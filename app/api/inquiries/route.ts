@@ -2,7 +2,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { NextRequest, NextResponse } from 'next/server';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.WEBSITE_ORIGIN ?? '*',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, x-inquiry-secret',
 };
