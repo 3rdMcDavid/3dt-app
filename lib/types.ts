@@ -84,16 +84,16 @@ export interface PortalSessionWithProject extends PortalSession {
 export type Database = {
   public: {
     Tables: {
-      clients: { Row: Client; Insert: Omit<Client, 'id' | 'created_at'>; Update: Partial<Omit<Client, 'id' | 'created_at'>> };
-      projects: { Row: Project; Insert: Omit<Project, 'id' | 'created_at'>; Update: Partial<Omit<Project, 'id' | 'created_at'>> };
-      proposals: { Row: Proposal; Insert: Omit<Proposal, 'id' | 'created_at'>; Update: Partial<Omit<Proposal, 'id' | 'created_at'>> };
-      contracts: { Row: Contract; Insert: Omit<Contract, 'id' | 'created_at'>; Update: Partial<Omit<Contract, 'id' | 'created_at'>> };
-      invoices: { Row: Invoice; Insert: Omit<Invoice, 'id' | 'created_at'>; Update: Partial<Omit<Invoice, 'id' | 'created_at'>> };
-      documents: { Row: Document; Insert: Omit<Document, 'id' | 'created_at'>; Update: Partial<Omit<Document, 'id' | 'created_at'>> };
-      portal_sessions: { Row: PortalSession; Insert: Omit<PortalSession, 'id' | 'created_at' | 'token'>; Update: Partial<Omit<PortalSession, 'id' | 'created_at'>> };
+      clients:         { Row: Client;        Insert: Omit<Client,        'id' | 'created_at'>;           Update: Partial<Omit<Client,        'id' | 'created_at'>>; Relationships: [] };
+      projects:        { Row: Project;       Insert: Omit<Project,       'id' | 'created_at'>;           Update: Partial<Omit<Project,       'id' | 'created_at'>>; Relationships: [] };
+      proposals:       { Row: Proposal;      Insert: Omit<Proposal,      'id' | 'created_at'>;           Update: Partial<Omit<Proposal,      'id' | 'created_at'>>; Relationships: [] };
+      contracts:       { Row: Contract;      Insert: Omit<Contract,      'id' | 'created_at'>;           Update: Partial<Omit<Contract,      'id' | 'created_at'>>; Relationships: [] };
+      invoices:        { Row: Invoice;       Insert: Omit<Invoice,       'id' | 'created_at'>;           Update: Partial<Omit<Invoice,       'id' | 'created_at'>>; Relationships: [] };
+      documents:       { Row: Document;      Insert: Omit<Document,      'id' | 'created_at'>;           Update: Partial<Omit<Document,      'id' | 'created_at'>>; Relationships: [] };
+      portal_sessions: { Row: PortalSession; Insert: Omit<PortalSession, 'id' | 'created_at' | 'token'>; Update: Partial<Omit<PortalSession, 'id' | 'created_at'>>; Relationships: [] };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Views:     { [_ in never]: never };
+    Functions: { [_ in never]: never };
+    Enums:     { [_ in never]: never };
   };
 };

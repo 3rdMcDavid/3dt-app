@@ -158,3 +158,41 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); }
 /* ── Empty state ── */
 .empty-state { text-align: center; padding: 48px 24px; color: var(--muted); }
 .empty-state p { margin-top: 8px; font-size: 13px; }
+
+/* ── Page helpers ── */
+.page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.page-header h1 { font-size: 22px; font-weight: 700; }
+.page-header .ph-actions { margin-left: auto; display: flex; gap: 10px; }
+.back-link { color: var(--muted); font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+.back-link:hover { color: var(--text); }
+
+/* ── Section helpers ── */
+.section { margin-bottom: 24px; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+
+/* ── Forms ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.form-actions { display: flex; gap: 10px; margin-top: 24px; }
+.form-full { grid-column: 1 / -1; }
+
+/* ── Detail view ── */
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.detail-item label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); display: block; margin-bottom: 4px; }
+.detail-item span { font-size: 14px; }
+
+/* ── Hub layout ── */
+.hub-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; }
+.hub-section-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.hub-section-body { padding: 20px; }
+.hub-section-empty { padding: 20px; color: var(--muted); font-size: 13px; }
+
+/* ── Portal theme (client-facing) ── */
+.portal-root {
+  --p-bg: #F7F7F2; --p-surface: #FFFFFF; --p-border: #E0E0D8;
+  --p-text: #1A1A1A; --p-muted: #6B6B60; --p-gold: #E8A020;
+  --p-green: #1B4D2E; --p-green-lt: #2D6B45; --p-radius: 12px;
+  background: var(--p-bg); color: var(--p-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}

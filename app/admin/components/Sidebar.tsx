@@ -33,7 +33,11 @@ export default function Sidebar() {
           <Link
             key={item.href}
             href={item.href}
-            className={`nav-item${pathname === item.href ? ' active' : ''}`}
+            className={`nav-item${
+              item.href === '/admin'
+                ? pathname === '/admin' ? ' active' : ''
+                : pathname.startsWith(item.href) ? ' active' : ''
+            }`}
           >
             <span>{item.icon}</span>
             {item.label}
