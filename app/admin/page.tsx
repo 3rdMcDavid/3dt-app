@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { createClient } from '@/lib/supabase/server';
+import Link from 'next/link';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -19,20 +20,20 @@ export default async function DashboardPage() {
       </div>
       <div className="admin-content">
         <div className="stat-grid">
-          <div className="stat-card">
+          <Link href="/admin/clients" className="stat-card stat-card-link">
             <div className="stat-label">Total Clients</div>
             <div className="stat-value">{clientCount ?? 0}</div>
-          </div>
-          <div className="stat-card">
+          </Link>
+          <Link href="/admin/projects" className="stat-card stat-card-link">
             <div className="stat-label">Active Projects</div>
             <div className="stat-value">{projectCount ?? 0}</div>
-          </div>
-          <div className="stat-card">
+          </Link>
+          <Link href="/admin/projects" className="stat-card stat-card-link">
             <div className="stat-label">Unpaid Invoices</div>
             <div className="stat-value" style={{ color: unpaidCount ? 'var(--red)' : 'inherit' }}>
               {unpaidCount ?? 0}
             </div>
-          </div>
+          </Link>
         </div>
 
         <div className="empty-state card">
