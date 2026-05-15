@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Sidebar from '@/app/admin/components/Sidebar';
+import MobileNav from '@/app/admin/components/MobileNav';
 import PushSubscribe from '@/app/admin/components/PushSubscribe';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="admin-layout">
       <Sidebar />
       <main className="admin-main">{children}</main>
+      <MobileNav />
       <PushSubscribe />
     </div>
   );
