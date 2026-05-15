@@ -11,6 +11,7 @@ export interface Client {
   email: string;
   phone: string | null;
   status: ClientStatus;
+  notes: string | null;
 }
 
 export interface Project {
