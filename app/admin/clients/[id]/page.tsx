@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { deleteClientAction } from '@/app/admin/clients/actions';
 import type { Client } from '@/lib/types';
+import DeleteClientButton from './components/DeleteClientButton';
 
 export default async function ClientDetailPage({
   params,
@@ -28,16 +28,7 @@ export default async function ClientDetailPage({
         <span className="topbar-title">{client.name}</span>
         <div className="topbar-actions">
           <Link href={`/admin/clients/${id}/edit`} className="btn btn-ghost btn-sm">Edit</Link>
-          <form action={deleteClientAction} style={{ display: 'inline' }}>
-            <input type="hidden" name="id" value={id} />
-            <button
-              type="submit"
-              className="btn btn-danger btn-sm"
-              onClick={e => { if (!confirm('Delete this client and all their data?')) e.preventDefault(); }}
-            >
-              Delete
-            </button>
-          </form>
+          <DeleteClientButton id={id} />
         </div>
       </div>
       <div className="admin-content">
@@ -68,6 +59,12 @@ export default async function ClientDetailPage({
                 <span>{new Date(client.created_at).toLocaleDateString()}</span>
               </div>
             </div>
+            {client.notes && (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                <div className="form-label" style={{ marginBottom: 6 }}>Inquiry Notes</div>
+                <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>{client.notes}</p>
+              </div>
+            )}
           </div>
         </div>
 

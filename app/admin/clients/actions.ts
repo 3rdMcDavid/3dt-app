@@ -39,6 +39,14 @@ export async function updateClientAction(formData: FormData) {
   redirect(`/admin/clients/${id}`);
 }
 
+export async function updateClientStatusAction(formData: FormData) {
+  const id = formData.get('id') as string;
+  const status = formData.get('status') as string;
+  const supabase = await createClient();
+  await supabase.from('clients').update({ status }).eq('id', id);
+  revalidatePath('/admin/clients');
+}
+
 export async function deleteClientAction(formData: FormData) {
   const id = formData.get('id') as string;
   const supabase = await createClient();
