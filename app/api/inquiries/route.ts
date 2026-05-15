@@ -13,14 +13,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
   }
 
-  let body: { first_name?: string; last_name?: string; email?: string; message?: string };
+  let body: { first_name?: string; last_name?: string; email?: string; phone?: string; message?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: corsHeaders });
   }
 
-  const { first_name, last_name, email, message } = body;
+  const { first_name, last_name, email, phone, message } = body;
 
   if (!first_name || !email) {
     return NextResponse.json({ error: 'first_name and email are required' }, { status: 400, headers: corsHeaders });
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const { error } = await supabase.from('clients').insert({
     name,
     email,
-    phone: null,
+    phone: phone ?? null,
     status: 'lead',
     notes: message ?? null,
   });
