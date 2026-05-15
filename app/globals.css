@@ -198,3 +198,44 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); }
   background: var(--p-bg); color: var(--p-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
 }
+.portal-shell { max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: 88px; }
+.portal-main { padding: 28px 16px 16px; }
+.portal-card { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: var(--p-radius); padding: 20px; margin-bottom: 14px; }
+.portal-header { margin-bottom: 24px; }
+.portal-welcome { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.portal-subtitle { color: var(--p-muted); font-size: 14px; }
+.portal-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--p-muted); margin-bottom: 14px; }
+.portal-status-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--p-border); }
+.portal-status-row:last-child { border-bottom: none; padding-bottom: 0; }
+.portal-status-row:first-child { padding-top: 0; }
+.portal-status-label { font-size: 13px; color: var(--p-muted); }
+.portal-status-value { font-weight: 600; font-size: 14px; }
+.portal-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.portal-badge-green { background: #D1FAE5; color: #065F46; }
+.portal-badge-amber { background: #FEF3C7; color: #92400E; }
+.portal-badge-stage { background: #EDE9FE; color: #4C1D95; }
+.portal-btn { display: block; width: 100%; padding: 15px; background: var(--p-green); color: #fff; border: none; border-radius: var(--p-radius); font-size: 15px; font-weight: 600; text-align: center; cursor: pointer; text-decoration: none; transition: background 0.15s; margin-top: 4px; }
+.portal-btn:hover { background: var(--p-green-lt); color: #fff; }
+.portal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.portal-btn-outline { background: transparent; border: 2px solid var(--p-green); color: var(--p-green); }
+.portal-btn-outline:hover { background: var(--p-green); color: #fff; }
+.portal-contract-body { white-space: pre-wrap; font-size: 13px; line-height: 1.75; color: var(--p-text); max-height: 380px; overflow-y: auto; border: 1px solid var(--p-border); border-radius: 8px; padding: 16px; background: var(--p-bg); margin-bottom: 16px; }
+.portal-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--p-border); border-radius: 8px; font-size: 14px; background: #fff; color: var(--p-text); margin-bottom: 12px; outline: none; }
+.portal-input:focus { border-color: var(--p-green); }
+.portal-signed-banner { background: #D1FAE5; border: 1px solid #6EE7B7; border-radius: var(--p-radius); padding: 18px; text-align: center; margin-bottom: 16px; }
+.portal-signed-banner h3 { color: #065F46; font-size: 16px; margin-bottom: 4px; }
+.portal-signed-banner p { color: #047857; font-size: 13px; margin: 0; }
+.portal-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.portal-table td { padding: 11px 0; border-bottom: 1px solid var(--p-border); vertical-align: middle; }
+.portal-table td:last-child { text-align: right; }
+.portal-table tr:last-child td { border-bottom: none; }
+.portal-table .total-row td { font-weight: 700; font-size: 15px; padding-top: 14px; }
+.portal-expired { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; }
+.portal-expired-inner { text-align: center; max-width: 320px; }
+.portal-expired-inner h2 { font-size: 20px; font-weight: 700; margin-bottom: 10px; color: var(--p-text); }
+.portal-expired-inner p { color: var(--p-muted); font-size: 14px; line-height: 1.6; }
+/* Bottom nav */
+.portal-nav { position: fixed; bottom: 0; left: 0; right: 0; padding: 10px 16px 18px; background: var(--p-bg); border-top: 1px solid var(--p-border); z-index: 50; }
+.portal-nav-inner { display: flex; max-width: 448px; margin: 0 auto; background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 100px; padding: 4px; gap: 4px; }
+.portal-nav-tab { flex: 1; padding: 9px 0; text-align: center; font-size: 13px; font-weight: 500; border-radius: 100px; color: var(--p-muted); text-decoration: none; transition: all 0.15s; }
+.portal-nav-tab.active { background: var(--p-green); color: #fff; font-weight: 600; }
