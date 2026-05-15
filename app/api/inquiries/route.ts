@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import { sendPushNotification } from '@/lib/push';
 import { NextRequest, NextResponse } from 'next/server';
 
 const corsHeaders = {
@@ -41,6 +42,12 @@ export async function POST(req: NextRequest) {
     console.error('Inquiry insert error:', error);
     return NextResponse.json({ error: 'Failed to save inquiry' }, { status: 500, headers: corsHeaders });
   }
+
+  sendPushNotification(
+    '🆕 New Lead',
+    `${name} submitted an inquiry`,
+    '/admin/clients'
+  ).catch(() => {});
 
   return NextResponse.json({ success: true }, { status: 201, headers: corsHeaders });
 }

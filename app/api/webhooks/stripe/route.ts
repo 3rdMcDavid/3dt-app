@@ -1,5 +1,6 @@
 import { stripe } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase/service';
+import { sendPushNotification } from '@/lib/push';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
@@ -23,16 +24,16 @@ export async function POST(req: NextRequest) {
     const supabase = createServiceClient();
 
     if (invoiceId) {
-      await supabase
-        .from('invoices')
-        .update({ status: 'paid' })
-        .eq('id', invoiceId);
+      await supabase.from('invoices').update({ status: 'paid' }).eq('id', invoiceId);
     } else if (paymentLinkId) {
-      await supabase
-        .from('invoices')
-        .update({ status: 'paid' })
-        .eq('stripe_payment_id', paymentLinkId);
+      await supabase.from('invoices').update({ status: 'paid' }).eq('stripe_payment_id', paymentLinkId);
     }
+
+    sendPushNotification(
+      '💰 Invoice Paid',
+      `A client just completed a payment`,
+      '/admin/projects'
+    ).catch(() => {});
   }
 
   return NextResponse.json({ received: true });
