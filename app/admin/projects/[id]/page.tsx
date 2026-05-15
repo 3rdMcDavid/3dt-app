@@ -5,15 +5,15 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DocumentUpload from './components/DocumentUpload';
+import DeleteProjectButton from './components/DeleteProjectButton';
+import DeleteInvoiceButton from './components/DeleteInvoiceButton';
+import DeleteDocumentButton from './components/DeleteDocumentButton';
 import {
-  deleteProjectAction,
   upsertProposalAction,
   upsertContractAction,
   createInvoiceAction,
   markInvoicePaidAction,
   generateStripePaymentLinkAction,
-  deleteInvoiceAction,
-  deleteDocumentAction,
   generatePortalLinkAction,
   sendPortalEmailAction,
 } from '@/app/admin/projects/actions';
@@ -77,16 +77,7 @@ export default async function ProjectHubPage({
         <span className="topbar-title">{project.title}</span>
         <div className="topbar-actions">
           <Link href={`/admin/projects/${id}/edit`} className="btn btn-ghost btn-sm">Edit</Link>
-          <form action={deleteProjectAction} style={{ display: 'inline' }}>
-            <input type="hidden" name="id" value={id} />
-            <button
-              type="submit"
-              className="btn btn-danger btn-sm"
-              onClick={e => { if (!confirm('Delete this project and all its data?')) e.preventDefault(); }}
-            >
-              Delete
-            </button>
-          </form>
+          <DeleteProjectButton id={id} />
         </div>
       </div>
 
@@ -225,18 +216,7 @@ export default async function ProjectHubPage({
                               <button type="submit" className="btn btn-ghost btn-sm" style={{ color: 'var(--green)' }}>Mark Paid</button>
                             </form>
                           )}
-                          <form action={deleteInvoiceAction} style={{ display: 'inline' }}>
-                            <input type="hidden" name="invoice_id" value={inv.id} />
-                            <input type="hidden" name="project_id" value={id} />
-                            <button
-                              type="submit"
-                              className="btn btn-ghost btn-sm"
-                              style={{ color: 'var(--red)' }}
-                              onClick={e => { if (!confirm('Delete this invoice?')) e.preventDefault(); }}
-                            >
-                              Delete
-                            </button>
-                          </form>
+                          <DeleteInvoiceButton invoiceId={inv.id} projectId={id} />
                         </td>
                       </tr>
                     ))}
@@ -307,19 +287,7 @@ export default async function ProjectHubPage({
                         <td style={{ color: 'var(--muted)', textTransform: 'capitalize' }}>{doc.type}</td>
                         <td style={{ color: 'var(--muted)' }}>{new Date(doc.created_at).toLocaleDateString()}</td>
                         <td>
-                          <form action={deleteDocumentAction} style={{ display: 'inline' }}>
-                            <input type="hidden" name="document_id" value={doc.id} />
-                            <input type="hidden" name="project_id" value={id} />
-                            <input type="hidden" name="file_url" value={doc.file_url} />
-                            <button
-                              type="submit"
-                              className="btn btn-ghost btn-sm"
-                              style={{ color: 'var(--red)' }}
-                              onClick={e => { if (!confirm('Delete this file?')) e.preventDefault(); }}
-                            >
-                              Delete
-                            </button>
-                          </form>
+                          <DeleteDocumentButton documentId={doc.id} projectId={id} fileUrl={doc.file_url} />
                         </td>
                       </tr>
                     ))}
