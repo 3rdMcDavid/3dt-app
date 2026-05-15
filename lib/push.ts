@@ -1,13 +1,12 @@
 import webpush from 'web-push';
 import { createServiceClient } from './supabase/service';
 
-webpush.setVapidDetails(
-  'mailto:3rddavidstechnology@gmail.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
-
 export async function sendPushNotification(title: string, body: string, url = '/admin') {
+  webpush.setVapidDetails(
+    'mailto:3rddavidstechnology@gmail.com',
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
   const supabase = createServiceClient();
   const { data: subscriptions } = await supabase.from('push_subscriptions').select('*');
   if (!subscriptions || subscriptions.length === 0) return;
