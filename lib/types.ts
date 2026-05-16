@@ -78,9 +78,17 @@ export interface Contract {
   created_at: string;
   project_id: string;
   content: string;
+  sign_token: string;
+  sign_email_sent_at: string | null;
   signed_at: string | null;
   signature_name: string | null;
   signature_ip: string | null;
+}
+
+export interface ContractTemplate {
+  id: string;
+  content: string;
+  updated_at: string;
 }
 
 export interface Invoice {

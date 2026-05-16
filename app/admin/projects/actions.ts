@@ -39,64 +39,54 @@ export async function createProjectAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  // Auto-create deposit + final invoices
-  const { data: depositInvoice } = await supabase
-    .from('invoices')
-    .insert({ project_id: project.id, amount: 250, type: 'deposit', status: 'unpaid' })
-    .select()
-    .single();
-
-  await supabase
-    .from('invoices')
-    .insert({ project_id: project.id, amount: 250, type: 'final', status: 'unpaid' });
-
-  // Generate Stripe payment link + email client (best-effort)
-  if (depositInvoice && client) {
+  // Auto-create contract from template and email signing link (best-effort)
+  if (client) {
     try {
-      const price = await stripe.prices.create({
-        currency: 'usd',
-        unit_amount: 25000,
-        product_data: { name: `${project.title} — Deposit` },
-      });
+      const { data: template } = await supabase
+        .from('contract_templates')
+        .select('content')
+        .single();
 
-      const paymentLink = await stripe.paymentLinks.create({
-        line_items: [{ price: price.id, quantity: 1 }],
-        metadata: { invoice_id: depositInvoice.id },
-        after_completion: {
-          type: 'redirect',
-          redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success` },
-        },
-      });
+      const content = (template?.content ?? '')
+        .replace(/\{\{client_name\}\}/g, client.name)
+        .replace(/\{\{project_title\}\}/g, project.title)
+        .replace(/\{\{date\}\}/g, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
 
-      await supabase
-        .from('invoices')
-        .update({ stripe_payment_id: paymentLink.id, stripe_payment_url: paymentLink.url })
-        .eq('id', depositInvoice.id);
+      const { data: contract } = await supabase
+        .from('contracts')
+        .insert({ project_id: project.id, content })
+        .select('sign_token')
+        .single();
 
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL!,
-        to: client.email,
-        subject: `Your website project is confirmed — $250 deposit due`,
-        html: `
-          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
-            <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
-            <p style="margin-bottom:16px;line-height:1.6;">
-              Your website project <strong>${project.title}</strong> has been confirmed.
-              To get started, a deposit of <strong>$250</strong> is due now.
-              Once paid, you'll receive access to your private client portal.
-            </p>
-            <a href="${paymentLink.url}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
-              Pay $250 Deposit →
-            </a>
-            <p style="margin-top:24px;color:#6B6B60;font-size:13px;">
-              Total project: $500 &nbsp;·&nbsp; Deposit: $250 (due now) &nbsp;·&nbsp; Final: $250 (due on completion)
-            </p>
-            <p style="color:#6B6B60;font-size:12px;">Questions? Reply to this email.</p>
-          </div>
-        `,
-      });
+      if (contract) {
+        const signUrl = `${process.env.NEXT_PUBLIC_APP_URL}/sign/${contract.sign_token}`;
+
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL!,
+          to: client.email,
+          subject: `Please review and sign your contract — ${project.title}`,
+          html: `
+            <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+              <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
+              <p style="margin-bottom:16px;line-height:1.6;">
+                We're excited to get started on your website project <strong>${project.title}</strong>!
+                Please review and sign your contract below. Once signed, you'll receive your deposit invoice.
+              </p>
+              <a href="${signUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+                Review &amp; Sign Contract →
+              </a>
+              <p style="margin-top:24px;color:#6B6B60;font-size:12px;">Questions? Reply to this email.</p>
+            </div>
+          `,
+        });
+
+        await supabase
+          .from('contracts')
+          .update({ sign_email_sent_at: new Date().toISOString() })
+          .eq('sign_token', contract.sign_token);
+      }
     } catch (e) {
-      console.error('Auto invoice/email failed:', e);
+      console.error('Auto contract/email failed:', e);
     }
   }
 
