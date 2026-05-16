@@ -7,6 +7,7 @@ const tabs = [
   { label: 'Dashboard', href: '/admin', icon: '⊞' },
   { label: 'Clients', href: '/admin/clients', icon: '👤' },
   { label: 'Projects', href: '/admin/projects', icon: '📁' },
+  { label: 'Contract', href: '/admin/settings/contract', icon: '📄' },
 ];
 
 export default function MobileNav() {

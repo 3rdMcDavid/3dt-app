@@ -9,8 +9,6 @@ import DeleteProjectButton from './components/DeleteProjectButton';
 import DeleteInvoiceButton from './components/DeleteInvoiceButton';
 import DeleteDocumentButton from './components/DeleteDocumentButton';
 import {
-  upsertProposalAction,
-  upsertContractAction,
   createInvoiceAction,
   markInvoicePaidAction,
   generateStripePaymentLinkAction,
@@ -131,41 +129,22 @@ export default async function ProjectHubPage({
           <span className={`badge badge-${project.stage}`}>{project.stage}</span>
         </div>
 
-        {/* ── Proposal ─────────────────────────────────────────────────────── */}
+        {/* ── Scope of Work ────────────────────────────────────────────────── */}
         <div className="hub-section">
           <div className="hub-section-header">
-            <span className="section-title">Proposal</span>
-            {proposal && <span className={`badge badge-${proposal.status}`}>{proposal.status}</span>}
+            <span className="section-title">Scope of Work</span>
+            <span className="badge badge-accepted">$500 Flat Rate</span>
           </div>
           <div className="hub-section-body">
-            <form action={upsertProposalAction}>
-              <input type="hidden" name="project_id" value={id} />
-              {proposal && <input type="hidden" name="proposal_id" value={proposal.id} />}
-              <div className="form-grid">
-                <div className="form-group form-full">
-                  <label className="form-label">Deliverables</label>
-                  <textarea name="deliverables" required placeholder="List what's included…" defaultValue={proposal?.deliverables || ''} style={{ minHeight: 80 }} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Price ($)</label>
-                  <input name="price" type="number" step="0.01" min="0" required placeholder="0.00" defaultValue={proposal?.price ?? ''} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Status</label>
-                  <select name="status" defaultValue={proposal?.status || 'draft'}>
-                    <option value="draft">Draft</option>
-                    <option value="sent">Sent</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="declined">Declined</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary btn-sm">
-                  {proposal ? 'Save Proposal' : 'Create Proposal'}
-                </button>
-              </div>
-            </form>
+            <div className="detail-grid">
+              <div className="detail-item"><label>Service</label><span>Custom Website Design &amp; Development</span></div>
+              <div className="detail-item"><label>Deposit</label><span>$250 (at signing)</span></div>
+              <div className="detail-item"><label>Final</label><span>$250 (before launch)</span></div>
+              <div className="detail-item"><label>Timeline</label><span>~7 business days from asset delivery</span></div>
+            </div>
+            <div style={{ marginTop: 14, fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>
+              Custom design · Mobile-responsive · Up to 5 pages/sections · Contact form · SEO foundation · Domain connection · 30 days post-launch support · 2 revision rounds included
+            </div>
           </div>
         </div>
 
@@ -174,36 +153,54 @@ export default async function ProjectHubPage({
           <div className="hub-section-header">
             <span className="section-title">Contract</span>
             {contract?.signed_at ? (
-              <span className="badge badge-accepted">Signed {new Date(contract.signed_at).toLocaleDateString()}</span>
+              <span className="badge badge-accepted">Signed</span>
             ) : contract ? (
-              <span className="badge badge-sent">Unsigned</span>
-            ) : null}
+              <span className="badge badge-sent">Awaiting Signature</span>
+            ) : (
+              <span className="badge badge-draft">Not Sent</span>
+            )}
           </div>
           <div className="hub-section-body">
-            <form action={upsertContractAction}>
-              <input type="hidden" name="project_id" value={id} />
-              {contract && <input type="hidden" name="contract_id" value={contract.id} />}
-              <div className="form-group">
-                <label className="form-label">Contract Content</label>
-                <textarea
-                  name="content"
-                  required
-                  placeholder="Paste or write the full contract text…"
-                  defaultValue={contract?.content || ''}
-                  style={{ minHeight: 180 }}
-                />
+            {!contract ? (
+              <p style={{ fontSize: 13, color: 'var(--muted)' }}>
+                Contract is auto-created when a project is saved. If missing, check the{' '}
+                <a href="/admin/settings/contract" style={{ color: 'var(--accent-lt)' }}>contract template</a>.
+              </p>
+            ) : contract.signed_at ? (
+              <div className="detail-grid">
+                <div className="detail-item"><label>Signed By</label><span>{contract.signature_name}</span></div>
+                <div className="detail-item"><label>Signed On</label><span>{new Date(contract.signed_at).toLocaleString()}</span></div>
+                {contract.sign_email_sent_at && (
+                  <div className="detail-item"><label>Sent</label><span>{new Date(contract.sign_email_sent_at).toLocaleDateString()}</span></div>
+                )}
               </div>
-              {contract?.signed_at && (
-                <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--muted)' }}>
-                  Signed by <strong>{contract.signature_name}</strong> on {new Date(contract.signed_at).toLocaleString()}
+            ) : (
+              <div>
+                <div className="detail-grid" style={{ marginBottom: 14 }}>
+                  {contract.sign_email_sent_at && (
+                    <div className="detail-item"><label>Email Sent</label><span>{new Date(contract.sign_email_sent_at).toLocaleDateString()}</span></div>
+                  )}
                 </div>
-              )}
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary btn-sm">
-                  {contract ? 'Save Contract' : 'Create Contract'}
-                </button>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label className="form-label" style={{ margin: 0 }}>Signing Link</label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${process.env.NEXT_PUBLIC_APP_URL}/sign/${contract.sign_token}`}
+                    style={{ flex: 1, background: 'var(--bg)', fontSize: 12, minWidth: 200 }}
+                    onClick={e => (e.target as HTMLInputElement).select()}
+                  />
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_APP_URL}/sign/${contract.sign_token}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost btn-sm"
+                  >
+                    Preview ↗
+                  </a>
+                </div>
               </div>
-            </form>
+            )}
           </div>
         </div>
 
