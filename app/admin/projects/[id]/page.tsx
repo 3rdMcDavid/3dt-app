@@ -16,6 +16,7 @@ import {
   generateStripePaymentLinkAction,
   generatePortalLinkAction,
   sendPortalEmailAction,
+  advanceRevisionStageAction,
 } from '@/app/admin/projects/actions';
 
 export default async function ProjectHubPage({
@@ -33,6 +34,7 @@ export default async function ProjectHubPage({
     { data: invoices },
     { data: documents },
     { data: portalSessions },
+    { data: intakeSubmissions },
   ] = await Promise.all([
     supabase.from('projects').select('*, clients(*)').eq('id', id).single(),
     supabase.from('proposals').select('*').eq('project_id', id).maybeSingle(),
@@ -46,6 +48,11 @@ export default async function ProjectHubPage({
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1),
+    supabase
+      .from('intake_submissions')
+      .select('*, intake_files(*)')
+      .eq('project_id', id)
+      .order('created_at', { ascending: false }),
   ]);
 
   const project = projectResult.data as any;
@@ -60,8 +67,42 @@ export default async function ProjectHubPage({
     ? `${process.env.NEXT_PUBLIC_APP_URL}/portal/${activeSession.token}`
     : null;
 
-  // Generate signed URLs for documents
+  const revisionStage = project?.revision_stage ?? 'awaiting_intake';
+
+  const REVISION_STAGE_LABEL: Record<string, string> = {
+    awaiting_intake: 'Awaiting Intake',
+    intake_received: 'Intake Received — Ready for Draft 1',
+    revision_1_open: 'Draft 1 Sent — Awaiting Client Review',
+    revision_1_received: 'Revision 1 Received — Ready for Draft 2',
+    revision_2_open: 'Draft 2 Sent — Awaiting Client Review',
+    revision_2_received: 'Revision 2 Received — Ready for Final',
+    post_final_open: 'Final Sent — Awaiting Client Approval',
+    complete: 'Complete',
+  };
+
+  const CAN_SEND_DRAFT: Record<string, string> = {
+    intake_received: 'Send Draft 1',
+    revision_1_received: 'Send Draft 2',
+    revision_2_received: 'Send Final',
+  };
+
+  // Generate signed URLs for intake files
   const service = createServiceClient();
+  const intakeWithUrls = await Promise.all(
+    (intakeSubmissions ?? []).map(async (sub: any) => ({
+      ...sub,
+      intake_files: await Promise.all(
+        (sub.intake_files ?? []).map(async (f: any) => {
+          const { data } = await service.storage
+            .from('intake')
+            .createSignedUrl(f.file_url, 3600);
+          return { ...f, signedUrl: data?.signedUrl ?? null };
+        })
+      ),
+    }))
+  );
+
+  // Generate signed URLs for documents
   const docsWithUrls = await Promise.all(
     (documents || []).map(async (doc: any) => {
       const { data } = await service.storage
@@ -252,6 +293,66 @@ export default async function ProjectHubPage({
                 </div>
               </form>
             </div>
+          </div>
+        </div>
+
+        {/* ── Intake ───────────────────────────────────────────────────────── */}
+        <div className="hub-section">
+          <div className="hub-section-header">
+            <span className="section-title">Intake ({intakeWithUrls.length})</span>
+            <span className={`badge badge-${revisionStage === 'complete' ? 'accepted' : revisionStage.includes('received') ? 'sent' : 'draft'}`}>
+              {REVISION_STAGE_LABEL[revisionStage]}
+            </span>
+          </div>
+          <div className="hub-section-body">
+            {CAN_SEND_DRAFT[revisionStage] && (
+              <form action={advanceRevisionStageAction} style={{ marginBottom: 20 }}>
+                <input type="hidden" name="project_id" value={id} />
+                <input type="hidden" name="current_stage" value={revisionStage} />
+                <button type="submit" className="btn btn-primary btn-sm">
+                  {CAN_SEND_DRAFT[revisionStage]} →
+                </button>
+              </form>
+            )}
+
+            {intakeWithUrls.length === 0 ? (
+              <p style={{ color: 'var(--muted)', fontSize: 13 }}>No intake submissions yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {intakeWithUrls.map((sub: any, i: number) => (
+                  <div key={sub.id} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <strong style={{ textTransform: 'capitalize', fontSize: 13 }}>
+                        {sub.type.replace('_', ' ')}
+                        {sub.approved && ' · ✓ Approved'}
+                      </strong>
+                      <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                        {new Date(sub.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="detail-grid" style={{ marginBottom: sub.additional_notes || sub.intake_files?.length ? 10 : 0 }}>
+                      {sub.business_name && <div className="detail-item"><label>Business</label><span>{sub.business_name}</span></div>}
+                      {sub.tagline && <div className="detail-item"><label>Tagline</label><span>{sub.tagline}</span></div>}
+                      {sub.pages_type && <div className="detail-item"><label>Pages</label><span style={{ textTransform: 'capitalize' }}>{sub.pages_type === 'single' ? '1-Page with tabs' : sub.pages_list?.join(', ') || 'Multi-page'}</span></div>}
+                      {sub.target_audience && <div className="detail-item"><label>Audience</label><span>{sub.target_audience}</span></div>}
+                    </div>
+                    {sub.style_notes && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Style:</strong> {sub.style_notes}</p>}
+                    {sub.bio && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Bio:</strong> {sub.bio.length > 150 ? sub.bio.slice(0, 150) + '…' : sub.bio}</p>}
+                    {sub.additional_notes && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Notes:</strong> {sub.additional_notes}</p>}
+                    {sub.intake_files?.length > 0 && (
+                      <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {sub.intake_files.map((f: any) => (
+                          <a key={f.id} href={f.signedUrl} target="_blank" rel="noopener noreferrer"
+                            className="btn btn-ghost btn-sm" style={{ fontSize: 11 }}>
+                            ↓ {f.file_name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

@@ -279,3 +279,24 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); }
 .portal-nav-inner { display: flex; max-width: 448px; margin: 0 auto; background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 100px; padding: 4px; gap: 4px; }
 .portal-nav-tab { flex: 1; padding: 9px 0; text-align: center; font-size: 13px; font-weight: 500; border-radius: 100px; color: var(--p-muted); text-decoration: none; transition: all 0.15s; }
 .portal-nav-tab.active { background: var(--p-green); color: #fff; font-weight: 600; }
+
+/* ── Portal Intake ──────────────────────────────────────────────────── */
+.portal-label { display: block; font-size: 12px; font-weight: 600; color: var(--p-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.portal-card input[type="text"],
+.portal-card input[type="url"],
+.portal-card textarea { width: 100%; background: var(--p-bg); border: 1px solid var(--p-border); border-radius: 8px; padding: 10px 12px; font-size: 14px; color: var(--p-text); outline: none; box-sizing: border-box; }
+.portal-card input[type="text"]:focus,
+.portal-card input[type="url"]:focus,
+.portal-card textarea:focus { border-color: var(--p-green); }
+.portal-card input[type="file"] { font-size: 13px; color: var(--p-muted); }
+.intake-section-title { font-size: 15px; font-weight: 700; color: var(--p-text); margin-bottom: 14px; }
+.intake-radio-label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--p-text); cursor: pointer; }
+.intake-radio-label input { accent-color: var(--p-green); width: 16px; height: 16px; }
+.intake-checkbox-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-left: 8px; }
+.intake-check-label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--p-text); cursor: pointer; }
+.intake-check-label input { accent-color: var(--p-green); width: 16px; height: 16px; }
+.intake-approval { padding: 4px 0; }
+.btn-portal-primary { display: inline-block; background: var(--p-green); color: #fff; padding: 13px 24px; border-radius: 10px; font-size: 15px; font-weight: 600; border: none; cursor: pointer; width: 100%; text-align: center; }
+.btn-portal-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-portal-ghost { display: inline-block; background: transparent; color: var(--p-green); padding: 11px 24px; border-radius: 10px; font-size: 15px; font-weight: 600; border: 2px solid var(--p-green); cursor: pointer; width: 100%; text-align: center; }
+.btn-portal-ghost:disabled { opacity: 0.6; cursor: not-allowed; }

@@ -1,5 +1,15 @@
 export type ClientStatus = 'lead' | 'active' | 'completed';
 export type ProjectStage = 'discovery' | 'proposal' | 'contract' | 'build' | 'review' | 'launched';
+export type RevisionStage =
+  | 'awaiting_intake'
+  | 'intake_received'
+  | 'revision_1_open'
+  | 'revision_1_received'
+  | 'revision_2_open'
+  | 'revision_2_received'
+  | 'post_final_open'
+  | 'complete';
+export type IntakeSubmissionType = 'initial' | 'revision_1' | 'revision_2' | 'post_final';
 export type ProposalStatus = 'draft' | 'sent' | 'accepted' | 'declined';
 export type InvoiceType = 'deposit' | 'final';
 export type InvoiceStatus = 'unpaid' | 'paid';
@@ -21,6 +31,37 @@ export interface Project {
   title: string;
   stage: ProjectStage;
   notes: string | null;
+  revision_stage: RevisionStage;
+}
+
+export interface IntakeSubmission {
+  id: string;
+  project_id: string;
+  created_at: string;
+  type: IntakeSubmissionType;
+  approved: boolean;
+  pages_type: string | null;
+  pages_list: string[] | null;
+  business_name: string | null;
+  tagline: string | null;
+  description: string | null;
+  target_audience: string | null;
+  style_notes: string | null;
+  bio: string | null;
+  social_facebook: string | null;
+  social_instagram: string | null;
+  social_linkedin: string | null;
+  social_other: string | null;
+  additional_notes: string | null;
+}
+
+export interface IntakeFile {
+  id: string;
+  intake_submission_id: string;
+  project_id: string;
+  created_at: string;
+  file_name: string;
+  file_url: string;
 }
 
 export interface Proposal {

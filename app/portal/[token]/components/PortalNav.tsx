@@ -9,6 +9,7 @@ export default function PortalNav({ token }: { token: string }) {
 
   const tabs = [
     { label: 'Home', href: base },
+    { label: 'Intake', href: `${base}/intake` },
     { label: 'Contract', href: `${base}/contract` },
     { label: 'Invoice', href: `${base}/invoice` },
   ];
