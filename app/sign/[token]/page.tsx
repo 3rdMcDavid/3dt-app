@@ -41,7 +41,7 @@ export default async function SignContractPage({
         <div className="sign-card">
           <div className="sign-contract-body">
             {contract.content
-              ? contract.content.split('\n').map((line, i) =>
+              ? contract.content.split('\n').map((line: string, i: number) =>
                   line.trim() ? <p key={i}>{line}</p> : <br key={i} />
                 )
               : <p style={{ color: '#6B6B60' }}>Contract content is being prepared. Please check back shortly.</p>
