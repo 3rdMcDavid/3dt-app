@@ -8,6 +8,7 @@ import DocumentUpload from './components/DocumentUpload';
 import DeleteProjectButton from './components/DeleteProjectButton';
 import DeleteInvoiceButton from './components/DeleteInvoiceButton';
 import DeleteDocumentButton from './components/DeleteDocumentButton';
+import SigningLink from './components/SigningLink';
 import {
   createInvoiceAction,
   markInvoicePaidAction,
@@ -181,23 +182,9 @@ export default async function ProjectHubPage({
                     <div className="detail-item"><label>Email Sent</label><span>{new Date(contract.sign_email_sent_at).toLocaleDateString()}</span></div>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <label className="form-label" style={{ margin: 0 }}>Signing Link</label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={`${process.env.NEXT_PUBLIC_APP_URL}/sign/${contract.sign_token}`}
-                    style={{ flex: 1, background: 'var(--bg)', fontSize: 12, minWidth: 200 }}
-                    onClick={e => (e.target as HTMLInputElement).select()}
-                  />
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_APP_URL}/sign/${contract.sign_token}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-ghost btn-sm"
-                  >
-                    Preview ↗
-                  </a>
+                <div>
+                  <label className="form-label" style={{ marginBottom: 8 }}>Signing Link</label>
+                  <SigningLink url={`${process.env.NEXT_PUBLIC_APP_URL}/sign/${contract.sign_token}`} />
                 </div>
               </div>
             )}
