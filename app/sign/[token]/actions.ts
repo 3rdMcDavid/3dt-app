@@ -30,7 +30,7 @@ export async function signContractAction(formData: FormData) {
 
   const { data: project } = await supabase
     .from('projects')
-    .select('title, clients(name, email)')
+    .select('title, client_id, clients(name, email)')
     .eq('id', contract.project_id)
     .single();
 
@@ -46,6 +46,14 @@ export async function signContractAction(formData: FormData) {
       signature_ip: ip,
     })
     .eq('id', contract.id);
+
+  // Activate the client
+  if ((project as any)?.client_id) {
+    await supabase
+      .from('clients')
+      .update({ status: 'active' })
+      .eq('id', (project as any).client_id);
+  }
 
   // Create deposit + final invoices
   const { data: depositInvoice } = await supabase
