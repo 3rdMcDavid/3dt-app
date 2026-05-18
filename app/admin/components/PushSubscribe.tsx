@@ -14,7 +14,17 @@ export default function PushSubscribe() {
     if (Notification.permission === 'granted') {
       navigator.serviceWorker.ready.then((reg) =>
         reg.pushManager.getSubscription().then((sub) => {
-          setState(sub ? 'subscribed' : 'prompt');
+          if (sub) {
+            // Always sync current subscription to DB — handles rotated endpoints
+            fetch('/api/push/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(sub.toJSON()),
+            }).catch(() => {});
+            setState('subscribed');
+          } else {
+            setState('prompt');
+          }
         })
       );
     } else {
