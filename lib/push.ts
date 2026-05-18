@@ -1,31 +1,24 @@
-import webpush from 'web-push';
-import { createServiceClient } from './supabase/service';
-
 export async function sendPushNotification(title: string, body: string, url = '/admin') {
-  webpush.setVapidDetails(
-    'mailto:3rddavidstechnology@gmail.com',
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
-  );
-  const supabase = createServiceClient();
-  const { data: subscriptions } = await supabase.from('push_subscriptions').select('*');
-  if (!subscriptions || subscriptions.length === 0) return;
+  const appId = process.env.ONESIGNAL_APP_ID;
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+  if (!appId || !apiKey) return;
 
-  const payload = JSON.stringify({ title, body, url });
+  const fullUrl = url.startsWith('http')
+    ? url
+    : `${process.env.NEXT_PUBLIC_APP_URL}${url}`;
 
-  await Promise.all(
-    subscriptions.map(async (sub: any) => {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          payload,
-          { urgency: 'high', TTL: 60 }
-        );
-      } catch (err: any) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-        }
-      }
-    })
-  );
+  await fetch('https://api.onesignal.com/notifications', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Key ${apiKey}`,
+    },
+    body: JSON.stringify({
+      app_id: appId,
+      included_segments: ['All'],
+      headings: { en: title },
+      contents: { en: body },
+      url: fullUrl,
+    }),
+  }).catch(() => {});
 }

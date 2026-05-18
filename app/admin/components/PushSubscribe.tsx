@@ -2,62 +2,37 @@
 
 import { useEffect, useState } from 'react';
 
+declare global {
+  interface Window {
+    OneSignalDeferred?: Array<(os: any) => void>;
+    OneSignal?: any;
+  }
+}
+
 export default function PushSubscribe() {
-  const [state, setState] = useState<'loading' | 'unsupported' | 'prompt' | 'subscribed' | 'denied'>('loading');
+  const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setState('unsupported');
-      return;
-    }
-    if (Notification.permission === 'denied') { setState('denied'); return; }
-    if (Notification.permission === 'granted') {
-      navigator.serviceWorker.ready.then((reg) =>
-        reg.pushManager.getSubscription().then((sub) => {
-          if (sub) {
-            // Always sync current subscription to DB — handles rotated endpoints
-            fetch('/api/push/subscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(sub.toJSON()),
-            }).catch(() => {});
-            setState('subscribed');
-          } else {
-            setState('prompt');
-          }
-        })
-      );
-    } else {
-      setState('prompt');
-    }
-  }, []);
-
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async (OneSignal: any) => {
+      await OneSignal.init({
+        appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
+        serviceWorkerPath: '/OneSignalSDKWorker.js',
+        notifyButton: { enable: false },
+        allowLocalhostAsSecureOrigin: true,
+      });
+      if (!OneSignal.User.PushSubscription.optedIn) {
+        setShowPrompt(true);
+      }
+    });
   }, []);
 
   async function enable() {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') { setState('denied'); return; }
-
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-    });
-
-    await fetch('/api/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(sub.toJSON()),
-    });
-
-    setState('subscribed');
+    await window.OneSignal?.Notifications.requestPermission();
+    setShowPrompt(false);
   }
 
-  if (state !== 'prompt') return null;
+  if (!showPrompt) return null;
 
   return (
     <div style={{
