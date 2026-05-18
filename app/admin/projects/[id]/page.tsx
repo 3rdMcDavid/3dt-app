@@ -170,16 +170,16 @@ export default async function ProjectHubPage({
             ) : contract.signed_at ? (
               <div className="detail-grid">
                 <div className="detail-item"><label>Signed By</label><span>{contract.signature_name}</span></div>
-                <div className="detail-item"><label>Signed On</label><span>{new Date(contract.signed_at).toLocaleString()}</span></div>
+                <div className="detail-item"><label>Signed On</label><span>{new Date(contract.signed_at).toLocaleString('en-US', { timeZone: 'America/Chicago' })}</span></div>
                 {contract.sign_email_sent_at && (
-                  <div className="detail-item"><label>Sent</label><span>{new Date(contract.sign_email_sent_at).toLocaleDateString()}</span></div>
+                  <div className="detail-item"><label>Sent</label><span>{new Date(contract.sign_email_sent_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</span></div>
                 )}
               </div>
             ) : (
               <div>
                 <div className="detail-grid" style={{ marginBottom: 14 }}>
                   {contract.sign_email_sent_at && (
-                    <div className="detail-item"><label>Email Sent</label><span>{new Date(contract.sign_email_sent_at).toLocaleDateString()}</span></div>
+                    <div className="detail-item"><label>Email Sent</label><span>{new Date(contract.sign_email_sent_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</span></div>
                   )}
                 </div>
                 <div>
@@ -217,7 +217,7 @@ export default async function ProjectHubPage({
                         <td style={{ textTransform: 'capitalize' }}>{inv.type}</td>
                         <td>${Number(inv.amount).toFixed(2)}</td>
                         <td style={{ color: 'var(--muted)' }}>
-                          {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}
+                          {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-US', { timeZone: 'America/Chicago' }) : '—'}
                         </td>
                         <td><span className={`badge badge-${inv.status}`}>{inv.status}</span></td>
                         <td>
@@ -289,10 +289,30 @@ export default async function ProjectHubPage({
             </span>
           </div>
           <div className="hub-section-body">
+            {project.draft_url && !CAN_SEND_DRAFT[revisionStage] && (
+              <div style={{ marginBottom: 16, fontSize: 13 }}>
+                <label className="form-label" style={{ marginBottom: 4 }}>Draft URL</label>
+                <a href={project.draft_url} target="_blank" rel="noopener noreferrer"
+                  style={{ color: 'var(--accent-lt)', wordBreak: 'break-all' }}>
+                  {project.draft_url} ↗
+                </a>
+              </div>
+            )}
+
             {CAN_SEND_DRAFT[revisionStage] && (
               <form action={advanceRevisionStageAction} style={{ marginBottom: 20 }}>
                 <input type="hidden" name="project_id" value={id} />
                 <input type="hidden" name="current_stage" value={revisionStage} />
+                <div className="form-group" style={{ marginBottom: 12 }}>
+                  <label className="form-label">Draft Preview URL <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional — included in client email)</span></label>
+                  <input
+                    name="draft_url"
+                    type="url"
+                    placeholder="https://your-project.vercel.app"
+                    defaultValue={project.draft_url ?? ''}
+                    style={{ maxWidth: 420 }}
+                  />
+                </div>
                 <button type="submit" className="btn btn-primary btn-sm">
                   {CAN_SEND_DRAFT[revisionStage]} →
                 </button>
@@ -311,7 +331,7 @@ export default async function ProjectHubPage({
                         {sub.approved && ' · ✓ Approved'}
                       </strong>
                       <span style={{ fontSize: 12, color: 'var(--muted)' }}>
-                        {new Date(sub.created_at).toLocaleString()}
+                        {new Date(sub.created_at).toLocaleString('en-US', { timeZone: 'America/Chicago' })}
                       </span>
                     </div>
                     <div className="detail-grid" style={{ marginBottom: sub.additional_notes || sub.intake_files?.length ? 10 : 0 }}>
@@ -370,7 +390,7 @@ export default async function ProjectHubPage({
                           )}
                         </td>
                         <td style={{ color: 'var(--muted)', textTransform: 'capitalize' }}>{doc.type}</td>
-                        <td style={{ color: 'var(--muted)' }}>{new Date(doc.created_at).toLocaleDateString()}</td>
+                        <td style={{ color: 'var(--muted)' }}>{new Date(doc.created_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</td>
                         <td>
                           <DeleteDocumentButton documentId={doc.id} projectId={id} fileUrl={doc.file_url} />
                         </td>
@@ -390,7 +410,7 @@ export default async function ProjectHubPage({
             <span className="section-title">Client Portal</span>
             {activeSession && (
               <span style={{ fontSize: 12, color: 'var(--muted)' }}>
-                Expires {new Date(activeSession.expires_at).toLocaleDateString()}
+                Expires {new Date(activeSession.expires_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
               </span>
             )}
           </div>
@@ -412,27 +432,27 @@ export default async function ProjectHubPage({
                   </div>
                   {activeSession?.sent_at && (
                     <p style={{ marginTop: 6, fontSize: 12, color: 'var(--muted)' }}>
-                      Email sent {new Date(activeSession.sent_at).toLocaleString()}
+                      Email sent {new Date(activeSession.sent_at).toLocaleString('en-US', { timeZone: 'America/Chicago' })}
                     </p>
                   )}
                 </div>
 
-                <form action={sendPortalEmailAction}>
-                  <input type="hidden" name="project_id" value={id} />
-                  <input type="hidden" name="token" value={activeSession.token} />
-                  <input type="hidden" name="client_email" value={client?.email || ''} />
-                  <input type="hidden" name="client_name" value={client?.name || ''} />
-                  <input type="hidden" name="project_title" value={project.title} />
-                  <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <form action={sendPortalEmailAction} style={{ display: 'inline' }}>
+                    <input type="hidden" name="project_id" value={id} />
+                    <input type="hidden" name="token" value={activeSession.token} />
+                    <input type="hidden" name="client_email" value={client?.email || ''} />
+                    <input type="hidden" name="client_name" value={client?.name || ''} />
+                    <input type="hidden" name="project_title" value={project.title} />
                     <button type="submit" className="btn btn-primary btn-sm">
                       {activeSession?.sent_at ? 'Resend Email' : 'Send Email to Client'}
                     </button>
-                    <form action={generatePortalLinkAction} style={{ display: 'inline' }}>
-                      <input type="hidden" name="project_id" value={id} />
-                      <button type="submit" className="btn btn-ghost btn-sm">Generate New Link</button>
-                    </form>
-                  </div>
-                </form>
+                  </form>
+                  <form action={generatePortalLinkAction} style={{ display: 'inline' }}>
+                    <input type="hidden" name="project_id" value={id} />
+                    <button type="submit" className="btn btn-ghost btn-sm">Generate New Link</button>
+                  </form>
+                </div>
               </>
             ) : (
               <form action={generatePortalLinkAction}>
@@ -445,6 +465,49 @@ export default async function ProjectHubPage({
             )}
           </div>
         </div>
+
+        {/* ── Launch ───────────────────────────────────────────────────────── */}
+        <div className="hub-section">
+          <div className="hub-section-header">
+            <span className="section-title">Launch</span>
+            {project.launch_submitted_at ? (
+              <span className="badge badge-accepted">Info Received</span>
+            ) : (
+              <span className="badge badge-draft">Pending</span>
+            )}
+          </div>
+          <div className="hub-section-body">
+            {project.launch_submitted_at ? (
+              <div className="detail-grid">
+                <div className="detail-item">
+                  <label>Vercel Email</label>
+                  <span>{project.client_vercel_email || '—'}</span>
+                </div>
+                {project.client_github_username && (
+                  <div className="detail-item">
+                    <label>GitHub</label>
+                    <span>{project.client_github_username}</span>
+                  </div>
+                )}
+                <div className="detail-item">
+                  <label>Submitted</label>
+                  <span>{new Date(project.launch_submitted_at).toLocaleString('en-US', { timeZone: 'America/Chicago' })}</span>
+                </div>
+                {project.launch_notes && (
+                  <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
+                    <label>Notes</label>
+                    <span>{project.launch_notes}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p style={{ fontSize: 13, color: 'var(--muted)' }}>
+                Waiting for {client?.name} to submit their Vercel account info via the portal Launch tab.
+              </p>
+            )}
+          </div>
+        </div>
+
       </div>
     </>
   );

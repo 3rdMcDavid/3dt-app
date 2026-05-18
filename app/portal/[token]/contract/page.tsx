@@ -67,9 +67,28 @@ export default async function PortalContractPage({
               <p>
                 Signed by <strong>{contract.signature_name}</strong> on{' '}
                 {new Date(contract.signed_at).toLocaleDateString('en-US', {
-                  year: 'numeric', month: 'long', day: 'numeric',
+                  year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Chicago',
                 })}
               </p>
+              <a
+                href={`/portal/${token}/contract/print`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block',
+                  marginTop: 14,
+                  background: 'transparent',
+                  border: '1px solid var(--p-green)',
+                  color: 'var(--p-green)',
+                  borderRadius: 8,
+                  padding: '8px 18px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Download / Print Contract ↗
+              </a>
             </div>
           )}
         </>

@@ -60,7 +60,7 @@ export default function ClientCard({ c }: { c: Client }) {
       </div>
 
       <div style={{ fontSize: 11, color: 'var(--muted)' }}>
-        Added {new Date(c.created_at).toLocaleDateString()}
+        Added {new Date(c.created_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
       </div>
     </div>
   );

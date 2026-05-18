@@ -12,6 +12,7 @@ export default function PortalNav({ token }: { token: string }) {
     { label: 'Intake', href: `${base}/intake` },
     { label: 'Contract', href: `${base}/contract` },
     { label: 'Invoice', href: `${base}/invoice` },
+    { label: 'Launch', href: `${base}/launch` },
   ];
 
   return (

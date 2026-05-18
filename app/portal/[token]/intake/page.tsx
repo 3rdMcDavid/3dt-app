@@ -32,7 +32,7 @@ export default async function PortalIntakePage({
 
   const { data: session } = await supabase
     .from('portal_sessions')
-    .select('project_id, projects(title, revision_stage)')
+    .select('project_id, projects(title, revision_stage, draft_url)')
     .eq('token', token)
     .gt('expires_at', new Date().toISOString())
     .single();
@@ -41,6 +41,7 @@ export default async function PortalIntakePage({
 
   const project = (session as any).projects;
   const stage = project?.revision_stage as RevisionStage;
+  const draftUrl = project?.draft_url as string | null;
 
   const { data: submissions } = await supabase
     .from('intake_submissions')
@@ -48,11 +49,10 @@ export default async function PortalIntakePage({
     .eq('project_id', session.project_id)
     .order('created_at', { ascending: false });
 
-  const isClientTurn =
-    stage === 'awaiting_intake' ||
-    stage === 'revision_1_open' ||
-    stage === 'revision_2_open' ||
-    stage === 'post_final_open';
+  // Count how many times client has already requested changes on the final
+  const extraRevisionCount = (submissions ?? []).filter(
+    (s: any) => s.type === 'post_final' && !s.approved
+  ).length;
 
   const isWaiting =
     stage === 'intake_received' ||
@@ -102,11 +102,25 @@ export default async function PortalIntakePage({
 
       {/* Revision approval forms */}
       {(stage === 'revision_1_open' || stage === 'revision_2_open' || stage === 'post_final_open') && (
-        <IntakeForm
-          token={token}
-          submissionType={REVISION_TYPE[stage]!}
-          isApproval
-        />
+        <>
+          {draftUrl && (
+            <a
+              href={draftUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="portal-btn"
+              style={{ display: 'block', textAlign: 'center', marginBottom: 16 }}
+            >
+              View Your Draft ↗
+            </a>
+          )}
+          <IntakeForm
+            token={token}
+            submissionType={REVISION_TYPE[stage]!}
+            isApproval
+            extraRevision={stage === 'post_final_open' && extraRevisionCount > 0}
+          />
+        </>
       )}
 
       {/* Previous submissions */}
@@ -124,7 +138,7 @@ export default async function PortalIntakePage({
                     {sub.approved && ' · ✓ Approved'}
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--p-muted)' }}>
-                    {new Date(sub.created_at).toLocaleDateString()}
+                    {new Date(sub.created_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
                   </span>
                 </div>
                 {sub.additional_notes && (

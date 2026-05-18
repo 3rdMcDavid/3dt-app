@@ -7,6 +7,7 @@ type Props = {
   token: string;
   submissionType: 'initial' | 'revision_1' | 'revision_2' | 'post_final';
   isApproval?: boolean;
+  extraRevision?: boolean;
 };
 
 const PAGE_OPTIONS = [
@@ -18,11 +19,12 @@ const PAGE_OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
-export default function IntakeForm({ token, submissionType, isApproval }: Props) {
+export default function IntakeForm({ token, submissionType, isApproval, extraRevision }: Props) {
   const [pagesType, setPagesType] = useState('');
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [extraRevisionConfirmed, setExtraRevisionConfirmed] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
@@ -64,6 +66,42 @@ export default function IntakeForm({ token, submissionType, isApproval }: Props)
           If everything looks good and you have no further changes, click below.
           Otherwise, fill in the form to describe what you'd like adjusted.
         </p>
+
+        {extraRevision && !extraRevisionConfirmed && (
+          <div style={{
+            background: '#451a03',
+            border: '1px solid #92400e',
+            borderRadius: 10,
+            padding: '16px 18px',
+            marginBottom: 20,
+          }}>
+            <p style={{ fontWeight: 600, marginBottom: 6, color: '#fbbf24' }}>
+              ⚠️ You've used your included revision rounds
+            </p>
+            <p style={{ fontSize: 13, color: '#fde68a', lineHeight: 1.6, marginBottom: 14 }}>
+              Your contract includes 2 revision rounds, which have been used. Any additional
+              changes beyond this point may be subject to an extra fee. Please reach out to
+              David before submitting to confirm any additional charges.
+            </p>
+            <button
+              type="button"
+              onClick={() => setExtraRevisionConfirmed(true)}
+              style={{
+                background: '#92400e',
+                color: '#fde68a',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 18px',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              I understand — proceed anyway
+            </button>
+          </div>
+        )}
+
         <form ref={formRef}>
           <div className="form-group" style={{ marginBottom: 20 }}>
             <label className="portal-label">Changes requested (optional)</label>
@@ -78,14 +116,16 @@ export default function IntakeForm({ token, submissionType, isApproval }: Props)
             >
               {loading ? 'Submitting…' : submissionType === 'post_final' ? 'Approve Final ✓' : 'Looks Good →'}
             </button>
-            <button
-              type="button"
-              className="btn-portal-ghost"
-              onClick={() => handleSubmit(false)}
-              disabled={loading}
-            >
-              {loading ? 'Submitting…' : 'Submit Changes'}
-            </button>
+            {(!extraRevision || extraRevisionConfirmed) && (
+              <button
+                type="button"
+                className="btn-portal-ghost"
+                onClick={() => handleSubmit(false)}
+                disabled={loading}
+              >
+                {loading ? 'Submitting…' : 'Submit Changes'}
+              </button>
+            )}
           </div>
           {error && <p style={{ color: 'var(--p-gold)', marginTop: 12, fontSize: 13 }}>{error}</p>}
         </form>

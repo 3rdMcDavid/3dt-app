@@ -7,6 +7,37 @@ import { redirect } from 'next/navigation';
 import { stripe } from '@/lib/stripe';
 import { resend } from '@/lib/resend';
 
+// Shared helper — sends the initial "get started" portal email to the client
+export async function sendPortalGetStartedEmail(
+  clientName: string,
+  clientEmail: string,
+  projectTitle: string,
+  portalToken: string
+) {
+  const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${portalToken}`;
+  await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL!,
+    to: clientEmail,
+    subject: `Your project portal is ready — ${projectTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+        <h2 style="margin-bottom:8px;">Hi ${clientName},</h2>
+        <p style="margin-bottom:16px;line-height:1.6;">
+          We're excited to get started on <strong>${projectTitle}</strong>!
+          Your client portal is ready — inside you'll review and sign your contract,
+          pay your deposit, and track everything from start to launch.
+        </p>
+        <a href="${portalUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+          Get Started →
+        </a>
+        <p style="margin-top:24px;color:#6B6B60;font-size:12px;">
+          This link is private to you and valid for 30 days. Questions? Reply to this email.
+        </p>
+      </div>
+    `,
+  });
+}
+
 // Stage advancement map — admin "Send Draft" button
 const NEXT_REVISION_STAGE: Record<string, string> = {
   intake_received: 'revision_1_open',
@@ -39,7 +70,8 @@ export async function createProjectAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  // Auto-create contract from template and email signing link (best-effort)
+  // Auto-create contract + portal session. Email fires now if client is already active,
+  // otherwise it waits until David activates them (lead → active).
   if (client) {
     try {
       const { data: template } = await supabase
@@ -50,43 +82,32 @@ export async function createProjectAction(formData: FormData) {
       const content = (template?.content ?? '')
         .replace(/\{\{client_name\}\}/g, client.name)
         .replace(/\{\{project_title\}\}/g, project.title)
-        .replace(/\{\{date\}\}/g, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+        .replace(/\{\{date\}\}/g, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Chicago' }));
 
-      const { data: contract } = await supabase
-        .from('contracts')
-        .insert({ project_id: project.id, content })
-        .select('sign_token')
+      await supabase.from('contracts').insert({ project_id: project.id, content });
+
+      const { data: portalSession } = await supabase
+        .from('portal_sessions')
+        .insert({ project_id: project.id })
+        .select('token')
         .single();
 
-      if (contract) {
-        const signUrl = `${process.env.NEXT_PUBLIC_APP_URL}/sign/${contract.sign_token}`;
+      // Fire the portal email immediately if client is already active
+      const { data: fullClient } = await supabase
+        .from('clients')
+        .select('status')
+        .eq('id', clientId)
+        .single();
 
-        await resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL!,
-          to: client.email,
-          subject: `Please review and sign your contract — ${project.title}`,
-          html: `
-            <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
-              <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
-              <p style="margin-bottom:16px;line-height:1.6;">
-                We're excited to get started on your website project <strong>${project.title}</strong>!
-                Please review and sign your contract below. Once signed, you'll receive your deposit invoice.
-              </p>
-              <a href="${signUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
-                Review &amp; Sign Contract →
-              </a>
-              <p style="margin-top:24px;color:#6B6B60;font-size:12px;">Questions? Reply to this email.</p>
-            </div>
-          `,
-        });
-
+      if (portalSession && fullClient?.status === 'active') {
+        await sendPortalGetStartedEmail(client.name, client.email, project.title, portalSession.token);
         await supabase
-          .from('contracts')
-          .update({ sign_email_sent_at: new Date().toISOString() })
-          .eq('sign_token', contract.sign_token);
+          .from('portal_sessions')
+          .update({ sent_at: new Date().toISOString() })
+          .eq('token', portalSession.token);
       }
     } catch (e) {
-      console.error('Auto contract/email failed:', e);
+      console.error('Auto contract/portal setup failed:', e);
     }
   }
 
@@ -96,11 +117,80 @@ export async function createProjectAction(formData: FormData) {
 export async function advanceRevisionStageAction(formData: FormData) {
   const projectId = formData.get('project_id') as string;
   const currentStage = formData.get('current_stage') as string;
+  const draftUrl = (formData.get('draft_url') as string)?.trim() || null;
   const nextStage = NEXT_REVISION_STAGE[currentStage];
   if (!nextStage) return;
 
   const supabase = await createClient();
-  await supabase.from('projects').update({ revision_stage: nextStage }).eq('id', projectId);
+  await supabase
+    .from('projects')
+    .update({ revision_stage: nextStage, ...(draftUrl ? { draft_url: draftUrl } : {}) })
+    .eq('id', projectId);
+
+  try {
+    const [{ data: project }, { data: sessions }] = await Promise.all([
+      supabase.from('projects').select('title, clients(name, email)').eq('id', projectId).single(),
+      supabase
+        .from('portal_sessions')
+        .select('token')
+        .eq('project_id', projectId)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1),
+    ]);
+
+    const session = sessions?.[0];
+    if (project && session) {
+      const client = (project as any).clients;
+      const reviewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${session.token}/intake`;
+
+      const STAGE_EMAIL: Record<string, { subject: string; body: string; cta: string }> = {
+        revision_1_open: {
+          subject: `Your first draft is ready — ${project.title}`,
+          body: `Your first draft for <strong>${project.title}</strong> is ready! Head to your portal to review it and let us know what you think.`,
+          cta: 'Review Draft 1 →',
+        },
+        revision_2_open: {
+          subject: `Your updated draft is ready — ${project.title}`,
+          body: `Your updated draft for <strong>${project.title}</strong> is ready. Please review the changes and let us know if you'd like anything adjusted.`,
+          cta: 'Review Draft 2 →',
+        },
+        post_final_open: {
+          subject: `Your final version is ready for approval — ${project.title}`,
+          body: `Your final version of <strong>${project.title}</strong> is ready! Please review and approve — once confirmed, we'll send your final invoice and prepare for launch.`,
+          cta: 'Approve Final →',
+        },
+      };
+
+      const email = STAGE_EMAIL[nextStage];
+      if (email && client?.email) {
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL!,
+          to: client.email,
+          subject: email.subject,
+          html: `
+            <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+              <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
+              <p style="margin-bottom:16px;line-height:1.6;">${email.body}</p>
+              ${draftUrl ? `
+              <a href="${draftUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin-bottom:12px;">
+                View Your Draft ↗
+              </a>
+              <br/>
+              ` : ''}
+              <a href="${reviewUrl}" style="display:inline-block;${draftUrl ? 'background:#fff;color:#1B4D2E;border:1px solid #1B4D2E;' : 'background:#1B4D2E;color:#fff;'}padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin-top:${draftUrl ? '0' : '0'};">
+                ${email.cta}
+              </a>
+              <p style="margin-top:24px;color:#6B6B60;font-size:12px;">Questions? Reply to this email.</p>
+            </div>
+          `,
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Draft notification email failed:', e);
+  }
+
   revalidatePath(`/admin/projects/${projectId}`);
 }
 

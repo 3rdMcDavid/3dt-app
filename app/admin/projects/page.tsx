@@ -45,7 +45,7 @@ export default async function ProjectsPage() {
                         <Link href={`/admin/clients/${p.client_id}`} style={{ color: 'var(--muted)' }}>{p.clients?.name}</Link>
                       </td>
                       <td><span className={`badge badge-${p.stage}`}>{p.stage}</span></td>
-                      <td style={{ color: 'var(--muted)' }}>{new Date(p.created_at).toLocaleDateString()}</td>
+                      <td style={{ color: 'var(--muted)' }}>{new Date(p.created_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</td>
                       <td>
                         <Link href={`/admin/projects/${p.id}`} className="btn btn-ghost btn-sm">Open</Link>
                       </td>

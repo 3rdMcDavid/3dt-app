@@ -46,6 +46,57 @@ export async function POST(req: NextRequest) {
         .eq('id', paidInvoiceId)
         .single();
 
+      if (invoice?.type === 'final') {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('client_id, title, clients(name, email)')
+          .eq('id', invoice.project_id)
+          .single();
+
+        if (project) {
+          const client = (project as any).clients;
+
+          await supabase
+            .from('clients')
+            .update({ status: 'completed' })
+            .eq('id', (project as any).client_id);
+
+          await supabase
+            .from('projects')
+            .update({ stage: 'launched' })
+            .eq('id', invoice.project_id);
+
+          if (client?.email) {
+            resend.emails.send({
+              from: process.env.RESEND_FROM_EMAIL!,
+              to: client.email,
+              subject: `Your website is complete — ${project.title}`,
+              html: `
+                <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+                  <h2 style="margin-bottom:8px;">🎉 Congratulations, ${client.name}!</h2>
+                  <p style="margin-bottom:16px;line-height:1.6;">
+                    Your final payment has been received and <strong>${project.title}</strong> is officially complete!
+                    We'll be in touch shortly with your launch details and handoff information.
+                  </p>
+                  <p style="margin-bottom:16px;line-height:1.6;">
+                    Thank you for choosing 3rd Davids Technology — it was a pleasure building your website!
+                  </p>
+                  <p style="color:#6B6B60;font-size:13px;">
+                    Your 30-day post-launch support window starts now. Reply to this email with any questions.
+                  </p>
+                </div>
+              `,
+            }).catch(() => {});
+          }
+
+          sendPushNotification(
+            '🚀 Project Complete',
+            `${client?.name ?? 'Client'} paid their final invoice — ${project.title} is done!`,
+            `/admin/projects/${invoice.project_id}`
+          ).catch(() => {});
+        }
+      }
+
       if (invoice?.type === 'deposit') {
         const { data: project } = await supabase
           .from('projects')
@@ -53,56 +104,68 @@ export async function POST(req: NextRequest) {
           .eq('id', invoice.project_id)
           .single();
 
-        const { data: portalSession } = await supabase
+        // Find the existing portal session (created at project setup) rather than
+        // creating a new one, so the client keeps the same URL they already have.
+        const { data: existingSessions } = await supabase
           .from('portal_sessions')
-          .insert({ project_id: invoice.project_id })
           .select('token')
-          .single();
+          .eq('project_id', invoice.project_id)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        let portalToken = existingSessions?.[0]?.token ?? null;
+
+        // Safety fallback: if no session exists somehow, create one
+        if (!portalToken) {
+          const { data: newSession } = await supabase
+            .from('portal_sessions')
+            .insert({ project_id: invoice.project_id })
+            .select('token')
+            .single();
+          portalToken = newSession?.token ?? null;
+        }
 
         await supabase
           .from('projects')
           .update({ revision_stage: 'awaiting_intake' })
           .eq('id', invoice.project_id);
 
-        if (portalSession && project) {
+        if (portalToken && project) {
           const client = (project as any).clients;
-          const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${portalSession.token}`;
+          const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${portalToken}`;
+
+          sendPushNotification(
+            '💳 Deposit Paid',
+            `${client?.name ?? 'Client'} paid their deposit for ${project.title}`,
+            `/admin/projects/${invoice.project_id}`
+          ).catch(() => {});
 
           await resend.emails.send({
             from: process.env.RESEND_FROM_EMAIL!,
             to: client.email,
-            subject: `Payment received — your project portal is ready`,
+            subject: `Deposit received — your portal is now fully open`,
             html: `
               <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
                 <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
                 <p style="margin-bottom:16px;line-height:1.6;">
-                  Your $250 deposit has been received — thank you!
-                  Your client portal for <strong>${project.title}</strong> is now ready.
-                  Inside you'll complete your website intake form, review your contract, and track project progress.
+                  Your $250 deposit for <strong>${project.title}</strong> has been received — thank you!
+                  Your portal is now fully unlocked. Head inside to complete your intake form and
+                  kick off the project.
                 </p>
                 <a href="${portalUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
                   Open Your Portal →
                 </a>
                 <p style="margin-top:24px;color:#6B6B60;font-size:12px;">
-                  This link is private to you and valid for 30 days. Reply to this email with any questions.
+                  Same link as before — bookmark it for easy access. Questions? Reply to this email.
                 </p>
               </div>
             `,
           }).catch(() => {});
-
-          await supabase
-            .from('portal_sessions')
-            .update({ sent_at: new Date().toISOString() })
-            .eq('token', portalSession.token);
         }
       }
     }
 
-    sendPushNotification(
-      '💰 Invoice Paid',
-      `A client just completed a payment`,
-      '/admin/projects'
-    ).catch(() => {});
   }
 
   return NextResponse.json({ received: true });

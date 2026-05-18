@@ -32,6 +32,7 @@ export default async function PortalInvoicePage({
   if (!project) notFound();
 
   const firstUnpaid = (invoices || []).find((i: any) => i.status === 'unpaid' && i.stripe_payment_url);
+  const allPaid = (invoices || []).length > 0 && (invoices || []).every((i: any) => i.status === 'paid');
   const grandTotal = (invoices || []).reduce((sum: number, i: any) => sum + Number(i.amount), 0);
 
   return (
@@ -58,7 +59,7 @@ export default async function PortalInvoicePage({
                       {inv.type === 'deposit' ? 'Deposit' : 'Final Payment'}
                       {inv.due_date && (
                         <span style={{ display: 'block', fontSize: 11, color: 'var(--p-muted)', marginTop: 2 }}>
-                          Due {new Date(inv.due_date).toLocaleDateString()}
+                          Due {new Date(inv.due_date).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
                         </span>
                       )}
                     </td>
@@ -90,11 +91,17 @@ export default async function PortalInvoicePage({
             >
               Make a Payment →
             </a>
-          ) : (
+          ) : allPaid ? (
             <div className="portal-card" style={{ textAlign: 'center', padding: '20px' }}>
               <span className="portal-badge portal-badge-green" style={{ fontSize: 13, padding: '6px 16px' }}>
                 ✓ All Payments Complete
               </span>
+            </div>
+          ) : (
+            <div className="portal-card" style={{ padding: '20px' }}>
+              <p style={{ color: 'var(--p-muted)', fontSize: 14 }}>
+                Your final payment will be due upon project completion. David will send a payment link when ready.
+              </p>
             </div>
           )}
         </>

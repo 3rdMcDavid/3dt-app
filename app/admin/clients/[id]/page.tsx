@@ -56,7 +56,7 @@ export default async function ClientDetailPage({
               </div>
               <div className="detail-item">
                 <label>Added</label>
-                <span>{new Date(client.created_at).toLocaleDateString()}</span>
+                <span>{new Date(client.created_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</span>
               </div>
             </div>
             {client.notes && (
@@ -93,7 +93,7 @@ export default async function ClientDetailPage({
                       <tr key={p.id}>
                         <td><Link href={`/admin/projects/${p.id}`} style={{ fontWeight: 600 }}>{p.title}</Link></td>
                         <td><span className={`badge badge-${p.stage}`}>{p.stage}</span></td>
-                        <td style={{ color: 'var(--muted)' }}>{new Date(p.created_at).toLocaleDateString()}</td>
+                        <td style={{ color: 'var(--muted)' }}>{new Date(p.created_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</td>
                         <td><Link href={`/admin/projects/${p.id}`} className="btn btn-ghost btn-sm">Open</Link></td>
                       </tr>
                     ))}
