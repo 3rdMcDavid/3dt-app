@@ -6,6 +6,8 @@ self.addEventListener('push', (event) => {
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: { url: data.url ?? '/admin' },
+      requireInteraction: true,
+      vibrate: [200, 100, 200],
     })
   );
 });

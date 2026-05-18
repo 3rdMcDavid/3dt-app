@@ -18,7 +18,8 @@ export async function sendPushNotification(title: string, body: string, url = '/
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          payload
+          payload,
+          { urgency: 'high', TTL: 60 }
         );
       } catch (err: any) {
         if (err.statusCode === 410 || err.statusCode === 404) {
