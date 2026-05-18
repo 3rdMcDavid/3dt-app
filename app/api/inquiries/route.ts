@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { sendPushNotification } from '@/lib/push';
+import { resend } from '@/lib/resend';
 import { NextRequest, NextResponse } from 'next/server';
 
 const corsHeaders = {
@@ -48,6 +49,26 @@ export async function POST(req: NextRequest) {
     `${name} submitted an inquiry`,
     '/admin/clients'
   ).catch(() => {});
+
+  resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL!,
+    to: '3rddavidstechnology@gmail.com',
+    subject: `🆕 New Lead: ${name}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;color:#1A1A1A;">
+        <h2 style="margin-bottom:16px;">New inquiry from ${name}</h2>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr><td style="padding:8px 0;color:#6B6B60;width:80px;">Name</td><td style="padding:8px 0;font-weight:600;">${name}</td></tr>
+          <tr><td style="padding:8px 0;color:#6B6B60;">Email</td><td style="padding:8px 0;">${email}</td></tr>
+          ${phone ? `<tr><td style="padding:8px 0;color:#6B6B60;">Phone</td><td style="padding:8px 0;">${phone}</td></tr>` : ''}
+          ${message ? `<tr><td style="padding:8px 0;color:#6B6B60;vertical-align:top;">Message</td><td style="padding:8px 0;line-height:1.6;">${message}</td></tr>` : ''}
+        </table>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/clients" style="display:inline-block;margin-top:24px;background:#1B4D2E;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+          View in Admin →
+        </a>
+      </div>
+    `,
+  }).catch(() => {});
 
   return NextResponse.json({ success: true }, { status: 201, headers: corsHeaders });
 }
