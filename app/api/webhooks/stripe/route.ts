@@ -141,6 +141,8 @@ export async function POST(req: NextRequest) {
             `/admin/projects/${invoice.project_id}`
           ).catch(() => {});
 
+          if (!client?.email) return NextResponse.json({ received: true });
+
           await resend.emails.send({
             from: process.env.RESEND_FROM_EMAIL!,
             to: client.email,

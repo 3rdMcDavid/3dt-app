@@ -124,7 +124,9 @@ export default async function PortalHomePage({
         <div className="portal-status-row">
           <span className="portal-status-label">Status</span>
           <span className="portal-status-value" style={{ fontSize: 13 }}>
-            {PROGRESS_LABEL[revisionStage] ?? 'In progress'}
+            {revisionStage === 'complete' && !allPaid
+              ? 'Final approved — final payment due'
+              : PROGRESS_LABEL[revisionStage] ?? 'In progress'}
           </span>
         </div>
       </div>

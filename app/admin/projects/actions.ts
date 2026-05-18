@@ -124,7 +124,7 @@ export async function advanceRevisionStageAction(formData: FormData) {
   const supabase = await createClient();
   await supabase
     .from('projects')
-    .update({ revision_stage: nextStage, ...(draftUrl ? { draft_url: draftUrl } : {}) })
+    .update({ revision_stage: nextStage, draft_url: draftUrl })
     .eq('id', projectId);
 
   try {
