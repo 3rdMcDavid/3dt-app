@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
 
           await supabase
             .from('projects')
-            .update({ stage: 'launched' })
+            .update({ stage: 'handoff_pending' })
             .eq('id', invoice.project_id);
 
           const portalLaunchUrl = finalPortalSessions?.[0]?.token

@@ -77,6 +77,7 @@ export default async function ProjectHubPage({
     revision_2_open: 'Draft 2 Sent — Awaiting Client Review',
     revision_2_received: 'Revision 2 Received — Ready for Final',
     post_final_open: 'Final Sent — Awaiting Client Approval',
+    extra_revision_requested: 'Extra Revision Requested — Ready to Re-send Final',
     complete: 'Complete',
   };
 
@@ -84,6 +85,7 @@ export default async function ProjectHubPage({
     intake_received: 'Send Draft 1',
     revision_1_received: 'Send Draft 2',
     revision_2_received: 'Send Final',
+    extra_revision_requested: 'Re-send Final',
   };
 
   // Generate signed URLs for intake files

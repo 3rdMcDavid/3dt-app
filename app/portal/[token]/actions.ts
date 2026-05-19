@@ -46,7 +46,7 @@ export async function signContractFromPortalAction(formData: FormData) {
   if (!project) return;
   const client = (project as any).clients;
 
-  // Sign the contract
+  // Sign the contract and activate client
   await supabase
     .from('contracts')
     .update({
@@ -55,6 +55,11 @@ export async function signContractFromPortalAction(formData: FormData) {
       signature_ip: ip,
     })
     .eq('id', contract.id);
+
+  await supabase
+    .from('clients')
+    .update({ status: 'active' })
+    .eq('id', (project as any).client_id);
 
   await sendPushNotification(
     '✍️ Contract Signed',
@@ -222,6 +227,19 @@ export async function saveLaunchInfoAction(formData: FormData) {
     `${clientName} submitted their Vercel account info for ${projectTitle}`,
     `/admin/projects/${projectId}`
   );
+
+  resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL!,
+    to: '3rddavidstechnology@gmail.com',
+    subject: `🚀 Launch Info Submitted — ${projectTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+        <h2 style="margin-bottom:8px;">Launch Info Submitted</h2>
+        <p style="line-height:1.6;"><strong>${clientName}</strong> submitted their launch details for <strong>${projectTitle}</strong>. Transfer is ready to begin.</p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${projectId}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
+      </div>
+    `,
+  }).catch(() => {});
 
   revalidatePath(`/portal/${token}/launch`);
 }

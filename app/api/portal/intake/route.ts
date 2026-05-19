@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     initial: 'intake_received',
     revision_1: approved ? 'complete' : 'revision_1_received',
     revision_2: approved ? 'complete' : 'revision_2_received',
-    post_final: approved ? 'complete' : 'revision_2_received',
+    post_final: approved ? 'complete' : 'extra_revision_requested',
   };
   const nextStage = NEXT_STAGE[submissionType] ?? 'intake_received';
 

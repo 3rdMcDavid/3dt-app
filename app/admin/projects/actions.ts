@@ -43,6 +43,7 @@ const NEXT_REVISION_STAGE: Record<string, string> = {
   intake_received: 'revision_1_open',
   revision_1_received: 'revision_2_open',
   revision_2_received: 'post_final_open',
+  extra_revision_requested: 'post_final_open',
 };
 
 // ─── Projects ─────────────────────────────────────────────────────────────────
@@ -376,7 +377,7 @@ export async function markAsLaunchedAction(formData: FormData) {
   const supabase = await createClient();
   await supabase
     .from('projects')
-    .update({ launch_confirmed_at: new Date().toISOString() })
+    .update({ launch_confirmed_at: new Date().toISOString(), stage: 'launched' })
     .eq('id', projectId);
   revalidatePath(`/admin/projects/${projectId}`);
 }
