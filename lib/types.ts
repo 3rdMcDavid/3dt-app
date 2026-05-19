@@ -32,6 +32,7 @@ export interface Project {
   stage: ProjectStage;
   notes: string | null;
   revision_stage: RevisionStage;
+  launch_confirmed_at: string | null;
 }
 
 export interface IntakeSubmission {

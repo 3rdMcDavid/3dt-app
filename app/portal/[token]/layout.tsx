@@ -27,7 +27,7 @@ export default async function PortalLayout({
           <div className="portal-expired-inner">
             <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
             <h2>Link Expired</h2>
-            <p>This portal link has expired or is invalid. Please contact 3rd Davids Technology for a new link.</p>
+            <p>This portal link has expired or is invalid. Please contact 3rd David's Technology for a new link.</p>
           </div>
         </div>
       </div>

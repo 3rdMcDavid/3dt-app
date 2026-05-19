@@ -3,6 +3,7 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { stripe } from '@/lib/stripe';
 import { resend } from '@/lib/resend';
+import { sendPushNotification } from '@/lib/push';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
@@ -55,6 +56,25 @@ export async function signContractAction(formData: FormData) {
       .eq('id', (project as any).client_id);
   }
 
+  await sendPushNotification(
+    '✍️ Contract Signed',
+    `${client.name} signed the contract for ${project.title}`,
+    `/admin/projects/${contract.project_id}`
+  );
+
+  resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL!,
+    to: '3rddavidstechnology@gmail.com',
+    subject: `✍️ Contract Signed — ${project.title}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+        <h2 style="margin-bottom:8px;">Contract Signed</h2>
+        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>. Deposit invoice has been sent to the client.</p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${contract.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
+      </div>
+    `,
+  }).catch(() => {});
+
   // Create deposit + final invoices
   const { data: depositInvoice } = await supabase
     .from('invoices')
@@ -69,6 +89,16 @@ export async function signContractAction(formData: FormData) {
   // Generate Stripe payment link for deposit and email client
   if (depositInvoice && client) {
     try {
+      // Look up portal token so we can link back to the portal on the payment-success page
+      const { data: portalSessions } = await supabase
+        .from('portal_sessions')
+        .select('token')
+        .eq('project_id', contract.project_id)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const portalToken = portalSessions?.[0]?.token ?? null;
+
       const price = await stripe.prices.create({
         currency: 'usd',
         unit_amount: 25000,
@@ -80,7 +110,7 @@ export async function signContractAction(formData: FormData) {
         metadata: { invoice_id: depositInvoice.id },
         after_completion: {
           type: 'redirect',
-          redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success` },
+          redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success${portalToken ? `?token=${portalToken}` : ''}` },
         },
       });
 
@@ -107,7 +137,7 @@ export async function signContractAction(formData: FormData) {
             <p style="margin-top:24px;color:#6B6B60;font-size:13px;">
               Total project: $500 &nbsp;·&nbsp; Deposit: $250 (due now) &nbsp;·&nbsp; Final: $250 (due on completion)
             </p>
-            <p style="color:#6B6B60;font-size:12px;">Questions? Reply to this email.</p>
+            <p style="color:#6B6B60;font-size:12px;">Questions? Email us at 3rddavidstechnology@gmail.com</p>
           </div>
         `,
       });

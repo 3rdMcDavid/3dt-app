@@ -44,7 +44,7 @@ export default async function PortalContractPage({
             <p className="portal-section-title">Parties</p>
             <div className="portal-status-row">
               <span className="portal-status-label">Service Provider</span>
-              <span className="portal-status-value">3rd Davids Technology</span>
+              <span className="portal-status-value">3rd David's Technology</span>
             </div>
             <div className="portal-status-row">
               <span className="portal-status-label">Client</span>

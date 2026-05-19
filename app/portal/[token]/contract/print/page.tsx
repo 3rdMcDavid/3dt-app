@@ -93,7 +93,7 @@ export default async function ContractPrintPage({
 
       <div className="print-page">
         <div className="print-header">
-          <div className="print-brand">3rd Davids Technology</div>
+          <div className="print-brand">3rd David's Technology</div>
           <div className="print-doc-title">Service Agreement</div>
           <div className="print-doc-meta">
             {(project as any).title} &nbsp;·&nbsp; {clientName}

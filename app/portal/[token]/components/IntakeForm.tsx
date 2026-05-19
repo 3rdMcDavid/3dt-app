@@ -60,12 +60,18 @@ export default function IntakeForm({ token, submissionType, isApproval, extraRev
   }
 
   if (isApproval) {
+    const isEarlyApproval = submissionType === 'revision_1' || submissionType === 'revision_2';
     return (
       <div className="intake-approval">
-        <p style={{ color: 'var(--p-muted)', marginBottom: 20, lineHeight: 1.6 }}>
+        <p style={{ color: 'var(--p-muted)', marginBottom: isEarlyApproval ? 8 : 20, lineHeight: 1.6 }}>
           If everything looks good and you have no further changes, click below.
           Otherwise, fill in the form to describe what you'd like adjusted.
         </p>
+        {isEarlyApproval && (
+          <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 20, lineHeight: 1.6, background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 8, padding: '10px 14px' }}>
+            Approving will skip your remaining revision round and send your final invoice.
+          </p>
+        )}
 
         {extraRevision && !extraRevisionConfirmed && (
           <div style={{
@@ -114,7 +120,7 @@ export default function IntakeForm({ token, submissionType, isApproval, extraRev
               onClick={() => handleSubmit(true)}
               disabled={loading}
             >
-              {loading ? 'Submitting…' : submissionType === 'post_final' ? 'Approve Final ✓' : 'Looks Good →'}
+              {loading ? 'Submitting…' : submissionType === 'post_final' ? 'Approve Final ✓' : isEarlyApproval ? 'Approve & Skip Remaining Revisions ✓' : 'Looks Good →'}
             </button>
             {(!extraRevision || extraRevisionConfirmed) && (
               <button

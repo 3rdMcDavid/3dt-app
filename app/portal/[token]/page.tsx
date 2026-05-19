@@ -50,6 +50,9 @@ export default async function PortalHomePage({
   const client = (project as any).clients;
   const revisionStage = (project as any).revision_stage as string;
   const cta = ACTION_CTA[revisionStage];
+  const clientCompleted = client?.status === 'completed';
+  const launchSubmitted = !!(project as any).launch_submitted_at;
+  const launchConfirmed = !!(project as any).launch_confirmed_at;
 
   const totalOwed = (invoices || [])
     .filter((i: any) => i.status === 'unpaid')
@@ -84,8 +87,8 @@ export default async function PortalHomePage({
         </Link>
       )}
 
-      {/* Final approved but payment still due */}
-      {revisionStage === 'complete' && !allPaid && (
+      {/* Final approved — awaiting payment */}
+      {revisionStage === 'complete' && !clientCompleted && (
         <Link
           href={`/portal/${token}/invoice`}
           style={{
@@ -105,12 +108,43 @@ export default async function PortalHomePage({
         </Link>
       )}
 
-      {/* Complete state — only show when everything is truly done */}
-      {revisionStage === 'complete' && allPaid && (
+      {/* Paid — prompt to fill in launch details */}
+      {clientCompleted && !launchSubmitted && !launchConfirmed && (
+        <Link
+          href={`/portal/${token}/launch`}
+          style={{
+            display: 'block',
+            background: 'var(--p-green)',
+            color: '#fff',
+            borderRadius: 12,
+            padding: '18px 20px',
+            marginBottom: 16,
+            textDecoration: 'none',
+          }}
+        >
+          <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.8, marginBottom: 4 }}>
+            Last Step
+          </p>
+          <p style={{ fontSize: 16, fontWeight: 700 }}>Complete your launch details →</p>
+        </Link>
+      )}
+
+      {/* Launch details submitted — waiting for transfer */}
+      {clientCompleted && launchSubmitted && !launchConfirmed && (
+        <div className="portal-card" style={{ padding: '20px', marginBottom: 16 }}>
+          <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Transfer in progress</p>
+          <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6 }}>
+            We're transferring your site to your accounts. We'll reach out once everything is set up!
+          </p>
+        </div>
+      )}
+
+      {/* Complete state — only show after David confirms the launch */}
+      {launchConfirmed && (
         <div className="portal-card" style={{ textAlign: 'center', padding: '24px 20px', marginBottom: 16 }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🎉</div>
           <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Project Complete!</p>
-          <p style={{ fontSize: 13, color: 'var(--p-muted)' }}>Thank you for working with 3rd Davids Technology!</p>
+          <p style={{ fontSize: 13, color: 'var(--p-muted)' }}>Thank you for working with 3rd David's Technology!</p>
         </div>
       )}
 
@@ -124,7 +158,13 @@ export default async function PortalHomePage({
         <div className="portal-status-row">
           <span className="portal-status-label">Status</span>
           <span className="portal-status-value" style={{ fontSize: 13 }}>
-            {revisionStage === 'complete' && !allPaid
+            {launchConfirmed
+              ? 'Complete — site transferred!'
+              : clientCompleted && launchSubmitted
+              ? 'Transfer in progress'
+              : clientCompleted
+              ? 'Paid — complete your launch details'
+              : revisionStage === 'complete'
               ? 'Final approved — final payment due'
               : PROGRESS_LABEL[revisionStage] ?? 'In progress'}
           </span>

@@ -69,7 +69,7 @@ export default async function PortalLaunchPage({
             )}
           </div>
           <p style={{ marginTop: 20, fontSize: 12, color: 'var(--p-muted)', borderTop: '1px solid var(--p-border)', paddingTop: 16 }}>
-            Need to update something? Reply to any email from us.
+            Need to update something? Email us at 3rddavidstechnology@gmail.com
           </p>
         </div>
       ) : (

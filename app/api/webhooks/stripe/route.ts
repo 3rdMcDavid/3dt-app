@@ -70,20 +70,35 @@ export async function POST(req: NextRequest) {
             resend.emails.send({
               from: process.env.RESEND_FROM_EMAIL!,
               to: client.email,
-              subject: `Your website is complete — ${project.title}`,
+              subject: `Final payment received — ${project.title}`,
               html: `
                 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
-                  <h2 style="margin-bottom:8px;">🎉 Congratulations, ${client.name}!</h2>
+                  <h2 style="margin-bottom:8px;">🎉 Thank you, ${client.name}!</h2>
                   <p style="margin-bottom:16px;line-height:1.6;">
-                    Your final payment has been received and <strong>${project.title}</strong> is officially complete!
-                    We'll be in touch shortly with your launch details and handoff information.
+                    Your final payment for <strong>${project.title}</strong> has been received — you're all set!
+                    The last step is to complete your launch details in the portal so we can transfer
+                    ownership of your site to you.
                   </p>
                   <p style="margin-bottom:16px;line-height:1.6;">
-                    Thank you for choosing 3rd Davids Technology — it was a pleasure building your website!
+                    Head to the <strong>Launch</strong> tab in your portal and enter your Vercel account email
+                    (and GitHub username if applicable). We'll take it from there.
                   </p>
                   <p style="color:#6B6B60;font-size:13px;">
-                    Your 30-day post-launch support window starts now. Reply to this email with any questions.
+                    Your 30-day post-launch support window starts now. Questions? Email us at 3rddavidstechnology@gmail.com
                   </p>
+                </div>
+              `,
+            }).catch(() => {});
+
+            resend.emails.send({
+              from: process.env.RESEND_FROM_EMAIL!,
+              to: '3rddavidstechnology@gmail.com',
+              subject: `💰 Final Payment Received — ${project.title}`,
+              html: `
+                <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+                  <h2 style="margin-bottom:8px;">Final Payment Received</h2>
+                  <p style="line-height:1.6;"><strong>${client.name}</strong> paid their final invoice for <strong>${project.title}</strong>. Client has been prompted to complete launch details.</p>
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${invoice.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
                 </div>
               `,
             }).catch(() => {});
@@ -141,6 +156,19 @@ export async function POST(req: NextRequest) {
             `/admin/projects/${invoice.project_id}`
           );
 
+          resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL!,
+            to: '3rddavidstechnology@gmail.com',
+            subject: `💳 Deposit Paid — ${project.title}`,
+            html: `
+              <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+                <h2 style="margin-bottom:8px;">Deposit Paid</h2>
+                <p style="line-height:1.6;"><strong>${client?.name ?? 'Client'}</strong> paid their $250 deposit for <strong>${project.title}</strong>. Their portal is now unlocked and intake form is open.</p>
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${invoice.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
+              </div>
+            `,
+          }).catch(() => {});
+
           if (!client?.email) return NextResponse.json({ received: true });
 
           await resend.emails.send({
@@ -159,7 +187,7 @@ export async function POST(req: NextRequest) {
                   Open Your Portal →
                 </a>
                 <p style="margin-top:24px;color:#6B6B60;font-size:12px;">
-                  Same link as before — bookmark it for easy access. Questions? Reply to this email.
+                  Same link as before — bookmark it for easy access. Questions? Email us at 3rddavidstechnology@gmail.com
                 </p>
               </div>
             `,

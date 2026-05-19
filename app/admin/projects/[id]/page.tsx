@@ -16,6 +16,7 @@ import {
   generatePortalLinkAction,
   sendPortalEmailAction,
   advanceRevisionStageAction,
+  markAsLaunchedAction,
 } from '@/app/admin/projects/actions';
 
 export default async function ProjectHubPage({
@@ -478,28 +479,42 @@ export default async function ProjectHubPage({
           </div>
           <div className="hub-section-body">
             {project.launch_submitted_at ? (
-              <div className="detail-grid">
-                <div className="detail-item">
-                  <label>Vercel Email</label>
-                  <span>{project.client_vercel_email || '—'}</span>
-                </div>
-                {project.client_github_username && (
+              <>
+                <div className="detail-grid" style={{ marginBottom: 16 }}>
                   <div className="detail-item">
-                    <label>GitHub</label>
-                    <span>{project.client_github_username}</span>
+                    <label>Vercel Email</label>
+                    <span>{project.client_vercel_email || '—'}</span>
                   </div>
-                )}
-                <div className="detail-item">
-                  <label>Submitted</label>
-                  <span>{new Date(project.launch_submitted_at).toLocaleString('en-US', { timeZone: 'America/Chicago' })}</span>
+                  {project.client_github_username && (
+                    <div className="detail-item">
+                      <label>GitHub</label>
+                      <span>{project.client_github_username}</span>
+                    </div>
+                  )}
+                  <div className="detail-item">
+                    <label>Submitted</label>
+                    <span>{new Date(project.launch_submitted_at).toLocaleString('en-US', { timeZone: 'America/Chicago' })}</span>
+                  </div>
+                  {project.launch_notes && (
+                    <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
+                      <label>Notes</label>
+                      <span>{project.launch_notes}</span>
+                    </div>
+                  )}
                 </div>
-                {project.launch_notes && (
-                  <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
-                    <label>Notes</label>
-                    <span>{project.launch_notes}</span>
-                  </div>
+                {project.launch_confirmed_at ? (
+                  <p style={{ fontSize: 13, color: 'var(--green)' }}>
+                    ✓ Launched on {new Date(project.launch_confirmed_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
+                  </p>
+                ) : (
+                  <form action={markAsLaunchedAction}>
+                    <input type="hidden" name="project_id" value={id} />
+                    <button type="submit" className="btn btn-primary btn-sm">
+                      Mark as Launched ✓
+                    </button>
+                  </form>
                 )}
-              </div>
+              </>
             ) : (
               <p style={{ fontSize: 13, color: 'var(--muted)' }}>
                 Waiting for {client?.name} to submit their Vercel account info via the portal Launch tab.

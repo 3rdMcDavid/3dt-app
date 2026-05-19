@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
 
   const NEXT_STAGE: Record<string, string> = {
     initial: 'intake_received',
-    revision_1: 'revision_1_received',
-    revision_2: 'revision_2_received',
+    revision_1: approved ? 'complete' : 'revision_1_received',
+    revision_2: approved ? 'complete' : 'revision_2_received',
     post_final: approved ? 'complete' : 'revision_2_received',
   };
   const nextStage = NEXT_STAGE[submissionType] ?? 'intake_received';
@@ -87,10 +87,10 @@ export async function POST(req: NextRequest) {
   const PUSH: Record<string, (a: boolean) => { title: string; body: string }> = {
     initial:    () => ({ title: '📋 Intake Submitted',      body: 'A client completed their intake — ready to build!' }),
     revision_1: (a) => a
-      ? { title: '✅ Draft 1 Approved',      body: 'Client approved Draft 1 — no changes needed.' }
+      ? { title: '🎉 Early Approval!',       body: 'Client approved Draft 1 and skipped remaining revisions — final invoice sent.' }
       : { title: '📝 Revision 1 Feedback',  body: 'Client sent feedback on Draft 1 — check the hub.' },
     revision_2: (a) => a
-      ? { title: '✅ Draft 2 Approved',      body: 'Client approved Draft 2 — ready to finalize.' }
+      ? { title: '🎉 Early Approval!',       body: 'Client approved Draft 2 and skipped remaining revisions — final invoice sent.' }
       : { title: '📝 Revision 2 Feedback',  body: 'Client sent feedback on Draft 2 — check the hub.' },
     post_final: (a) => a
       ? { title: '🎉 Final Approved!',       body: 'Client approved the final — sending final invoice now.' }
@@ -101,8 +101,8 @@ export async function POST(req: NextRequest) {
     await sendPushNotification(push.title, push.body, `/admin/projects/${projectId}`);
   }
 
-  // ── Final payment automation (fires when client approves final) ────────────
-  if (submissionType === 'post_final' && approved) {
+  // ── Final payment automation (fires when client approves at any stage) ──────
+  if (approved && ['post_final', 'revision_1', 'revision_2'].includes(submissionType)) {
     try {
       const [{ data: project }, { data: finalInvoice }, { data: portalSessions }] = await Promise.all([
         supabase.from('projects').select('title, clients(name, email)').eq('id', projectId).single(),
@@ -132,12 +132,13 @@ export async function POST(req: NextRequest) {
             unit_amount: Math.round(Number(finalInvoice.amount) * 100),
             product_data: { name: `${project.title} — Final Payment` },
           });
+          const portalTokenForRedirect = portalSessions?.[0]?.token ?? null;
           const paymentLink = await stripe.paymentLinks.create({
             line_items: [{ price: price.id, quantity: 1 }],
             metadata: { invoice_id: finalInvoice.id },
             after_completion: {
               type: 'redirect',
-              redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success` },
+              redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success${portalTokenForRedirect ? `?token=${portalTokenForRedirect}` : ''}` },
             },
           });
           await supabase
@@ -171,7 +172,7 @@ export async function POST(req: NextRequest) {
                   Total project: $500 &nbsp;·&nbsp; Deposit: $250 (paid) &nbsp;·&nbsp; Final: $${Number(finalInvoice.amount).toFixed(2)} (due now)
                 </p>
                 ${portalInvoiceUrl ? `<p style="margin-top:8px;color:#6B6B60;font-size:12px;"><a href="${portalInvoiceUrl}" style="color:#22764A;">View in your portal →</a></p>` : ''}
-                <p style="color:#6B6B60;font-size:12px;margin-top:16px;">Questions? Reply to this email.</p>
+                <p style="color:#6B6B60;font-size:12px;margin-top:16px;">Questions? Email us at 3rddavidstechnology@gmail.com</p>
               </div>
             `,
           });

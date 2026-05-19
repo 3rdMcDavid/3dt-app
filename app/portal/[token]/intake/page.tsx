@@ -80,7 +80,7 @@ export default async function PortalIntakePage({
           <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Project Complete!</h2>
           <p style={{ color: 'var(--p-muted)', fontSize: 14 }}>
-            Your website project has been finalized. Thank you for working with 3rd Davids Technology!
+            Your website has been approved. Check your portal home for next steps on your launch.
           </p>
         </div>
       )}

@@ -62,6 +62,19 @@ export async function signContractFromPortalAction(formData: FormData) {
     `/admin/projects/${session.project_id}`
   );
 
+  resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL!,
+    to: '3rddavidstechnology@gmail.com',
+    subject: `✍️ Contract Signed — ${project.title}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+        <h2 style="margin-bottom:8px;">Contract Signed</h2>
+        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>. Deposit invoice has been sent to the client.</p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${session.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
+      </div>
+    `,
+  }).catch(() => {});
+
   // Create deposit + final invoices
   const { data: depositInvoice } = await supabase
     .from('invoices')
@@ -87,7 +100,7 @@ export async function signContractFromPortalAction(formData: FormData) {
         metadata: { invoice_id: depositInvoice.id },
         after_completion: {
           type: 'redirect',
-          redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success` },
+          redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success?token=${token}` },
         },
       });
       await supabase
@@ -154,7 +167,7 @@ export async function signContractFromPortalAction(formData: FormData) {
           </div>
 
           <p style="font-size:12px;color:#9CA3AF;">
-            Keep this email for your records. Questions? Reply to this email.
+            Keep this email for your records. Questions? Email us at 3rddavidstechnology@gmail.com
           </p>
         </div>
       `,

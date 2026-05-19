@@ -31,7 +31,7 @@ export async function sendPortalGetStartedEmail(
           Get Started →
         </a>
         <p style="margin-top:24px;color:#6B6B60;font-size:12px;">
-          This link is private to you and valid for 30 days. Questions? Reply to this email.
+          This link is private to you and valid for 30 days. Questions? Email us at 3rddavidstechnology@gmail.com
         </p>
       </div>
     `,
@@ -172,16 +172,10 @@ export async function advanceRevisionStageAction(formData: FormData) {
             <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
               <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
               <p style="margin-bottom:16px;line-height:1.6;">${email.body}</p>
-              ${draftUrl ? `
-              <a href="${draftUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin-bottom:12px;">
-                View Your Draft ↗
-              </a>
-              <br/>
-              ` : ''}
-              <a href="${reviewUrl}" style="display:inline-block;${draftUrl ? 'background:#fff;color:#1B4D2E;border:1px solid #1B4D2E;' : 'background:#1B4D2E;color:#fff;'}padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin-top:${draftUrl ? '0' : '0'};">
+              <a href="${reviewUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
                 ${email.cta}
               </a>
-              <p style="margin-top:24px;color:#6B6B60;font-size:12px;">Questions? Reply to this email.</p>
+              <p style="margin-top:24px;color:#6B6B60;font-size:12px;">Questions? Email us at 3rddavidstechnology@gmail.com</p>
             </div>
           `,
         });
@@ -377,6 +371,16 @@ export async function generatePortalLinkAction(formData: FormData) {
   redirect(`/admin/projects/${projectId}`);
 }
 
+export async function markAsLaunchedAction(formData: FormData) {
+  const projectId = formData.get('project_id') as string;
+  const supabase = await createClient();
+  await supabase
+    .from('projects')
+    .update({ launch_confirmed_at: new Date().toISOString() })
+    .eq('id', projectId);
+  revalidatePath(`/admin/projects/${projectId}`);
+}
+
 export async function sendPortalEmailAction(formData: FormData) {
   const projectId = formData.get('project_id') as string;
   const token = formData.get('token') as string;
@@ -394,7 +398,7 @@ export async function sendPortalEmailAction(formData: FormData) {
         <h2 style="margin-bottom:8px;">Hi ${clientName},</h2>
         <p style="margin-bottom:20px;line-height:1.6;">Your client portal for <strong>${projectTitle}</strong> is ready. You can view your project details, review your contract, and make payments through the link below.</p>
         <a href="${portalUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Open Your Portal →</a>
-        <p style="margin-top:24px;color:#6B6B60;font-size:12px;">This link is valid for 30 days. Reply to this email if you have any questions.</p>
+        <p style="margin-top:24px;color:#6B6B60;font-size:12px;">This link is valid for 30 days. Questions? Email us at 3rddavidstechnology@gmail.com</p>
       </div>
     `,
   });

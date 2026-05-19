@@ -33,7 +33,7 @@ export default async function SignContractPage({
     <div className="sign-root">
       <div className="sign-shell">
         <div className="sign-header">
-          <div className="sign-brand">3rd Davids Technology</div>
+          <div className="sign-brand">3rd David's Technology</div>
           <h1 className="sign-title">Service Agreement</h1>
           <p className="sign-meta">{projectTitle}{clientName ? ` · ${clientName}` : ''}</p>
         </div>
@@ -95,7 +95,7 @@ export default async function SignContractPage({
         )}
 
         <p className="sign-footer">
-          3rd Davids Technology &nbsp;·&nbsp; Questions? Contact us at 3rddavidstechnology@gmail.com
+          3rd David's Technology &nbsp;·&nbsp; Questions? Contact us at 3rddavidstechnology@gmail.com
         </p>
       </div>
     </div>
