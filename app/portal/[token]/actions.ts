@@ -56,11 +56,11 @@ export async function signContractFromPortalAction(formData: FormData) {
     })
     .eq('id', contract.id);
 
-  sendPushNotification(
+  await sendPushNotification(
     '✍️ Contract Signed',
     `${client.name} signed the contract for ${project.title}`,
     `/admin/projects/${session.project_id}`
-  ).catch(() => {});
+  );
 
   // Create deposit + final invoices
   const { data: depositInvoice } = await supabase
@@ -204,11 +204,11 @@ export async function saveLaunchInfoAction(formData: FormData) {
   const clientName = (project as any)?.clients?.name ?? 'Client';
   const projectTitle = (project as any)?.title ?? '';
 
-  sendPushNotification(
+  await sendPushNotification(
     '🚀 Launch Info Submitted',
     `${clientName} submitted their Vercel account info for ${projectTitle}`,
     `/admin/projects/${projectId}`
-  ).catch(() => {});
+  );
 
   revalidatePath(`/portal/${token}/launch`);
 }

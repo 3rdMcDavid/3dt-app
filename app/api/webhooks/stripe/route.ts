@@ -89,11 +89,11 @@ export async function POST(req: NextRequest) {
             }).catch(() => {});
           }
 
-          sendPushNotification(
+          await sendPushNotification(
             '🚀 Project Complete',
             `${client?.name ?? 'Client'} paid their final invoice — ${project.title} is done!`,
             `/admin/projects/${invoice.project_id}`
-          ).catch(() => {});
+          );
         }
       }
 
@@ -135,11 +135,11 @@ export async function POST(req: NextRequest) {
           const client = (project as any).clients;
           const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${portalToken}`;
 
-          sendPushNotification(
+          await sendPushNotification(
             '💳 Deposit Paid',
             `${client?.name ?? 'Client'} paid their deposit for ${project.title}`,
             `/admin/projects/${invoice.project_id}`
-          ).catch(() => {});
+          );
 
           if (!client?.email) return NextResponse.json({ received: true });
 

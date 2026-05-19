@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
   };
   const push = PUSH[submissionType]?.(approved);
   if (push) {
-    sendPushNotification(push.title, push.body, `/admin/projects/${projectId}`).catch(() => {});
+    await sendPushNotification(push.title, push.body, `/admin/projects/${projectId}`);
   }
 
   // ── Final payment automation (fires when client approves final) ────────────

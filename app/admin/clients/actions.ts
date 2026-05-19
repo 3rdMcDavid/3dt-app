@@ -38,11 +38,11 @@ async function firePortalEmailForClient(
     .update({ sent_at: new Date().toISOString() })
     .eq('token', session.token);
 
-  sendPushNotification(
+  await sendPushNotification(
     '📧 Portal Email Sent',
     `Get-started link sent to ${clientName}`,
     `/admin/clients/${clientId}`
-  ).catch(() => {});
+  );
 }
 
 export async function createClientAction(formData: FormData) {

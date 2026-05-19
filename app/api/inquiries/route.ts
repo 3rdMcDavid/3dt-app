@@ -44,11 +44,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to save inquiry' }, { status: 500, headers: corsHeaders });
   }
 
-  sendPushNotification(
+  await sendPushNotification(
     '🆕 New Lead',
     `${name} submitted an inquiry`,
     '/admin/clients'
-  ).catch(() => {});
+  );
 
   resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
