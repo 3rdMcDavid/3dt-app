@@ -47,11 +47,20 @@ export async function POST(req: NextRequest) {
         .single();
 
       if (invoice?.type === 'final') {
-        const { data: project } = await supabase
-          .from('projects')
-          .select('client_id, title, clients(name, email)')
-          .eq('id', invoice.project_id)
-          .single();
+        const [{ data: project }, { data: finalPortalSessions }] = await Promise.all([
+          supabase
+            .from('projects')
+            .select('client_id, title, clients(name, email)')
+            .eq('id', invoice.project_id)
+            .single(),
+          supabase
+            .from('portal_sessions')
+            .select('token')
+            .eq('project_id', invoice.project_id)
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1),
+        ]);
 
         if (project) {
           const client = (project as any).clients;
@@ -66,6 +75,10 @@ export async function POST(req: NextRequest) {
             .update({ stage: 'launched' })
             .eq('id', invoice.project_id);
 
+          const portalLaunchUrl = finalPortalSessions?.[0]?.token
+            ? `${process.env.NEXT_PUBLIC_APP_URL}/portal/${finalPortalSessions[0].token}/launch`
+            : null;
+
           if (client?.email) {
             resend.emails.send({
               from: process.env.RESEND_FROM_EMAIL!,
@@ -76,13 +89,16 @@ export async function POST(req: NextRequest) {
                   <h2 style="margin-bottom:8px;">🎉 Thank you, ${client.name}!</h2>
                   <p style="margin-bottom:16px;line-height:1.6;">
                     Your final payment for <strong>${project.title}</strong> has been received — you're all set!
-                    The last step is to complete your launch details in the portal so we can transfer
-                    ownership of your site to you.
+                    One last step: complete your launch details so we can transfer ownership of your site to you.
                   </p>
-                  <p style="margin-bottom:16px;line-height:1.6;">
-                    Head to the <strong>Launch</strong> tab in your portal and enter your Vercel account email
-                    (and GitHub username if applicable). We'll take it from there.
+                  ${portalLaunchUrl ? `
+                  <a href="${portalLaunchUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin-bottom:16px;">
+                    Complete Launch Details →
+                  </a>
+                  <p style="margin-bottom:16px;font-size:13px;color:#6B6B60;">
+                    Enter your Vercel account email (and GitHub username if applicable) in the Launch tab. We'll take it from there.
                   </p>
+                  ` : ''}
                   <p style="color:#6B6B60;font-size:13px;">
                     Your 30-day post-launch support window starts now. Questions? Email us at 3rddavidstechnology@gmail.com
                   </p>

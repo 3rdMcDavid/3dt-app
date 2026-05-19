@@ -69,7 +69,7 @@ export async function signContractAction(formData: FormData) {
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
         <h2 style="margin-bottom:8px;">Contract Signed</h2>
-        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>. Deposit invoice has been sent to the client.</p>
+        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>. Deposit invoice is being sent to them now.</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${contract.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
       </div>
     `,
@@ -129,7 +129,7 @@ export async function signContractAction(formData: FormData) {
             <p style="margin-bottom:16px;line-height:1.6;">
               Thank you for signing your contract for <strong>${project.title}</strong>!
               To officially kick off your project, a deposit of <strong>$250</strong> is due now.
-              Once paid, you'll receive access to your private client portal.
+              Once paid, your portal will be fully unlocked.
             </p>
             <a href="${paymentLink.url}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
               Pay $250 Deposit →

@@ -69,7 +69,7 @@ export async function signContractFromPortalAction(formData: FormData) {
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
         <h2 style="margin-bottom:8px;">Contract Signed</h2>
-        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>. Deposit invoice has been sent to the client.</p>
+        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>. Deposit invoice is being sent to them now.</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${session.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
       </div>
     `,
