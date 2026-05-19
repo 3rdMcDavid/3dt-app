@@ -1,5 +1,5 @@
 export async function sendPushNotification(title: string, body: string, url = '/admin') {
-  const appId = process.env.ONESIGNAL_APP_ID;
+  const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
   const apiKey = process.env.ONESIGNAL_REST_API_KEY;
   if (!appId || !apiKey) return;
 
