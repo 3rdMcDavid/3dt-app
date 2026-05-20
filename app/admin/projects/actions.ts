@@ -210,6 +210,21 @@ export async function updateProjectAction(formData: FormData) {
 export async function deleteProjectAction(formData: FormData) {
   const id = formData.get('id') as string;
   const supabase = await createClient();
+  const service = createServiceClient();
+
+  const [{ data: intakeFiles }, { data: documents }] = await Promise.all([
+    service.from('intake_files').select('file_url').eq('project_id', id),
+    service.from('documents').select('file_url').eq('project_id', id),
+  ]);
+
+  const intakePaths = (intakeFiles ?? []).map((f: any) => f.file_url);
+  const docPaths = (documents ?? []).map((d: any) => d.file_url);
+
+  await Promise.all([
+    intakePaths.length ? service.storage.from('intake').remove(intakePaths) : Promise.resolve(),
+    docPaths.length ? service.storage.from('documents').remove(docPaths) : Promise.resolve(),
+  ]);
+
   await supabase.from('projects').delete().eq('id', id);
   revalidatePath('/admin/projects');
   redirect('/admin/projects');
