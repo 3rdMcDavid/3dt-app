@@ -252,7 +252,12 @@ export async function upsertContractAction(formData: FormData) {
   };
 
   if (contractId) {
-    await supabase.from('contracts').update(payload).eq('id', contractId);
+    await supabase.from('contracts').update({
+      ...payload,
+      signed_at: null,
+      signature_name: null,
+      signature_ip: null,
+    }).eq('id', contractId);
   } else {
     await supabase.from('contracts').insert(payload);
   }

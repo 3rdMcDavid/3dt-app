@@ -60,7 +60,7 @@ export default async function SignContractPage({
               })}
             </p>
             <p style={{ marginTop: 12, fontSize: 13 }}>
-              Check your email — your deposit invoice has been sent.
+              Check your email for your signed contract copy and deposit payment link.
             </p>
           </div>
         ) : (
