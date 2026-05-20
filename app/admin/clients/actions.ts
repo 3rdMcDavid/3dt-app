@@ -26,6 +26,7 @@ async function firePortalEmailForClient(
     .from('portal_sessions')
     .select('token, sent_at')
     .eq('project_id', project.id)
+    .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
     .limit(1);
 

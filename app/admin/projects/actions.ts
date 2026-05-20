@@ -284,7 +284,37 @@ export async function markInvoicePaidAction(formData: FormData) {
   const projectId = formData.get('project_id') as string;
   const supabase = await createClient();
 
+  const { data: invoice } = await supabase
+    .from('invoices')
+    .select('type')
+    .eq('id', invoiceId)
+    .single();
+
   await supabase.from('invoices').update({ status: 'paid' }).eq('id', invoiceId);
+
+  if (invoice?.type === 'deposit') {
+    await supabase
+      .from('projects')
+      .update({ revision_stage: 'awaiting_intake' })
+      .eq('id', projectId);
+  } else if (invoice?.type === 'final') {
+    const { data: project } = await supabase
+      .from('projects')
+      .select('client_id')
+      .eq('id', projectId)
+      .single();
+    await supabase
+      .from('projects')
+      .update({ stage: 'handoff_pending' })
+      .eq('id', projectId);
+    if (project?.client_id) {
+      await supabase
+        .from('clients')
+        .update({ status: 'completed' })
+        .eq('id', project.client_id);
+    }
+  }
+
   revalidatePath(`/admin/projects/${projectId}`);
 }
 
@@ -293,19 +323,21 @@ export async function generateStripePaymentLinkAction(formData: FormData) {
   const projectId = formData.get('project_id') as string;
   const supabase = await createClient();
 
-  const { data: invoice } = await supabase
-    .from('invoices')
-    .select('*')
-    .eq('id', invoiceId)
-    .single();
-
-  const { data: project } = await supabase
-    .from('projects')
-    .select('title')
-    .eq('id', projectId)
-    .single();
+  const [{ data: invoice }, { data: project }, { data: sessions }] = await Promise.all([
+    supabase.from('invoices').select('*').eq('id', invoiceId).single(),
+    supabase.from('projects').select('title').eq('id', projectId).single(),
+    supabase
+      .from('portal_sessions')
+      .select('token')
+      .eq('project_id', projectId)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1),
+  ]);
 
   if (!invoice || !project) throw new Error('Invoice or project not found');
+
+  const portalToken = sessions?.[0]?.token ?? null;
 
   const price = await stripe.prices.create({
     currency: 'usd',
@@ -320,7 +352,7 @@ export async function generateStripePaymentLinkAction(formData: FormData) {
     metadata: { invoice_id: invoiceId },
     after_completion: {
       type: 'redirect',
-      redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success` },
+      redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success${portalToken ? `?token=${portalToken}` : ''}` },
     },
   });
 
