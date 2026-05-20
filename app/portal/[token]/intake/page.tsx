@@ -13,6 +13,7 @@ const STAGE_LABELS: Record<RevisionStage, string> = {
   revision_2_open: 'Review Draft 2',
   revision_2_received: 'Final In Progress',
   post_final_open: 'Final Review',
+  extra_revision_requested: 'Changes Requested',
   complete: 'Complete',
 };
 
@@ -57,12 +58,14 @@ export default async function PortalIntakePage({
   const isWaiting =
     stage === 'intake_received' ||
     stage === 'revision_1_received' ||
-    stage === 'revision_2_received';
+    stage === 'revision_2_received' ||
+    stage === 'extra_revision_requested';
 
   const waitingMessages: Partial<Record<RevisionStage, string>> = {
     intake_received: "Your intake has been received! David is working on your first draft. We'll be in touch soon.",
     revision_1_received: "Your feedback has been received! David is preparing your updated draft.",
     revision_2_received: "Your feedback has been received! David is preparing your final version.",
+    extra_revision_requested: "Your change request has been received. David will prepare an updated version and be in touch shortly.",
   };
 
   return (

@@ -1,5 +1,5 @@
 export type ClientStatus = 'lead' | 'active' | 'completed';
-export type ProjectStage = 'discovery' | 'proposal' | 'contract' | 'build' | 'review' | 'launched';
+export type ProjectStage = 'discovery' | 'proposal' | 'contract' | 'build' | 'review' | 'handoff_pending' | 'launched';
 export type RevisionStage =
   | 'awaiting_intake'
   | 'intake_received'
@@ -8,6 +8,7 @@ export type RevisionStage =
   | 'revision_2_open'
   | 'revision_2_received'
   | 'post_final_open'
+  | 'extra_revision_requested'
   | 'complete';
 export type IntakeSubmissionType = 'initial' | 'revision_1' | 'revision_2' | 'post_final';
 export type ProposalStatus = 'draft' | 'sent' | 'accepted' | 'declined';
