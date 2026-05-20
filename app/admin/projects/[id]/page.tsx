@@ -337,14 +337,25 @@ export default async function ProjectHubPage({
                         {new Date(sub.created_at).toLocaleString('en-US', { timeZone: 'America/Chicago' })}
                       </span>
                     </div>
-                    <div className="detail-grid" style={{ marginBottom: sub.additional_notes || sub.intake_files?.length ? 10 : 0 }}>
+                    <div className="detail-grid" style={{ marginBottom: 10 }}>
                       {sub.business_name && <div className="detail-item"><label>Business</label><span>{sub.business_name}</span></div>}
                       {sub.tagline && <div className="detail-item"><label>Tagline</label><span>{sub.tagline}</span></div>}
-                      {sub.pages_type && <div className="detail-item"><label>Pages</label><span style={{ textTransform: 'capitalize' }}>{sub.pages_type === 'single' ? '1-Page with tabs' : sub.pages_list?.join(', ') || 'Multi-page'}</span></div>}
+                      {sub.pages_type && <div className="detail-item"><label>Pages</label><span>{sub.pages_type === 'single' ? '1-Page with tabs' : sub.pages_list?.join(', ') || 'Multi-page'}</span></div>}
                       {sub.target_audience && <div className="detail-item"><label>Audience</label><span>{sub.target_audience}</span></div>}
+                      {sub.primary_cta && <div className="detail-item"><label>Goal / CTA</label><span>{sub.primary_cta}</span></div>}
+                      {sub.phone && <div className="detail-item"><label>Phone</label><span>{sub.phone}</span></div>}
+                      {sub.business_email && <div className="detail-item"><label>Business Email</label><span>{sub.business_email}</span></div>}
+                      {sub.business_address && <div className="detail-item"><label>Address</label><span>{sub.business_address}</span></div>}
+                      {sub.existing_domain && <div className="detail-item"><label>Domain</label><span>{sub.existing_domain}</span></div>}
+                      {sub.existing_website && <div className="detail-item"><label>Existing Site</label><span><a href={sub.existing_website} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-lt)' }}>{sub.existing_website} ↗</a></span></div>}
+                      {sub.brand_colors && <div className="detail-item"><label>Brand Colors</label><span>{sub.brand_colors}</span></div>}
+                      {sub.content_ready && <div className="detail-item"><label>Content Ready</label><span style={{ textTransform: 'capitalize' }}>{sub.content_ready === 'yes' ? 'Yes' : sub.content_ready === 'partial' ? 'Partial' : 'No'}</span></div>}
+                      {sub.special_features?.length > 0 && <div className="detail-item" style={{ gridColumn: '1 / -1' }}><label>Special Features</label><span>{sub.special_features.join(', ')}</span></div>}
                     </div>
+                    {sub.services_offered && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Services:</strong> {sub.services_offered}</p>}
                     {sub.style_notes && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Style:</strong> {sub.style_notes}</p>}
                     {sub.bio && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Bio:</strong> {sub.bio.length > 150 ? sub.bio.slice(0, 150) + '…' : sub.bio}</p>}
+                    {sub.testimonials && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Testimonials:</strong> {sub.testimonials.length > 150 ? sub.testimonials.slice(0, 150) + '…' : sub.testimonials}</p>}
                     {sub.additional_notes && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Notes:</strong> {sub.additional_notes}</p>}
                     {sub.intake_files?.length > 0 && (
                       <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>

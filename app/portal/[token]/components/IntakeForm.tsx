@@ -19,9 +19,21 @@ const PAGE_OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
+const SPECIAL_FEATURE_OPTIONS = [
+  { value: 'gallery', label: 'Photo gallery' },
+  { value: 'faq', label: 'FAQ section' },
+  { value: 'booking', label: 'Booking / scheduling link' },
+  { value: 'newsletter', label: 'Newsletter signup' },
+  { value: 'map', label: 'Map / directions' },
+  { value: 'video', label: 'Video embed' },
+  { value: 'testimonials_section', label: 'Testimonials / reviews section' },
+  { value: 'blog', label: 'Blog / news section' },
+];
+
 export default function IntakeForm({ token, submissionType, isApproval, extraRevision }: Props) {
   const [pagesType, setPagesType] = useState('');
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [extraRevisionConfirmed, setExtraRevisionConfirmed] = useState(false);
@@ -30,6 +42,10 @@ export default function IntakeForm({ token, submissionType, isApproval, extraRev
 
   function togglePage(val: string) {
     setSelectedPages(p => p.includes(val) ? p.filter(x => x !== val) : [...p, val]);
+  }
+
+  function toggleFeature(val: string) {
+    setSelectedFeatures(f => f.includes(val) ? f.filter(x => x !== val) : [...f, val]);
   }
 
   async function handleSubmit(approved: boolean) {
@@ -42,11 +58,13 @@ export default function IntakeForm({ token, submissionType, isApproval, extraRev
     fd.set('submission_type', submissionType);
     fd.set('approved', String(approved));
 
-    // pages_list handled from state
     fd.delete('pages_list');
     if (pagesType === 'multi') {
       selectedPages.forEach(p => fd.append('pages_list', p));
     }
+
+    fd.delete('special_features');
+    selectedFeatures.forEach(f => fd.append('special_features', f));
 
     const res = await fetch('/api/portal/intake', { method: 'POST', body: fd });
     const json = await res.json();
@@ -141,9 +159,16 @@ export default function IntakeForm({ token, submissionType, isApproval, extraRev
 
   return (
     <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Pages */}
+
+      {/* Helper note */}
+      <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
+        Fill in what you can — the more detail you share, the better we can tailor your site.
+        Nothing is required except the page structure at the top.
+      </p>
+
+      {/* Website Structure */}
       <div className="portal-card">
-        <h3 className="intake-section-title">Website Structure</h3>
+        <h3 className="intake-section-title">Website Structure *</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
             { value: 'single', label: '1-Page site with tabs / sections' },
@@ -186,7 +211,7 @@ export default function IntakeForm({ token, submissionType, isApproval, extraRev
             <input type="text" name="business_name" placeholder="e.g. Sunrise Studio" />
           </div>
           <div>
-            <label className="portal-label">Tagline (optional)</label>
+            <label className="portal-label">Tagline</label>
             <input type="text" name="tagline" placeholder="A short phrase that sums you up" />
           </div>
           <div>
@@ -197,30 +222,116 @@ export default function IntakeForm({ token, submissionType, isApproval, extraRev
             <label className="portal-label">Target Audience</label>
             <input type="text" name="target_audience" placeholder="Who are your ideal customers?" />
           </div>
+          <div>
+            <label className="portal-label">Services / Offerings</label>
+            <textarea name="services_offered" placeholder="List the services or products you want featured on the site…" style={{ minHeight: 80 }} />
+          </div>
+          <div>
+            <label className="portal-label">Main Goal of the Site</label>
+            <input type="text" name="primary_cta" placeholder="e.g. Get people to call me, book a consultation, buy online…" />
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Info */}
+      <div className="portal-card">
+        <h3 className="intake-section-title">Contact Info to Display</h3>
+        <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 14, lineHeight: 1.6 }}>
+          What contact info should appear on your site? Leave blank anything you'd rather not show.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label className="portal-label">Phone Number</label>
+            <input type="tel" name="phone" placeholder="(555) 000-0000" />
+          </div>
+          <div>
+            <label className="portal-label">Business Email</label>
+            <input type="email" name="business_email" placeholder="hello@yourbusiness.com" />
+          </div>
+          <div>
+            <label className="portal-label">Business Address</label>
+            <input type="text" name="business_address" placeholder="123 Main St, City, State (or 'Remote / Online only')" />
+          </div>
+        </div>
+      </div>
+
+      {/* Domain & Existing Site */}
+      <div className="portal-card">
+        <h3 className="intake-section-title">Domain & Existing Website</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label className="portal-label">Do you have a domain name?</label>
+            <input type="text" name="existing_domain" placeholder="e.g. yourbusiness.com — or leave blank if you need one" />
+          </div>
+          <div>
+            <label className="portal-label">Existing Website URL</label>
+            <input type="url" name="existing_website" placeholder="https://your-current-site.com (if you have one)" />
+          </div>
         </div>
       </div>
 
       {/* Style */}
       <div className="portal-card">
         <h3 className="intake-section-title">Style & Vibe</h3>
-        <div>
-          <label className="portal-label">Colors, mood, websites you like</label>
-          <textarea name="style_notes" placeholder="e.g. Clean and modern, dark theme. Love the look of example.com…" style={{ minHeight: 80 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label className="portal-label">Colors, mood, sites you like</label>
+            <textarea name="style_notes" placeholder="e.g. Clean and modern, dark theme. Love the look of example.com…" style={{ minHeight: 80 }} />
+          </div>
+          <div>
+            <label className="portal-label">Brand Colors</label>
+            <input type="text" name="brand_colors" placeholder="e.g. Navy blue (#1B2E4B) and gold — or 'no preference'" />
+          </div>
         </div>
       </div>
 
-      {/* Bio */}
+      {/* Content */}
       <div className="portal-card">
-        <h3 className="intake-section-title">About You (optional)</h3>
-        <div>
-          <label className="portal-label">Bio / About section text</label>
-          <textarea name="bio" placeholder="Paste or write your bio here…" style={{ minHeight: 80 }} />
+        <h3 className="intake-section-title">Content & Assets</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label className="portal-label">Content Readiness</label>
+            <select name="content_ready" defaultValue="">
+              <option value="" disabled>Select one…</option>
+              <option value="yes">Yes — I have photos and written copy ready</option>
+              <option value="partial">Partial — I have some but not everything</option>
+              <option value="no">No — I need help with placeholders / content direction</option>
+            </select>
+          </div>
+          <div>
+            <label className="portal-label">Bio / About Section</label>
+            <textarea name="bio" placeholder="Paste or write your bio here — or describe yourself and we'll help write it…" style={{ minHeight: 80 }} />
+          </div>
+          <div>
+            <label className="portal-label">Testimonials / Reviews</label>
+            <textarea name="testimonials" placeholder="Paste any client quotes or reviews you'd like featured…" style={{ minHeight: 80 }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Special Features */}
+      <div className="portal-card">
+        <h3 className="intake-section-title">Special Features</h3>
+        <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 14 }}>
+          Check anything you'd like included. These may affect scope — David will confirm before building.
+        </p>
+        <div className="intake-checkbox-group">
+          {SPECIAL_FEATURE_OPTIONS.map(opt => (
+            <label key={opt.value} className="intake-check-label">
+              <input
+                type="checkbox"
+                checked={selectedFeatures.includes(opt.value)}
+                onChange={() => toggleFeature(opt.value)}
+              />
+              {opt.label}
+            </label>
+          ))}
         </div>
       </div>
 
       {/* Social Links */}
       <div className="portal-card">
-        <h3 className="intake-section-title">Social Links (optional)</h3>
+        <h3 className="intake-section-title">Social Links</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <input type="url" name="social_facebook" placeholder="Facebook URL" />
           <input type="url" name="social_instagram" placeholder="Instagram URL" />
@@ -231,9 +342,9 @@ export default function IntakeForm({ token, submissionType, isApproval, extraRev
 
       {/* Files */}
       <div className="portal-card">
-        <h3 className="intake-section-title">Files (optional)</h3>
-        <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 10 }}>
-          Upload your logo, photos, or any other assets.
+        <h3 className="intake-section-title">Files</h3>
+        <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 10, lineHeight: 1.6 }}>
+          Upload your logo, photos, brand assets, or any inspiration images. You can also send these via email later.
         </p>
         <input type="file" name="files" multiple accept="image/*,.pdf,.doc,.docx,.zip" />
       </div>
