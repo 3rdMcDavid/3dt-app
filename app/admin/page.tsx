@@ -19,6 +19,7 @@ export default async function DashboardPage() {
     { count: projectCount },
     { count: unpaidCount },
     { data: actionProjects },
+    { data: newLeads },
   ] = await Promise.all([
     supabase.from('clients').select('*', { count: 'exact', head: true }),
     supabase.from('projects').select('*', { count: 'exact', head: true }).neq('stage', 'launched'),
@@ -28,6 +29,11 @@ export default async function DashboardPage() {
       .select('id, title, revision_stage, clients(name)')
       .in('revision_stage', ACTION_STAGES)
       .order('created_at', { ascending: true }),
+    supabase
+      .from('clients')
+      .select('id, name, email, created_at, notes')
+      .eq('status', 'lead')
+      .order('created_at', { ascending: false }),
   ]);
 
   return (
@@ -52,6 +58,46 @@ export default async function DashboardPage() {
             </div>
           </Link>
         </div>
+
+        {newLeads && newLeads.length > 0 && (
+          <div className="card" style={{ marginTop: 8 }}>
+            <div className="card-header" style={{ borderBottom: '1px solid var(--border)', padding: '14px 20px' }}>
+              <span className="card-title" style={{ color: 'var(--green)' }}>
+                🆕 New Leads ({newLeads.length})
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {newLeads.map((lead: any, i: number) => (
+                <Link
+                  key={lead.id}
+                  href={`/admin/clients/${lead.id}`}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '14px 20px',
+                    borderTop: i === 0 ? 'none' : '1px solid var(--border)',
+                    transition: 'background 0.12s',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: 2 }}>{lead.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                      {lead.email}&nbsp;·&nbsp;
+                      {new Date(lead.created_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
+                    </div>
+                    {lead.notes && (
+                      <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                        {lead.notes.length > 80 ? lead.notes.slice(0, 80) + '…' : lead.notes}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--accent-lt)' }}>View →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {actionProjects && actionProjects.length > 0 ? (
           <div className="card" style={{ marginTop: 8 }}>

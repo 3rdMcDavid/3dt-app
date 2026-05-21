@@ -29,7 +29,6 @@ export default async function ProjectHubPage({
 
   const [
     projectResult,
-    proposalResult,
     contractResult,
     { data: invoices },
     { data: documents },
@@ -37,7 +36,6 @@ export default async function ProjectHubPage({
     { data: intakeSubmissions },
   ] = await Promise.all([
     supabase.from('projects').select('*, clients(*)').eq('id', id).single(),
-    supabase.from('proposals').select('*').eq('project_id', id).maybeSingle(),
     supabase.from('contracts').select('*').eq('project_id', id).maybeSingle(),
     supabase.from('invoices').select('*').eq('project_id', id).order('created_at'),
     supabase.from('documents').select('*').eq('project_id', id).order('created_at'),
@@ -56,7 +54,6 @@ export default async function ProjectHubPage({
   ]);
 
   const project = projectResult.data as any;
-  const proposal = proposalResult.data as any;
   const contract = contractResult.data as any;
 
   if (!project) notFound();
@@ -131,25 +128,6 @@ export default async function ProjectHubPage({
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700 }}>{project.title}</h1>
           <span className={`badge badge-${project.stage}`}>{project.stage}</span>
-        </div>
-
-        {/* ── Scope of Work ────────────────────────────────────────────────── */}
-        <div className="hub-section">
-          <div className="hub-section-header">
-            <span className="section-title">Scope of Work</span>
-            <span className="badge badge-accepted">$500 Flat Rate</span>
-          </div>
-          <div className="hub-section-body">
-            <div className="detail-grid">
-              <div className="detail-item"><label>Service</label><span>Custom Website Design &amp; Development</span></div>
-              <div className="detail-item"><label>Deposit</label><span>$250 (at signing)</span></div>
-              <div className="detail-item"><label>Final</label><span>$250 (before launch)</span></div>
-              <div className="detail-item"><label>Timeline</label><span>~7 business days from asset delivery</span></div>
-            </div>
-            <div style={{ marginTop: 14, fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>
-              Custom design · Mobile-responsive · Up to 5 pages/sections · Contact form · SEO foundation · Domain connection · 30 days post-launch support · 2 revision rounds included
-            </div>
-          </div>
         </div>
 
         {/* ── Contract ─────────────────────────────────────────────────────── */}

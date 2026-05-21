@@ -16,8 +16,9 @@ const PROGRESS_LABEL: Record<string, string> = {
   revision_1_received:'Feedback received — updates in progress',
   revision_2_open:    'Draft 2 is ready for your review',
   revision_2_received:'Feedback received — final version in progress',
-  post_final_open:    'Final version is ready for your approval',
-  complete:           'Project complete — thank you!',
+  post_final_open:         'Final version is ready for your approval',
+  extra_revision_requested:'Extra revision requested — updates in progress',
+  complete:                'Project complete — thank you!',
 };
 
 export default async function PortalHomePage({

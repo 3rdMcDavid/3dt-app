@@ -15,18 +15,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
   }
 
-  let body: { first_name?: string; last_name?: string; email?: string; phone?: string; message?: string };
+  let body: { first_name?: string; last_name?: string; email?: string; phone?: string; service?: string; message?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: corsHeaders });
   }
 
-  const { first_name, last_name, email, phone, message } = body;
+  const { first_name, last_name, email, phone, service, message } = body;
 
   if (!first_name || !email) {
     return NextResponse.json({ error: 'first_name and email are required' }, { status: 400, headers: corsHeaders });
   }
+
+  const SERVICE_LABELS: Record<string, string> = {
+    'website':       'New Website ($500+)',
+    'website-tools': 'Website + Business Tools',
+    'tool':          'Business Tool / Custom Build',
+    'care-plan':     'Monthly Care Plan ($75/mo)',
+    'other':         "Not sure — let's talk",
+  };
+
+  const serviceLabel = service ? (SERVICE_LABELS[service] ?? service) : null;
+  const notes = [
+    serviceLabel ? `Interested in: ${serviceLabel}` : null,
+    message || null,
+  ].filter(Boolean).join('\n\n') || null;
 
   const name = [first_name, last_name].filter(Boolean).join(' ');
 
@@ -36,7 +50,7 @@ export async function POST(req: NextRequest) {
     email,
     phone: phone ?? null,
     status: 'lead',
-    notes: message ?? null,
+    notes,
   });
 
   if (error) {
@@ -61,6 +75,7 @@ export async function POST(req: NextRequest) {
           <tr><td style="padding:8px 0;color:#6B6B60;width:80px;">Name</td><td style="padding:8px 0;font-weight:600;">${name}</td></tr>
           <tr><td style="padding:8px 0;color:#6B6B60;">Email</td><td style="padding:8px 0;">${email}</td></tr>
           ${phone ? `<tr><td style="padding:8px 0;color:#6B6B60;">Phone</td><td style="padding:8px 0;">${phone}</td></tr>` : ''}
+          ${serviceLabel ? `<tr><td style="padding:8px 0;color:#6B6B60;">Interested In</td><td style="padding:8px 0;">${serviceLabel}</td></tr>` : ''}
           ${message ? `<tr><td style="padding:8px 0;color:#6B6B60;vertical-align:top;">Message</td><td style="padding:8px 0;line-height:1.6;">${message}</td></tr>` : ''}
         </table>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/clients" style="display:inline-block;margin-top:24px;background:#1B4D2E;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
