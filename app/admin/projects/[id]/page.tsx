@@ -349,7 +349,7 @@ export default async function ProjectHubPage({
                               type="radio"
                               name="revision_components"
                               value={opt.value}
-                              defaultChecked={opt.value === 'both'}
+                              defaultChecked={opt.value === (project?.revision_components ?? 'both')}
                               style={{ width: 'auto' }}
                             />
                             {opt.label}

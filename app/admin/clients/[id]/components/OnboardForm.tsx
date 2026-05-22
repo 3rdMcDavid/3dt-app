@@ -5,10 +5,10 @@ import { useState } from 'react';
 import { onboardClientAction } from '@/app/admin/clients/actions';
 import ScopeSelector from './ScopeSelector';
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn btn-primary" disabled={pending} style={{ minWidth: 180 }}>
+    <button type="submit" className="btn btn-primary" disabled={pending || disabled} style={{ minWidth: 180 }}>
       {pending ? 'Onboarding…' : 'Onboard Client →'}
     </button>
   );
@@ -29,6 +29,7 @@ export default function OnboardForm({
 }) {
   const firstName = clientName.split(' ')[0];
   const [projectType, setProjectType] = useState<'website' | 'tool' | 'website_tool'>('website');
+  const [scopeTotal, setScopeTotal] = useState(0);
 
   const defaultTitle =
     projectType === 'tool'         ? `${firstName}'s Custom Tool` :
@@ -99,10 +100,10 @@ export default function OnboardForm({
             />
           </div>
 
-          <ScopeSelector projectType={projectType} />
+          <ScopeSelector projectType={projectType} onTotalChange={setScopeTotal} />
 
           <div className="form-actions" style={{ marginTop: 20 }}>
-            <SubmitButton />
+            <SubmitButton disabled={scopeTotal === 0} />
           </div>
         </form>
       </div>

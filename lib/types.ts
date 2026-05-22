@@ -39,6 +39,10 @@ export interface Project {
   draft_url: string | null;
   tool_draft_url: string | null;
   revision_components: 'website' | 'tool' | 'both';
+  client_vercel_email: string | null;
+  client_github_username: string | null;
+  launch_notes: string | null;
+  launch_submitted_at: string | null;
   launch_confirmed_at: string | null;
 }
 

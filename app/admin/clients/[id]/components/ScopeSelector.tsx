@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 type SelectedMap = Record<string, number>;
 type CustomItem = { id: number; name: string; price: string };
@@ -40,7 +40,7 @@ function fmt(n: number) {
   return `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
 }
 
-export default function ScopeSelector({ projectType = 'website' }: { projectType?: string }) {
+export default function ScopeSelector({ projectType = 'website', onTotalChange }: { projectType?: string; onTotalChange?: (total: number) => void }) {
   const [selected, setSelected] = useState<SelectedMap>({});
   const [customItems, setCustomItems] = useState<CustomItem[]>([]);
   const [carePlan, setCarePlan] = useState(false);
@@ -76,6 +76,8 @@ export default function ScopeSelector({ projectType = 'website' }: { projectType
   const customTotal = customItems.reduce((a, c) => a + (parseFloat(c.price) || 0), 0);
   const total = catalogTotal + customTotal;
   const deposit = Math.round((total / 2) * 100) / 100;
+
+  useEffect(() => { onTotalChange?.(total); }, [total, onTotalChange]);
 
   const scopeItems = [
     ...Object.entries(selected).map(([name, price]) => ({ name, price })),
