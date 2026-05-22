@@ -15,14 +15,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
   }
 
-  let body: { first_name?: string; last_name?: string; email?: string; phone?: string; service?: string; message?: string };
+  let body: { first_name?: string; last_name?: string; email?: string; phone?: string; service?: string; budget?: string; message?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: corsHeaders });
   }
 
-  const { first_name, last_name, email, phone, service, message } = body;
+  const { first_name, last_name, email, phone, service, budget, message } = body;
 
   if (!first_name || !email) {
     return NextResponse.json({ error: 'first_name and email are required' }, { status: 400, headers: corsHeaders });
@@ -36,9 +36,18 @@ export async function POST(req: NextRequest) {
     'other':         "Not sure — let's talk",
   };
 
+  const BUDGET_LABELS: Record<string, string> = {
+    'under-500':  'Under $500',
+    '500-1000':   '$500 – $1,000',
+    '1000-2500':  '$1,000 – $2,500',
+    '2500-plus':  '$2,500+',
+  };
+
   const serviceLabel = service ? (SERVICE_LABELS[service] ?? service) : null;
+  const budgetLabel = budget ? (BUDGET_LABELS[budget] ?? null) : null;
   const notes = [
     serviceLabel ? `Interested in: ${serviceLabel}` : null,
+    budgetLabel ? `Budget: ${budgetLabel}` : null,
     message || null,
   ].filter(Boolean).join('\n\n') || null;
 
@@ -76,6 +85,7 @@ export async function POST(req: NextRequest) {
           <tr><td style="padding:8px 0;color:#6B6B60;">Email</td><td style="padding:8px 0;">${email}</td></tr>
           ${phone ? `<tr><td style="padding:8px 0;color:#6B6B60;">Phone</td><td style="padding:8px 0;">${phone}</td></tr>` : ''}
           ${serviceLabel ? `<tr><td style="padding:8px 0;color:#6B6B60;">Interested In</td><td style="padding:8px 0;">${serviceLabel}</td></tr>` : ''}
+          ${budgetLabel ? `<tr><td style="padding:8px 0;color:#6B6B60;">Budget</td><td style="padding:8px 0;">${budgetLabel}</td></tr>` : ''}
           ${message ? `<tr><td style="padding:8px 0;color:#6B6B60;vertical-align:top;">Message</td><td style="padding:8px 0;line-height:1.6;">${message}</td></tr>` : ''}
         </table>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/clients" style="display:inline-block;margin-top:24px;background:#1B4D2E;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">

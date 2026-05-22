@@ -42,7 +42,7 @@ export default async function PortalLayout({
       .maybeSingle(),
     supabase
       .from('invoices')
-      .select('id, status, stripe_payment_url')
+      .select('id, status, stripe_payment_url, amount')
       .eq('project_id', session.project_id)
       .eq('type', 'deposit')
       .maybeSingle(),
@@ -85,6 +85,7 @@ export default async function PortalLayout({
               projectTitle={projectTitle}
               stripeUrl={depositInvoice?.stripe_payment_url ?? null}
               signatureName={contract.signature_name ?? ''}
+              depositAmount={depositInvoice?.amount ?? null}
             />
           </main>
         </div>

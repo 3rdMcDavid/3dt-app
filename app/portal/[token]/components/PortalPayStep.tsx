@@ -3,9 +3,13 @@ type Props = {
   projectTitle: string;
   stripeUrl: string | null;
   signatureName: string;
+  depositAmount: number | null;
 };
 
-export default function PortalPayStep({ projectTitle, stripeUrl, signatureName }: Props) {
+export default function PortalPayStep({ projectTitle, stripeUrl, signatureName, depositAmount }: Props) {
+  const amount = depositAmount != null ? depositAmount : null;
+  const fmt = (n: number) => `$${n.toFixed(2).replace(/\.00$/, '')}`;
+
   return (
     <div style={{ padding: '24px 16px 80px' }}>
       <div className="portal-header">
@@ -29,18 +33,12 @@ export default function PortalPayStep({ projectTitle, stripeUrl, signatureName }
           <span className="portal-status-label">Project</span>
           <span className="portal-status-value">{projectTitle}</span>
         </div>
-        <div className="portal-status-row">
-          <span className="portal-status-label">Total</span>
-          <span className="portal-status-value">$500.00</span>
-        </div>
-        <div className="portal-status-row">
-          <span className="portal-status-label">Due Now</span>
-          <span className="portal-status-value" style={{ color: '#92400E', fontWeight: 700 }}>$250.00 deposit</span>
-        </div>
-        <div className="portal-status-row">
-          <span className="portal-status-label">Final</span>
-          <span className="portal-status-value">$250.00 (due on completion)</span>
-        </div>
+        {amount != null && (
+          <div className="portal-status-row">
+            <span className="portal-status-label">Due Now</span>
+            <span className="portal-status-value" style={{ color: '#92400E', fontWeight: 700 }}>{fmt(amount)} deposit</span>
+          </div>
+        )}
       </div>
 
       {stripeUrl ? (
@@ -51,7 +49,7 @@ export default function PortalPayStep({ projectTitle, stripeUrl, signatureName }
           className="portal-btn"
           style={{ display: 'block', textAlign: 'center' }}
         >
-          Pay $250 Deposit →
+          {amount != null ? `Pay ${fmt(amount)} Deposit →` : 'Pay Deposit →'}
         </a>
       ) : (
         <div className="portal-card" style={{ textAlign: 'center', padding: 20 }}>

@@ -63,10 +63,6 @@ export default async function ClientDetailPage({
                 <span>{client.phone || '—'}</span>
               </div>
               <div className="detail-item">
-                <label>Status</label>
-                <span><span className={`badge badge-${client.status}`}>{client.status}</span></span>
-              </div>
-              <div className="detail-item">
                 <label>Added</label>
                 <span>{new Date(client.created_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</span>
               </div>
