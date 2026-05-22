@@ -161,8 +161,9 @@ export async function POST(req: NextRequest) {
       if (finalInvoice && project) {
         const client = (project as any).clients;
         const pt = (project as any).project_type ?? 'website';
-        const isToolProject = pt === 'tool' || pt === 'website_tool';
-        const handoffWord = isToolProject ? 'delivery' : 'launch';
+        const isToolOnly = pt === 'tool';
+        const isBoth     = pt === 'website_tool';
+        const handoffWord = isToolOnly ? 'delivery' : isBoth ? 'launch and delivery' : 'launch';
         const depositAmt = Number(depositInvoice?.amount ?? 0);
         const finalAmt = Number(finalInvoice.amount);
         const totalAmt = depositAmt > 0 ? depositAmt + finalAmt : null;

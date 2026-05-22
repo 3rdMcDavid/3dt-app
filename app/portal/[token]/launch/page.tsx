@@ -30,6 +30,7 @@ export default async function PortalLaunchPage({
   const submitted = !!(project as any).launch_submitted_at;
   const confirmed = !!(project as any).launch_confirmed_at;
   const isTool = (project as any).project_type === 'tool';
+  const isBoth = (project as any).project_type === 'website_tool';
 
   // ── Tool delivery page ─────────────────────────────────────────────────────
   if (isTool) {
@@ -110,8 +111,9 @@ export default async function PortalLaunchPage({
 
       <div className="portal-card">
         <p style={{ fontSize: 14, color: 'var(--p-muted)', lineHeight: 1.65, marginBottom: 0 }}>
-          To hand off your finished website, David just needs your Vercel account email.
-          He handles everything else — including the domain, hosting setup, and transfer.
+          {isBoth
+            ? 'To transfer your site, David needs your Vercel account email. Your tool delivery will be handled separately — David will reach out with files and access details.'
+            : 'To hand off your finished website, David just needs your Vercel account email. He handles everything else — including the domain, hosting setup, and transfer.'}
         </p>
       </div>
 
