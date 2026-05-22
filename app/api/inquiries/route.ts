@@ -37,7 +37,6 @@ export async function POST(req: NextRequest) {
   };
 
   const BUDGET_LABELS: Record<string, string> = {
-    'under-500':  'Under $500',
     '500-1000':   '$500 – $1,000',
     '1000-2500':  '$1,000 – $2,500',
     '2500-plus':  '$2,500+',
