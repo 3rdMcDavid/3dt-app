@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         const [{ data: project }, { data: finalPortalSessions }] = await Promise.all([
           supabase
             .from('projects')
-            .select('client_id, title, clients(name, email)')
+            .select('client_id, title, project_type, clients(name, email)')
             .eq('id', invoice.project_id)
             .single(),
           supabase
@@ -64,6 +64,10 @@ export async function POST(req: NextRequest) {
 
         if (project) {
           const client = (project as any).clients;
+          const pt         = (project as any).project_type ?? 'website';
+          const isToolOnly = pt === 'tool';
+          const isBoth     = pt === 'website_tool';
+          const supportWord = isToolOnly ? 'post-delivery' : 'post-launch';
 
           await supabase
             .from('clients')
@@ -80,16 +84,25 @@ export async function POST(req: NextRequest) {
             : null;
 
           if (client?.email) {
-            resend.emails.send({
-              from: process.env.RESEND_FROM_EMAIL!,
-              to: client.email,
-              subject: `Final payment received — ${project.title}`,
-              html: `
+            const clientEmailHtml = isToolOnly
+              ? `
                 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
                   <h2 style="margin-bottom:8px;">🎉 Thank you, ${client.name}!</h2>
                   <p style="margin-bottom:16px;line-height:1.6;">
                     Your final payment for <strong>${project.title}</strong> has been received — you're all set!
-                    One last step: complete your launch details so we can transfer ownership of your site to you.
+                    David will be preparing your tool for delivery and will be in touch shortly with access details and instructions.
+                  </p>
+                  <p style="color:#6B6B60;font-size:13px;">
+                    Your 30-day ${supportWord} support window starts now. Questions? Email us at 3rddavidstechnology@gmail.com
+                  </p>
+                </div>
+              `
+              : `
+                <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+                  <h2 style="margin-bottom:8px;">🎉 Thank you, ${client.name}!</h2>
+                  <p style="margin-bottom:16px;line-height:1.6;">
+                    Your final payment for <strong>${project.title}</strong> has been received — you're all set!
+                    One last step: complete your launch details so we can ${isBoth ? 'transfer your site and prepare your tool delivery' : 'transfer ownership of your site to you'}.
                   </p>
                   ${portalLaunchUrl ? `
                   <a href="${portalLaunchUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin-bottom:16px;">
@@ -100,11 +113,23 @@ export async function POST(req: NextRequest) {
                   </p>
                   ` : ''}
                   <p style="color:#6B6B60;font-size:13px;">
-                    Your 30-day post-launch support window starts now. Questions? Email us at 3rddavidstechnology@gmail.com
+                    Your 30-day ${supportWord} support window starts now. Questions? Email us at 3rddavidstechnology@gmail.com
                   </p>
                 </div>
-              `,
+              `;
+
+            resend.emails.send({
+              from: process.env.RESEND_FROM_EMAIL!,
+              to: client.email,
+              subject: `Final payment received — ${project.title}`,
+              html: clientEmailHtml,
             }).catch(() => {});
+
+            const adminNote = isToolOnly
+              ? 'Prepare tool delivery for this client.'
+              : isBoth
+              ? 'Client has been prompted to complete launch details for site transfer and tool delivery.'
+              : 'Client has been prompted to complete launch details.';
 
             resend.emails.send({
               from: process.env.RESEND_FROM_EMAIL!,
@@ -113,7 +138,7 @@ export async function POST(req: NextRequest) {
               html: `
                 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
                   <h2 style="margin-bottom:8px;">Final Payment Received</h2>
-                  <p style="line-height:1.6;"><strong>${client.name}</strong> paid their final invoice for <strong>${project.title}</strong>. Client has been prompted to complete launch details.</p>
+                  <p style="line-height:1.6;"><strong>${client.name}</strong> paid their final invoice for <strong>${project.title}</strong>. ${adminNote}</p>
                   <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${invoice.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
                 </div>
               `,

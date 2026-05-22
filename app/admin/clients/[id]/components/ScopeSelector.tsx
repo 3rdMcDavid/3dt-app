@@ -40,7 +40,7 @@ function fmt(n: number) {
   return `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
 }
 
-export default function ScopeSelector() {
+export default function ScopeSelector({ projectType = 'website' }: { projectType?: string }) {
   const [selected, setSelected] = useState<SelectedMap>({});
   const [customItems, setCustomItems] = useState<CustomItem[]>([]);
   const [carePlan, setCarePlan] = useState(false);
@@ -214,7 +214,7 @@ export default function ScopeSelector() {
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--green)' }}>{fmt(deposit)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Final (50%) — due before launch</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Final (50%) — due before {projectType === 'tool' ? 'delivery' : projectType === 'website_tool' ? 'delivery/launch' : 'launch'}</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>{fmt(total - deposit)}</span>
           </div>
         </div>

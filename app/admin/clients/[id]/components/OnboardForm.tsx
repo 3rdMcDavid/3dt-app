@@ -99,7 +99,7 @@ export default function OnboardForm({
             />
           </div>
 
-          <ScopeSelector />
+          <ScopeSelector projectType={projectType} />
 
           <div className="form-actions" style={{ marginTop: 20 }}>
             <SubmitButton />
