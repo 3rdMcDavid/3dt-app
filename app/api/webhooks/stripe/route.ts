@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (paidInvoiceId) {
       const { data: invoice } = await supabase
         .from('invoices')
-        .select('type, project_id')
+        .select('type, project_id, amount')
         .eq('id', paidInvoiceId)
         .single();
 
@@ -129,6 +129,9 @@ export async function POST(req: NextRequest) {
       }
 
       if (invoice?.type === 'deposit') {
+        const depositAmount = invoice.amount ?? 250;
+        const fmtAmt = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
+
         const { data: project } = await supabase
           .from('projects')
           .select('title, clients(name, email)')
@@ -179,7 +182,7 @@ export async function POST(req: NextRequest) {
             html: `
               <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
                 <h2 style="margin-bottom:8px;">Deposit Paid</h2>
-                <p style="line-height:1.6;"><strong>${client?.name ?? 'Client'}</strong> paid their $250 deposit for <strong>${project.title}</strong>. Their portal is now unlocked and intake form is open.</p>
+                <p style="line-height:1.6;"><strong>${client?.name ?? 'Client'}</strong> paid their ${fmtAmt(depositAmount)} deposit for <strong>${project.title}</strong>. Their portal is now unlocked and intake form is open.</p>
                 <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${invoice.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
               </div>
             `,
@@ -195,7 +198,7 @@ export async function POST(req: NextRequest) {
               <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
                 <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
                 <p style="margin-bottom:16px;line-height:1.6;">
-                  Your $250 deposit for <strong>${project.title}</strong> has been received — thank you!
+                  Your ${fmtAmt(depositAmount)} deposit for <strong>${project.title}</strong> has been received — thank you!
                   Your portal is now fully unlocked. Head inside to complete your intake form and
                   kick off the project.
                 </p>
