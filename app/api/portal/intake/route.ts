@@ -63,6 +63,12 @@ export async function POST(req: NextRequest) {
       social_linkedin: (formData.get('social_linkedin') as string) || null,
       social_other: (formData.get('social_other') as string) || null,
       additional_notes: (formData.get('additional_notes') as string) || null,
+      // tool-specific fields
+      tool_problem:           (formData.get('tool_problem') as string) || null,
+      tool_current_workflow:  (formData.get('tool_current_workflow') as string) || null,
+      tool_desired_output:    (formData.get('tool_desired_output') as string) || null,
+      tool_systems:           (formData.get('tool_systems') as string) || null,
+      tool_success_criteria:  (formData.get('tool_success_criteria') as string) || null,
     })
     .select()
     .single();

@@ -127,6 +127,7 @@ export async function updateClientStatusAction(formData: FormData) {
 export async function onboardClientAction(formData: FormData) {
   const clientId = formData.get('client_id') as string;
   const title = (formData.get('title') as string).trim();
+  const projectType = (formData.get('project_type') as string) || 'website';
   const carePlan = formData.get('care_plan') === 'true';
 
   let scopeItems: { name: string; price: number }[] = [];
@@ -188,7 +189,7 @@ export async function onboardClientAction(formData: FormData) {
   // Create project
   const { data: project } = await supabase
     .from('projects')
-    .insert({ title, client_id: clientId, stage: 'discovery', notes: projectNotes })
+    .insert({ title, client_id: clientId, project_type: projectType, stage: 'discovery', notes: projectNotes })
     .select()
     .single();
 

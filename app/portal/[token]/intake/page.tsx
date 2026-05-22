@@ -2,20 +2,23 @@ export const dynamic = 'force-dynamic';
 
 import { createServiceClient } from '@/lib/supabase/service';
 import { notFound } from 'next/navigation';
-import type { RevisionStage, IntakeSubmissionType } from '@/lib/types';
+import type { RevisionStage, IntakeSubmissionType, ProjectType } from '@/lib/types';
 import IntakeForm from '../components/IntakeForm';
 
-const STAGE_LABELS: Record<RevisionStage, string> = {
-  awaiting_intake: 'Initial Intake',
-  intake_received: 'Draft In Progress',
-  revision_1_open: 'Review Draft 1',
-  revision_1_received: 'Revision In Progress',
-  revision_2_open: 'Review Draft 2',
-  revision_2_received: 'Final In Progress',
-  post_final_open: 'Final Review',
-  extra_revision_requested: 'Changes Requested',
-  complete: 'Complete',
-};
+function stageLabels(projectType: ProjectType): Record<RevisionStage, string> {
+  const isTool = projectType === 'tool' || projectType === 'website_tool';
+  return {
+    awaiting_intake:        'Initial Intake',
+    intake_received:        isTool ? 'Build In Progress'         : 'Draft In Progress',
+    revision_1_open:        isTool ? 'Review Build 1'            : 'Review Draft 1',
+    revision_1_received:    isTool ? 'Updates In Progress'       : 'Revision In Progress',
+    revision_2_open:        isTool ? 'Review Build 2'            : 'Review Draft 2',
+    revision_2_received:    isTool ? 'Final Build In Progress'   : 'Final In Progress',
+    post_final_open:        'Final Review',
+    extra_revision_requested: 'Changes Requested',
+    complete:               'Complete',
+  };
+}
 
 const REVISION_TYPE: Partial<Record<RevisionStage, IntakeSubmissionType>> = {
   revision_1_open: 'revision_1',
@@ -33,7 +36,7 @@ export default async function PortalIntakePage({
 
   const { data: session } = await supabase
     .from('portal_sessions')
-    .select('project_id, projects(title, revision_stage, draft_url)')
+    .select('project_id, projects(title, revision_stage, draft_url, project_type)')
     .eq('token', token)
     .gt('expires_at', new Date().toISOString())
     .single();
@@ -43,6 +46,8 @@ export default async function PortalIntakePage({
   const project = (session as any).projects;
   const stage = project?.revision_stage as RevisionStage;
   const draftUrl = project?.draft_url as string | null;
+  const projectType = (project?.project_type ?? 'website') as ProjectType;
+  const STAGE_LABELS = stageLabels(projectType);
 
   const { data: submissions } = await supabase
     .from('intake_submissions')
@@ -61,10 +66,17 @@ export default async function PortalIntakePage({
     stage === 'revision_2_received' ||
     stage === 'extra_revision_requested';
 
+  const isTool = projectType === 'tool' || projectType === 'website_tool';
   const waitingMessages: Partial<Record<RevisionStage, string>> = {
-    intake_received: "Your intake has been received! David is working on your first draft. We'll be in touch soon.",
-    revision_1_received: "Your feedback has been received! David is preparing your updated draft.",
-    revision_2_received: "Your feedback has been received! David is preparing your final version.",
+    intake_received:          isTool
+      ? "Your intake has been received! David is working on your first build. We'll be in touch soon."
+      : "Your intake has been received! David is working on your first draft. We'll be in touch soon.",
+    revision_1_received:      isTool
+      ? "Your feedback has been received! David is preparing your updates."
+      : "Your feedback has been received! David is preparing your updated draft.",
+    revision_2_received:      isTool
+      ? "Your feedback has been received! David is preparing the final build."
+      : "Your feedback has been received! David is preparing your final version.",
     extra_revision_requested: "Your change request has been received. David will prepare an updated version and be in touch shortly.",
   };
 
@@ -83,7 +95,9 @@ export default async function PortalIntakePage({
           <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Project Complete!</h2>
           <p style={{ color: 'var(--p-muted)', fontSize: 14 }}>
-            Your website has been approved. Check your portal home for next steps on your launch.
+            {isTool
+              ? 'Your build has been approved. Check your portal home for next steps.'
+              : 'Your website has been approved. Check your portal home for next steps on your launch.'}
           </p>
         </div>
       )}
@@ -100,7 +114,7 @@ export default async function PortalIntakePage({
 
       {/* Intake form — initial */}
       {stage === 'awaiting_intake' && (
-        <IntakeForm token={token} submissionType="initial" />
+        <IntakeForm token={token} submissionType="initial" projectType={projectType} />
       )}
 
       {/* Revision approval forms */}
@@ -114,12 +128,13 @@ export default async function PortalIntakePage({
               className="portal-btn"
               style={{ display: 'block', textAlign: 'center', marginBottom: 16 }}
             >
-              View Your Draft ↗
+              {isTool ? 'View Your Build ↗' : 'View Your Draft ↗'}
             </a>
           )}
           <IntakeForm
             token={token}
             submissionType={REVISION_TYPE[stage]!}
+            projectType={projectType}
             isApproval
             extraRevision={stage === 'post_final_open' && extraRevisionCount > 0}
           />

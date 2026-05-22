@@ -1,4 +1,5 @@
 export type ClientStatus = 'lead' | 'active' | 'completed';
+export type ProjectType = 'website' | 'tool' | 'website_tool';
 export type ProjectStage = 'discovery' | 'proposal' | 'contract' | 'build' | 'review' | 'handoff_pending' | 'launched';
 export type RevisionStage =
   | 'awaiting_intake'
@@ -30,6 +31,7 @@ export interface Project {
   created_at: string;
   client_id: string;
   title: string;
+  project_type: ProjectType;
   stage: ProjectStage;
   notes: string | null;
   revision_stage: RevisionStage;
@@ -42,6 +44,7 @@ export interface IntakeSubmission {
   created_at: string;
   type: IntakeSubmissionType;
   approved: boolean;
+  // website fields
   pages_type: string | null;
   pages_list: string[] | null;
   business_name: string | null;
@@ -54,6 +57,12 @@ export interface IntakeSubmission {
   social_instagram: string | null;
   social_linkedin: string | null;
   social_other: string | null;
+  // tool fields
+  tool_problem: string | null;
+  tool_current_workflow: string | null;
+  tool_desired_output: string | null;
+  tool_systems: string | null;
+  tool_success_criteria: string | null;
   additional_notes: string | null;
 }
 
