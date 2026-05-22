@@ -9,17 +9,21 @@ const ACTION_CTA: Partial<Record<string, { label: string; href: string; urgent: 
   post_final_open:    { label: 'Review & approve final →',    href: 'intake', urgent: true },
 };
 
-const PROGRESS_LABEL: Record<string, string> = {
-  awaiting_intake:    'Complete your intake form to get started',
-  intake_received:    'Intake received — first draft in progress',
-  revision_1_open:    'Draft 1 is ready for your review',
-  revision_1_received:'Feedback received — updates in progress',
-  revision_2_open:    'Draft 2 is ready for your review',
-  revision_2_received:'Feedback received — final version in progress',
-  post_final_open:         'Final version is ready for your approval',
-  extra_revision_requested:'Extra revision requested — updates in progress',
-  complete:                'Project complete — thank you!',
-};
+function progressLabel(stage: string, isTool: boolean): string {
+  const build = isTool ? 'build' : 'draft';
+  const map: Record<string, string> = {
+    awaiting_intake:          'Complete your intake form to get started',
+    intake_received:          `Intake received — first ${build} in progress`,
+    revision_1_open:          `${isTool ? 'Build' : 'Draft'} 1 is ready for your review`,
+    revision_1_received:      'Feedback received — updates in progress',
+    revision_2_open:          `${isTool ? 'Build' : 'Draft'} 2 is ready for your review`,
+    revision_2_received:      'Feedback received — final version in progress',
+    post_final_open:          'Final version is ready for your approval',
+    extra_revision_requested: 'Extra revision requested — updates in progress',
+    complete:                 'Project complete — thank you!',
+  };
+  return map[stage] ?? 'In progress';
+}
 
 export default async function PortalHomePage({
   params,
@@ -41,7 +45,7 @@ export default async function PortalHomePage({
   const projectId = session.project_id;
 
   const [{ data: project }, { data: contract }, { data: invoices }] = await Promise.all([
-    supabase.from('projects').select('*, clients(*)').eq('id', projectId).single(),
+    supabase.from('projects').select('*, clients(*), project_type').eq('id', projectId).single(),
     supabase.from('contracts').select('signed_at').eq('project_id', projectId).maybeSingle(),
     supabase.from('invoices').select('amount, status, type').eq('project_id', projectId),
   ]);
@@ -50,6 +54,8 @@ export default async function PortalHomePage({
 
   const client = (project as any).clients;
   const revisionStage = (project as any).revision_stage as string;
+  const projectType = (project as any).project_type ?? 'website';
+  const isTool = projectType === 'tool' || projectType === 'website_tool';
   const cta = ACTION_CTA[revisionStage];
   const clientCompleted = client?.status === 'completed';
   const launchSubmitted = !!(project as any).launch_submitted_at;
@@ -109,29 +115,29 @@ export default async function PortalHomePage({
         </Link>
       )}
 
-      {/* Paid — prompt to fill in launch details */}
-      {clientCompleted && !launchSubmitted && !launchConfirmed && (
+      {/* Paid — website: prompt for launch details / tool: delivery in progress info */}
+      {clientCompleted && !launchConfirmed && !isTool && !launchSubmitted && (
         <Link
           href={`/portal/${token}/launch`}
-          style={{
-            display: 'block',
-            background: 'var(--p-green)',
-            color: '#fff',
-            borderRadius: 12,
-            padding: '18px 20px',
-            marginBottom: 16,
-            textDecoration: 'none',
-          }}
+          style={{ display: 'block', background: 'var(--p-green)', color: '#fff', borderRadius: 12, padding: '18px 20px', marginBottom: 16, textDecoration: 'none' }}
         >
-          <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.8, marginBottom: 4 }}>
-            Last Step
-          </p>
+          <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.8, marginBottom: 4 }}>Last Step</p>
           <p style={{ fontSize: 16, fontWeight: 700 }}>Complete your launch details →</p>
         </Link>
       )}
 
-      {/* Launch details submitted — waiting for transfer */}
-      {clientCompleted && launchSubmitted && !launchConfirmed && (
+      {/* Tool: delivery in progress */}
+      {clientCompleted && !launchConfirmed && isTool && (
+        <div className="portal-card" style={{ padding: '20px', marginBottom: 16 }}>
+          <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Delivery in progress</p>
+          <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6 }}>
+            Your tool is complete! David is preparing your files and access details. You'll receive an email shortly with everything you need to get started.
+          </p>
+        </div>
+      )}
+
+      {/* Website: transfer in progress */}
+      {clientCompleted && launchSubmitted && !launchConfirmed && !isTool && (
         <div className="portal-card" style={{ padding: '20px', marginBottom: 16 }}>
           <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Transfer in progress</p>
           <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6 }}>
@@ -140,7 +146,7 @@ export default async function PortalHomePage({
         </div>
       )}
 
-      {/* Complete state — only show after David confirms the launch */}
+      {/* Complete state — after David confirms */}
       {launchConfirmed && (
         <div className="portal-card" style={{ textAlign: 'center', padding: '24px 20px', marginBottom: 16 }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🎉</div>
@@ -160,14 +166,16 @@ export default async function PortalHomePage({
           <span className="portal-status-label">Status</span>
           <span className="portal-status-value" style={{ fontSize: 13 }}>
             {launchConfirmed
-              ? 'Complete — site transferred!'
-              : clientCompleted && launchSubmitted
+              ? (isTool ? 'Complete — delivered!' : 'Complete — site transferred!')
+              : clientCompleted && launchSubmitted && !isTool
               ? 'Transfer in progress'
+              : clientCompleted && isTool
+              ? 'Delivery in progress'
               : clientCompleted
-              ? 'Paid — complete your launch details'
+              ? 'Paid — completing your launch details'
               : revisionStage === 'complete'
               ? 'Final approved — final payment due'
-              : PROGRESS_LABEL[revisionStage] ?? 'In progress'}
+              : progressLabel(revisionStage, isTool)}
           </span>
         </div>
       </div>

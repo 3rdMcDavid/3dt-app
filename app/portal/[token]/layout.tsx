@@ -48,13 +48,14 @@ export default async function PortalLayout({
       .maybeSingle(),
     supabase
       .from('projects')
-      .select('title, clients(name)')
+      .select('title, project_type, clients(name)')
       .eq('id', session.project_id)
       .single(),
   ]);
 
   const clientName = (project as any)?.clients?.name?.split(' ')[0] ?? 'there';
   const projectTitle = (project as any)?.title ?? '';
+  const projectType = (project as any)?.project_type ?? 'website';
 
   // Step 1: contract not yet signed
   if (!contract?.signed_at) {
@@ -98,7 +99,7 @@ export default async function PortalLayout({
     <div className="portal-root">
       <div className="portal-shell">
         <main className="portal-main">{children}</main>
-        <PortalNav token={token} />
+        <PortalNav token={token} projectType={projectType} />
       </div>
     </div>
   );

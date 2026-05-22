@@ -3,16 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export default function PortalNav({ token }: { token: string }) {
+export default function PortalNav({ token, projectType }: { token: string; projectType?: string }) {
   const pathname = usePathname();
   const base = `/portal/${token}`;
+  const isTool = projectType === 'tool' || projectType === 'website_tool';
 
   const tabs = [
-    { label: 'Home', href: base },
-    { label: 'Intake', href: `${base}/intake` },
+    { label: 'Home',     href: base },
+    { label: 'Intake',   href: `${base}/intake` },
     { label: 'Contract', href: `${base}/contract` },
-    { label: 'Invoice', href: `${base}/invoice` },
-    { label: 'Launch', href: `${base}/launch` },
+    { label: 'Invoice',  href: `${base}/invoice` },
+    { label: isTool ? 'Delivery' : 'Launch', href: `${base}/launch` },
   ];
 
   return (

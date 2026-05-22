@@ -81,6 +81,7 @@ export async function updateClientAction(formData: FormData) {
       name: (formData.get('name') as string).trim(),
       email: (formData.get('email') as string).trim().toLowerCase(),
       phone: (formData.get('phone') as string)?.trim() || null,
+      company: (formData.get('company') as string)?.trim() || null,
       status: newStatus,
     })
     .eq('id', id);

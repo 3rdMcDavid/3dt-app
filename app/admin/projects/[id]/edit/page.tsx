@@ -53,7 +53,16 @@ export default async function EditProjectPage({
                     <option value="contract">Contract</option>
                     <option value="build">Build</option>
                     <option value="review">Review</option>
+                    <option value="handoff_pending">Handoff Pending</option>
                     <option value="launched">Launched</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="project_type">Project Type</label>
+                  <select id="project_type" name="project_type" defaultValue={project.project_type}>
+                    <option value="website">Website</option>
+                    <option value="tool">Custom Tool / Automation</option>
+                    <option value="website_tool">Website + Tool</option>
                   </select>
                 </div>
                 <div className="form-group form-full">

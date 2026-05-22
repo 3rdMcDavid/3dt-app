@@ -65,17 +65,20 @@ export default async function ProjectHubPage({
     : null;
 
   const revisionStage = project?.revision_stage ?? 'awaiting_intake';
+  const projectType = project?.project_type ?? 'website';
+  const isTool = projectType === 'tool' || projectType === 'website_tool';
 
+  const draftWord = isTool ? 'Build' : 'Draft';
   const REVISION_STAGE_LABEL: Record<string, string> = {
-    awaiting_intake: 'Awaiting Intake',
-    intake_received: 'Intake Received — Ready for Draft 1',
-    revision_1_open: 'Draft 1 Sent — Awaiting Client Review',
-    revision_1_received: 'Revision 1 Received — Ready for Draft 2',
-    revision_2_open: 'Draft 2 Sent — Awaiting Client Review',
-    revision_2_received: 'Revision 2 Received — Ready for Final',
-    post_final_open: 'Final Sent — Awaiting Client Approval',
+    awaiting_intake:          'Awaiting Intake',
+    intake_received:          `Intake Received — Ready for ${draftWord} 1`,
+    revision_1_open:          `${draftWord} 1 Sent — Awaiting Client Review`,
+    revision_1_received:      `${draftWord} 1 Feedback Received — Ready for ${draftWord} 2`,
+    revision_2_open:          `${draftWord} 2 Sent — Awaiting Client Review`,
+    revision_2_received:      `${draftWord} 2 Feedback Received — Ready for Final`,
+    post_final_open:          'Final Sent — Awaiting Client Approval',
     extra_revision_requested: 'Extra Revision Requested — Ready to Re-send Final',
-    complete: 'Complete',
+    complete:                 'Complete',
   };
 
   const CAN_SEND_DRAFT: Record<string, string> = {
@@ -125,9 +128,12 @@ export default async function ProjectHubPage({
         <Link href={`/admin/clients/${project.client_id}`} className="back-link">← {client?.name}</Link>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           <h1 style={{ fontSize: 22, fontWeight: 700 }}>{project.title}</h1>
           <span className={`badge badge-${project.stage}`}>{project.stage}</span>
+          <span className="badge badge-draft" style={{ fontSize: 11, opacity: 0.8 }}>
+            {projectType === 'website' ? 'Website' : projectType === 'tool' ? 'Custom Tool' : 'Website + Tool'}
+          </span>
         </div>
 
         {/* ── Contract ─────────────────────────────────────────────────────── */}
@@ -330,6 +336,13 @@ export default async function ProjectHubPage({
                       {sub.content_ready && <div className="detail-item"><label>Content Ready</label><span style={{ textTransform: 'capitalize' }}>{sub.content_ready === 'yes' ? 'Yes' : sub.content_ready === 'partial' ? 'Partial' : 'No'}</span></div>}
                       {sub.special_features?.length > 0 && <div className="detail-item" style={{ gridColumn: '1 / -1' }}><label>Special Features</label><span>{sub.special_features.join(', ')}</span></div>}
                     </div>
+                    {/* Tool fields */}
+                    {sub.tool_problem && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Problem:</strong> {sub.tool_problem}</p>}
+                    {sub.tool_current_workflow && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Current workflow:</strong> {sub.tool_current_workflow}</p>}
+                    {sub.tool_desired_output && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Desired output:</strong> {sub.tool_desired_output}</p>}
+                    {sub.tool_systems && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Systems to connect:</strong> {sub.tool_systems}</p>}
+                    {sub.tool_success_criteria && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Success criteria:</strong> {sub.tool_success_criteria}</p>}
+                    {/* Website fields */}
                     {sub.services_offered && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Services:</strong> {sub.services_offered}</p>}
                     {sub.style_notes && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Style:</strong> {sub.style_notes}</p>}
                     {sub.bio && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}><strong>Bio:</strong> {sub.bio.length > 150 ? sub.bio.slice(0, 150) + '…' : sub.bio}</p>}
@@ -458,12 +471,12 @@ export default async function ProjectHubPage({
           </div>
         </div>
 
-        {/* ── Launch ───────────────────────────────────────────────────────── */}
+        {/* ── Launch / Delivery ────────────────────────────────────────────── */}
         <div className="hub-section">
           <div className="hub-section-header">
-            <span className="section-title">Launch</span>
+            <span className="section-title">{isTool ? 'Delivery' : 'Launch'}</span>
             {project.launch_submitted_at ? (
-              <span className="badge badge-accepted">Info Received</span>
+              <span className="badge badge-accepted">{isTool ? 'Ready to Deliver' : 'Info Received'}</span>
             ) : (
               <span className="badge badge-draft">Pending</span>
             )}
@@ -472,10 +485,12 @@ export default async function ProjectHubPage({
             {project.launch_submitted_at ? (
               <>
                 <div className="detail-grid" style={{ marginBottom: 16 }}>
-                  <div className="detail-item">
-                    <label>Vercel Email</label>
-                    <span>{project.client_vercel_email || '—'}</span>
-                  </div>
+                  {!isTool && (
+                    <div className="detail-item">
+                      <label>Vercel Email</label>
+                      <span>{project.client_vercel_email || '—'}</span>
+                    </div>
+                  )}
                   {project.client_github_username && (
                     <div className="detail-item">
                       <label>GitHub</label>
@@ -495,20 +510,22 @@ export default async function ProjectHubPage({
                 </div>
                 {project.launch_confirmed_at ? (
                   <p style={{ fontSize: 13, color: 'var(--green)' }}>
-                    ✓ Launched on {new Date(project.launch_confirmed_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
+                    ✓ {isTool ? 'Delivered' : 'Launched'} on {new Date(project.launch_confirmed_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
                   </p>
                 ) : (
                   <form action={markAsLaunchedAction}>
                     <input type="hidden" name="project_id" value={id} />
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Mark as Launched ✓
+                      {isTool ? 'Mark as Delivered ✓' : 'Mark as Launched ✓'}
                     </button>
                   </form>
                 )}
               </>
             ) : (
               <p style={{ fontSize: 13, color: 'var(--muted)' }}>
-                Waiting for {client?.name} to submit their Vercel account info via the portal Launch tab.
+                {isTool
+                  ? `Waiting for final payment. Once paid, you can deliver the tool to ${client?.name} and mark as delivered.`
+                  : `Waiting for ${client?.name} to submit their Vercel account info via the portal Launch tab.`}
               </p>
             )}
           </div>

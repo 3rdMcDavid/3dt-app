@@ -200,6 +200,7 @@ export async function updateProjectAction(formData: FormData) {
       title: (formData.get('title') as string).trim(),
       client_id: formData.get('client_id') as string,
       stage: formData.get('stage') as string,
+      project_type: (formData.get('project_type') as string) || 'website',
       notes: (formData.get('notes') as string)?.trim() || null,
     })
     .eq('id', id);

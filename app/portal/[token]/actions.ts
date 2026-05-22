@@ -197,11 +197,11 @@ export async function signContractFromPortalAction(formData: FormData) {
 export async function saveLaunchInfoAction(formData: FormData) {
   const token = formData.get('token') as string;
   const projectId = formData.get('project_id') as string;
-  const vercelEmail = (formData.get('vercel_email') as string).trim();
+  const vercelEmail = (formData.get('vercel_email') as string | null)?.trim() || null;
   const githubUsername = (formData.get('github_username') as string | null)?.trim() || null;
   const notes = (formData.get('notes') as string | null)?.trim() || null;
 
-  if (!token || !projectId || !vercelEmail) return;
+  if (!token || !projectId) return;
 
   const supabase = createServiceClient();
 
@@ -233,21 +233,24 @@ export async function saveLaunchInfoAction(formData: FormData) {
 
   const clientName = (project as any)?.clients?.name ?? 'Client';
   const projectTitle = (project as any)?.title ?? '';
+  const isTool = !vercelEmail;
 
   await sendPushNotification(
-    '🚀 Launch Info Submitted',
-    `${clientName} submitted their Vercel account info for ${projectTitle}`,
+    isTool ? '📦 Delivery Notes Submitted' : '🚀 Launch Info Submitted',
+    isTool
+      ? `${clientName} submitted delivery notes for ${projectTitle}`
+      : `${clientName} submitted their Vercel account info for ${projectTitle}`,
     `/admin/projects/${projectId}`
   );
 
   resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: '3rddavidstechnology@gmail.com',
-    subject: `🚀 Launch Info Submitted — ${projectTitle}`,
+    subject: isTool ? `📦 Delivery Notes — ${projectTitle}` : `🚀 Launch Info Submitted — ${projectTitle}`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
-        <h2 style="margin-bottom:8px;">Launch Info Submitted</h2>
-        <p style="line-height:1.6;"><strong>${clientName}</strong> submitted their launch details for <strong>${projectTitle}</strong>. Transfer is ready to begin.</p>
+        <h2 style="margin-bottom:8px;">${isTool ? 'Delivery Notes Submitted' : 'Launch Info Submitted'}</h2>
+        <p style="line-height:1.6;"><strong>${clientName}</strong> ${isTool ? 'submitted delivery notes for' : 'submitted their launch details for'} <strong>${projectTitle}</strong>. ${isTool ? '' : 'Transfer is ready to begin.'}</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${projectId}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
       </div>
     `,

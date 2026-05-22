@@ -41,6 +41,10 @@ export default async function EditClientPage({
                   <input id="phone" name="phone" type="tel" defaultValue={client.phone || ''} />
                 </div>
                 <div className="form-group">
+                  <label className="form-label" htmlFor="company">Company <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(optional)</span></label>
+                  <input id="company" name="company" type="text" defaultValue={client.company || ''} placeholder="Business or organization name" />
+                </div>
+                <div className="form-group">
                   <label className="form-label" htmlFor="status">Status</label>
                   <select id="status" name="status" defaultValue={client.status}>
                     <option value="lead">Lead</option>

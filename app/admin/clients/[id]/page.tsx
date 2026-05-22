@@ -43,6 +43,12 @@ export default async function ClientDetailPage({
           </div>
           <div className="card-body">
             <div className="detail-grid">
+              {client.company && (
+                <div className="detail-item">
+                  <label>Company</label>
+                  <span>{client.company}</span>
+                </div>
+              )}
               <div className="detail-item">
                 <label>Email</label>
                 <span>{client.email}</span>
