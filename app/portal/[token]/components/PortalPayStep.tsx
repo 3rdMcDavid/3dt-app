@@ -1,5 +1,4 @@
 type Props = {
-  token: string;
   projectTitle: string;
   stripeUrl: string | null;
   signatureName: string;

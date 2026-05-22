@@ -54,7 +54,7 @@ export default async function PortalHomePage({
   const projectId = session.project_id;
 
   const [{ data: project }, { data: contract }, { data: invoices }] = await Promise.all([
-    supabase.from('projects').select('*, clients(*), project_type').eq('id', projectId).single(),
+    supabase.from('projects').select('*, clients(*)').eq('id', projectId).single(),
     supabase.from('contracts').select('signed_at').eq('project_id', projectId).maybeSingle(),
     supabase.from('invoices').select('amount, status, type').eq('project_id', projectId),
   ]);

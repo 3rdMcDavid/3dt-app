@@ -82,7 +82,6 @@ export default async function PortalLayout({
         <div className="portal-shell">
           <main className="portal-main">
             <PortalPayStep
-              token={token}
               projectTitle={projectTitle}
               stripeUrl={depositInvoice?.stripe_payment_url ?? null}
               signatureName={contract.signature_name ?? ''}
