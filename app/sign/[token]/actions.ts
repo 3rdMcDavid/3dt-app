@@ -75,21 +75,30 @@ export async function signContractAction(formData: FormData) {
     `,
   }).catch(() => {});
 
-  // Create deposit + final invoices
-  const { data: depositInvoice } = await supabase
+  // Use existing invoices if created by the onboarding flow; otherwise create $250 defaults
+  let depositInvoice = (await supabase
     .from('invoices')
-    .insert({ project_id: contract.project_id, amount: 250, type: 'deposit', status: 'unpaid' })
-    .select()
-    .single();
+    .select('id, amount, stripe_payment_url')
+    .eq('project_id', contract.project_id)
+    .eq('type', 'deposit')
+    .maybeSingle()).data;
 
-  await supabase
-    .from('invoices')
-    .insert({ project_id: contract.project_id, amount: 250, type: 'final', status: 'unpaid' });
+  if (!depositInvoice) {
+    const { data: newDeposit } = await supabase
+      .from('invoices')
+      .insert({ project_id: contract.project_id, amount: 250, type: 'deposit', status: 'unpaid' })
+      .select('id, amount, stripe_payment_url')
+      .single();
+    depositInvoice = newDeposit;
 
-  // Generate Stripe payment link for deposit and email client
-  if (depositInvoice && client) {
+    await supabase
+      .from('invoices')
+      .insert({ project_id: contract.project_id, amount: 250, type: 'final', status: 'unpaid' });
+  }
+
+  // Generate Stripe link + email only if not already set up by the onboarding flow
+  if (depositInvoice && client && !depositInvoice.stripe_payment_url) {
     try {
-      // Look up portal token so we can link back to the portal on the payment-success page
       const { data: portalSessions } = await supabase
         .from('portal_sessions')
         .select('token')
@@ -99,9 +108,12 @@ export async function signContractAction(formData: FormData) {
         .limit(1);
       const portalToken = portalSessions?.[0]?.token ?? null;
 
+      const depositAmt = Number(depositInvoice.amount);
+      const fmt = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
+
       const price = await stripe.prices.create({
         currency: 'usd',
-        unit_amount: 25000,
+        unit_amount: Math.round(depositAmt * 100),
         product_data: { name: `${project.title} — Deposit` },
       });
 
@@ -122,22 +134,19 @@ export async function signContractAction(formData: FormData) {
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL!,
         to: client.email,
-        subject: `Contract signed — your $250 deposit is due`,
+        subject: `Contract signed — your ${fmt(depositAmt)} deposit is due`,
         html: `
           <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
             <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
             <p style="margin-bottom:16px;line-height:1.6;">
               Thank you for signing your contract for <strong>${project.title}</strong>!
-              To officially kick off your project, a deposit of <strong>$250</strong> is due now.
+              To officially kick off your project, a deposit of <strong>${fmt(depositAmt)}</strong> is due now.
               Once paid, your portal will be fully unlocked.
             </p>
             <a href="${paymentLink.url}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
-              Pay $250 Deposit →
+              Pay ${fmt(depositAmt)} Deposit →
             </a>
-            <p style="margin-top:24px;color:#6B6B60;font-size:13px;">
-              Total project: $500 &nbsp;·&nbsp; Deposit: $250 (due now) &nbsp;·&nbsp; Final: $250 (due on completion)
-            </p>
-            <p style="color:#6B6B60;font-size:12px;">Questions? Email us at 3rddavidstechnology@gmail.com</p>
+            <p style="color:#6B6B60;font-size:12px;margin-top:24px;">Questions? Email us at 3rddavidstechnology@gmail.com</p>
           </div>
         `,
       });
