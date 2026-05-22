@@ -15,14 +15,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
   }
 
-  let body: { first_name?: string; last_name?: string; email?: string; phone?: string; pain_point?: string; service?: string; budget?: string; message?: string };
+  let body: { first_name?: string; last_name?: string; email?: string; phone?: string; company?: string; pain_point?: string; service?: string; budget?: string; message?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: corsHeaders });
   }
 
-  const { first_name, last_name, email, phone, pain_point, service, budget, message } = body;
+  const { first_name, last_name, email, phone, company, pain_point, service, budget, message } = body;
 
   if (!first_name || !email) {
     return NextResponse.json({ error: 'first_name and email are required' }, { status: 400, headers: corsHeaders });
@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
     name,
     email,
     phone: phone ?? null,
+    company: company?.trim() || null,
     status: 'lead',
     notes,
   });
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
         <h2 style="margin-bottom:4px;">New inquiry from ${name}</h2>
+        ${company ? `<p style="font-size:13px;font-weight:600;margin-bottom:2px;">${company}</p>` : ''}
         <p style="color:#6B6B60;font-size:13px;margin-bottom:20px;">${email}${phone ? ` · ${phone}` : ''}</p>
 
         ${pain_point ? `

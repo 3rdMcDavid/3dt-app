@@ -13,27 +13,53 @@ type Props = {
 };
 
 const PAGE_OPTIONS = [
-  { value: 'home', label: 'Home' },
-  { value: 'about', label: 'About' },
-  { value: 'services', label: 'Services' },
+  { value: 'home',      label: 'Home' },
+  { value: 'about',     label: 'About' },
+  { value: 'services',  label: 'Services' },
   { value: 'portfolio', label: 'Portfolio / Gallery' },
-  { value: 'contact', label: 'Contact' },
-  { value: 'other', label: 'Other' },
+  { value: 'contact',   label: 'Contact' },
+  { value: 'other',     label: 'Other' },
 ];
 
 const SPECIAL_FEATURE_OPTIONS = [
-  { value: 'gallery', label: 'Photo gallery' },
-  { value: 'faq', label: 'FAQ section' },
-  { value: 'booking', label: 'Booking / scheduling link' },
-  { value: 'newsletter', label: 'Newsletter signup' },
-  { value: 'map', label: 'Map / directions' },
-  { value: 'video', label: 'Video embed' },
+  { value: 'gallery',            label: 'Photo gallery' },
+  { value: 'faq',                label: 'FAQ section' },
+  { value: 'booking',            label: 'Booking / scheduling link' },
+  { value: 'newsletter',         label: 'Newsletter signup' },
+  { value: 'map',                label: 'Map / directions' },
+  { value: 'video',              label: 'Video embed' },
   { value: 'testimonials_section', label: 'Testimonials / reviews section' },
-  { value: 'blog', label: 'Blog / news section' },
+  { value: 'blog',               label: 'Blog / news section' },
 ];
 
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      margin: '8px 0 4px',
+    }}>
+      <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
+      <span style={{
+        fontSize: 11,
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        color: 'var(--p-green)',
+        whiteSpace: 'nowrap',
+      }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
+    </div>
+  );
+}
+
 export default function IntakeForm({ token, submissionType, projectType = 'website', isApproval, extraRevision }: Props) {
-  const isTool = projectType === 'tool' || projectType === 'website_tool';
+  const isTool    = projectType === 'tool';
+  const isWebsite = projectType === 'website';
+  const isBoth    = projectType === 'website_tool';
 
   const [pagesType, setPagesType] = useState('');
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
@@ -81,10 +107,9 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
     }
   }
 
-  // ── Approval / revision form (shared by both types) ─────────────────────────
+  // ── Approval / revision form ────────────────────────────────────────────────
   if (isApproval) {
     const isEarlyApproval = submissionType === 'revision_1' || submissionType === 'revision_2';
-    const revisionLabel = isTool ? 'build' : 'site';
     return (
       <div className="intake-approval">
         <p style={{ color: 'var(--p-muted)', marginBottom: isEarlyApproval ? 8 : 20, lineHeight: 1.6 }}>
@@ -98,34 +123,16 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         )}
 
         {extraRevision && !extraRevisionConfirmed && (
-          <div style={{
-            background: '#451a03',
-            border: '1px solid #92400e',
-            borderRadius: 10,
-            padding: '16px 18px',
-            marginBottom: 20,
-          }}>
-            <p style={{ fontWeight: 600, marginBottom: 6, color: '#fbbf24' }}>
-              ⚠️ You've used your included revision rounds
-            </p>
+          <div style={{ background: '#451a03', border: '1px solid #92400e', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+            <p style={{ fontWeight: 600, marginBottom: 6, color: '#fbbf24' }}>⚠️ You've used your included revision rounds</p>
             <p style={{ fontSize: 13, color: '#fde68a', lineHeight: 1.6, marginBottom: 14 }}>
-              Your contract includes 2 revision rounds, which have been used. Any additional
-              changes beyond this point may be subject to an extra fee. Please reach out to
-              David before submitting to confirm any additional charges.
+              Your contract includes 2 revision rounds, which have been used. Any additional changes beyond this point
+              may be subject to an extra fee. Please reach out to David before submitting to confirm any additional charges.
             </p>
             <button
               type="button"
               onClick={() => setExtraRevisionConfirmed(true)}
-              style={{
-                background: '#92400e',
-                color: '#fde68a',
-                border: 'none',
-                borderRadius: 8,
-                padding: '8px 18px',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              style={{ background: '#92400e', color: '#fde68a', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >
               I understand — proceed anyway
             </button>
@@ -135,36 +142,26 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         <form ref={formRef}>
           <div className="form-group" style={{ marginBottom: 20 }}>
             <label className="portal-label">
-              {isTool ? 'What needs to change?' : 'Changes requested'}{' '}
+              {isTool || isBoth ? 'What needs to change?' : 'Changes requested'}{' '}
               <span style={{ fontWeight: 400, color: 'var(--p-muted)' }}>(optional)</span>
             </label>
             <textarea
               name="additional_notes"
               placeholder={
-                isTool
-                  ? `Describe what's not working as expected, or any new requirements…`
-                  : `Describe any changes you'd like…`
+                isTool || isBoth
+                  ? "Describe what's not working as expected, or any new requirements…"
+                  : "Describe any changes you'd like…"
               }
               style={{ minHeight: 100 }}
             />
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              className="btn-portal-primary"
-              onClick={() => handleSubmit(true)}
-              disabled={loading}
-            >
-              {loading ? 'Submitting…' : submissionType === 'post_final' ? 'Approve Final ✓' : isEarlyApproval ? `Approve & Skip Remaining Revisions ✓` : 'Looks Good →'}
+            <button type="button" className="btn-portal-primary" onClick={() => handleSubmit(true)} disabled={loading}>
+              {loading ? 'Submitting…' : submissionType === 'post_final' ? 'Approve Final ✓' : isEarlyApproval ? 'Approve & Skip Remaining Revisions ✓' : 'Looks Good →'}
             </button>
             {(!extraRevision || extraRevisionConfirmed) && (
-              <button
-                type="button"
-                className="btn-portal-ghost"
-                onClick={() => handleSubmit(false)}
-                disabled={loading}
-              >
-                {loading ? 'Submitting…' : `Submit Changes`}
+              <button type="button" className="btn-portal-ghost" onClick={() => handleSubmit(false)} disabled={loading}>
+                {loading ? 'Submitting…' : 'Submit Changes'}
               </button>
             )}
           </div>
@@ -174,126 +171,77 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
     );
   }
 
-  // ── Tool intake form ────────────────────────────────────────────────────────
-  if (isTool) {
-    return (
-      <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
-          The more detail you share about your situation, the better David can build something that
-          actually solves your problem — not just a generic tool. Nothing here is a one-size-fits-all.
+  // ── Shared tool section cards ───────────────────────────────────────────────
+  const ToolCards = (
+    <>
+      <div className="portal-card">
+        <h3 className="intake-section-title">The Problem</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label className="portal-label">What problem is this tool solving for you? *</label>
+            <textarea
+              name="tool_problem"
+              required
+              placeholder="e.g. I spend 2 hours every Monday manually pulling job orders from email into a spreadsheet, then texting each crew lead their assignments. It's error-prone and I always miss someone."
+              style={{ minHeight: 110 }}
+            />
+          </div>
+          <div>
+            <label className="portal-label">What does your current process look like?</label>
+            <textarea
+              name="tool_current_workflow"
+              placeholder="Walk me through how you handle this today — apps, spreadsheets, manual steps. Even if it's messy."
+              style={{ minHeight: 90 }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="portal-card">
+        <h3 className="intake-section-title">What the Tool Should Do</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label className="portal-label">Describe the ideal outcome</label>
+            <textarea
+              name="tool_desired_output"
+              placeholder="e.g. Every Monday at 8am, the tool pulls the week's jobs, groups them by crew, and texts each lead their schedule automatically."
+              style={{ minHeight: 100 }}
+            />
+          </div>
+          <div>
+            <label className="portal-label">How will you know it's working?</label>
+            <textarea
+              name="tool_success_criteria"
+              placeholder="e.g. Crew leads get their schedules without me doing anything. No missed assignments. I can see a log of what was sent."
+              style={{ minHeight: 80 }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="portal-card">
+        <h3 className="intake-section-title">Apps & Systems to Connect</h3>
+        <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 14, lineHeight: 1.6 }}>
+          List any apps, platforms, or data sources the tool needs to work with. Don't worry if you're not sure — we'll figure it out together.
         </p>
+        <textarea
+          name="tool_systems"
+          placeholder="e.g. Google Sheets, Twilio / SMS, QuickBooks, Gmail…"
+          style={{ minHeight: 80 }}
+        />
+      </div>
+    </>
+  );
 
-        {/* Pain point / problem */}
-        <div className="portal-card">
-          <h3 className="intake-section-title">The Problem *</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div>
-              <label className="portal-label">What problem is this tool solving for you?</label>
-              <textarea
-                name="tool_problem"
-                required
-                placeholder="e.g. I spend 2 hours every Monday manually pulling job orders from email into a spreadsheet, then texting each crew lead their assignments. It's error-prone and I always miss someone."
-                style={{ minHeight: 110 }}
-              />
-            </div>
-            <div>
-              <label className="portal-label">What does your current process look like?</label>
-              <textarea
-                name="tool_current_workflow"
-                placeholder="Walk me through how you handle this today, step by step — even if it's messy. What apps, spreadsheets, or manual steps are involved?"
-                style={{ minHeight: 90 }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* What it should do */}
-        <div className="portal-card">
-          <h3 className="intake-section-title">What the Tool Should Do</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div>
-              <label className="portal-label">Describe the ideal outcome</label>
-              <textarea
-                name="tool_desired_output"
-                placeholder="e.g. Every Monday morning at 8am, the tool should pull the week's jobs from my Google Sheet, group them by crew, and automatically text each crew lead their schedule for the week."
-                style={{ minHeight: 100 }}
-              />
-            </div>
-            <div>
-              <label className="portal-label">How will you know it's working?</label>
-              <textarea
-                name="tool_success_criteria"
-                placeholder="e.g. Crew leads are getting their schedules without me doing anything. No missed assignments. I can see a log of what was sent."
-                style={{ minHeight: 80 }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Systems */}
-        <div className="portal-card">
-          <h3 className="intake-section-title">Apps & Systems to Connect</h3>
-          <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 14, lineHeight: 1.6 }}>
-            List any apps, platforms, or data sources the tool needs to work with.
-            Don't worry if you're not sure — we'll figure it out together.
-          </p>
-          <textarea
-            name="tool_systems"
-            placeholder="e.g. Google Sheets (job list lives here), Twilio or just regular SMS, QuickBooks for invoicing, Gmail for sending confirmations…"
-            style={{ minHeight: 80 }}
-          />
-        </div>
-
-        {/* Files */}
-        <div className="portal-card">
-          <h3 className="intake-section-title">Files</h3>
-          <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 10, lineHeight: 1.6 }}>
-            Upload any spreadsheets, screenshots, or examples that show your current process.
-            A picture of the mess is worth a thousand words.
-          </p>
-          <input type="file" name="files" multiple accept="image/*,.pdf,.doc,.docx,.zip,.xlsx,.csv" />
-        </div>
-
-        {/* Anything else */}
-        <div className="portal-card">
-          <h3 className="intake-section-title">Anything else?</h3>
-          <textarea
-            name="additional_notes"
-            placeholder="Other context, questions, things David should know, timeline constraints…"
-            style={{ minHeight: 70 }}
-          />
-        </div>
-
-        {error && <p style={{ color: 'var(--p-gold)', fontSize: 13 }}>{error}</p>}
-
-        <button
-          type="button"
-          className="btn-portal-primary"
-          onClick={() => handleSubmit(false)}
-          disabled={loading}
-        >
-          {loading ? 'Submitting…' : 'Submit Intake →'}
-        </button>
-      </form>
-    );
-  }
-
-  // ── Website intake form ─────────────────────────────────────────────────────
-  return (
-    <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-      <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
-        Fill in what you can — the more detail you share, the better we can tailor your site.
-        Nothing is required except the page structure at the top.
-      </p>
-
-      {/* Website Structure */}
+  // ── Shared website section cards ────────────────────────────────────────────
+  const WebsiteCards = (
+    <>
       <div className="portal-card">
         <h3 className="intake-section-title">Website Structure *</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
             { value: 'single', label: '1-Page site with tabs / sections' },
-            { value: 'multi', label: 'Multi-page site' },
+            { value: 'multi',  label: 'Multi-page site' },
           ].map(opt => (
             <label key={opt.value} className="intake-radio-label">
               <input
@@ -310,11 +258,7 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
             <div className="intake-checkbox-group">
               {PAGE_OPTIONS.map(opt => (
                 <label key={opt.value} className="intake-check-label">
-                  <input
-                    type="checkbox"
-                    checked={selectedPages.includes(opt.value)}
-                    onChange={() => togglePage(opt.value)}
-                  />
+                  <input type="checkbox" checked={selectedPages.includes(opt.value)} onChange={() => togglePage(opt.value)} />
                   {opt.label}
                 </label>
               ))}
@@ -323,7 +267,6 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         </div>
       </div>
 
-      {/* Business Info */}
       <div className="portal-card">
         <h3 className="intake-section-title">Your Business</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -354,11 +297,10 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         </div>
       </div>
 
-      {/* Contact Info */}
       <div className="portal-card">
         <h3 className="intake-section-title">Contact Info to Display</h3>
         <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 14, lineHeight: 1.6 }}>
-          What contact info should appear on your site? Leave blank anything you'd rather not show.
+          Leave blank anything you'd rather not show publicly.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
@@ -376,7 +318,6 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         </div>
       </div>
 
-      {/* Domain & Existing Site */}
       <div className="portal-card">
         <h3 className="intake-section-title">Domain & Existing Website</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -391,7 +332,6 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         </div>
       </div>
 
-      {/* Style */}
       <div className="portal-card">
         <h3 className="intake-section-title">Style & Vibe</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -406,7 +346,6 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         </div>
       </div>
 
-      {/* Content */}
       <div className="portal-card">
         <h3 className="intake-section-title">Content & Assets</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -430,7 +369,6 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         </div>
       </div>
 
-      {/* Special Features */}
       <div className="portal-card">
         <h3 className="intake-section-title">Special Features</h3>
         <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 14 }}>
@@ -439,29 +377,117 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         <div className="intake-checkbox-group">
           {SPECIAL_FEATURE_OPTIONS.map(opt => (
             <label key={opt.value} className="intake-check-label">
-              <input
-                type="checkbox"
-                checked={selectedFeatures.includes(opt.value)}
-                onChange={() => toggleFeature(opt.value)}
-              />
+              <input type="checkbox" checked={selectedFeatures.includes(opt.value)} onChange={() => toggleFeature(opt.value)} />
               {opt.label}
             </label>
           ))}
         </div>
       </div>
 
-      {/* Social Links */}
       <div className="portal-card">
         <h3 className="intake-section-title">Social Links</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input type="url" name="social_facebook" placeholder="Facebook URL" />
+          <input type="url" name="social_facebook"  placeholder="Facebook URL" />
           <input type="url" name="social_instagram" placeholder="Instagram URL" />
-          <input type="url" name="social_linkedin" placeholder="LinkedIn URL" />
-          <input type="text" name="social_other" placeholder="Other (TikTok, YouTube, etc.)" />
+          <input type="url" name="social_linkedin"  placeholder="LinkedIn URL" />
+          <input type="text" name="social_other"    placeholder="Other (TikTok, YouTube, etc.)" />
         </div>
       </div>
+    </>
+  );
 
-      {/* Files */}
+  // ── Combined: Website + Tool ────────────────────────────────────────────────
+  if (isBoth) {
+    return (
+      <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
+          There are two parts below — first your custom tool, then your website. Fill in what you can;
+          the more detail you share, the better David can tailor everything to what you actually need.
+          Website structure is the only required field.
+        </p>
+
+        <SectionDivider label="Part 1 — Your Tool" />
+        {ToolCards}
+
+        <SectionDivider label="Part 2 — Your Website" />
+        {WebsiteCards}
+
+        <div className="portal-card">
+          <h3 className="intake-section-title">Files</h3>
+          <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 10, lineHeight: 1.6 }}>
+            Upload anything relevant — screenshots of your current process, logo, brand assets, inspiration images, spreadsheets.
+          </p>
+          <input type="file" name="files" multiple accept="image/*,.pdf,.doc,.docx,.zip,.xlsx,.csv" />
+        </div>
+
+        <div className="portal-card">
+          <h3 className="intake-section-title">Anything else?</h3>
+          <textarea name="additional_notes" placeholder="Other context, questions, timeline constraints…" style={{ minHeight: 70 }} />
+        </div>
+
+        {error && <p style={{ color: 'var(--p-gold)', fontSize: 13 }}>{error}</p>}
+
+        <button
+          type="button"
+          className="btn-portal-primary"
+          onClick={() => handleSubmit(false)}
+          disabled={loading || !pagesType}
+        >
+          {loading ? 'Submitting…' : 'Submit Intake →'}
+        </button>
+      </form>
+    );
+  }
+
+  // ── Tool only ───────────────────────────────────────────────────────────────
+  if (isTool) {
+    return (
+      <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
+          The more detail you share about your situation, the better David can build something that
+          actually solves the problem — not just a generic tool.
+        </p>
+
+        {ToolCards}
+
+        <div className="portal-card">
+          <h3 className="intake-section-title">Files</h3>
+          <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 10, lineHeight: 1.6 }}>
+            Upload any spreadsheets, screenshots, or examples that show your current process.
+            A picture of the mess is worth a thousand words.
+          </p>
+          <input type="file" name="files" multiple accept="image/*,.pdf,.doc,.docx,.zip,.xlsx,.csv" />
+        </div>
+
+        <div className="portal-card">
+          <h3 className="intake-section-title">Anything else?</h3>
+          <textarea name="additional_notes" placeholder="Other context, questions, timeline constraints…" style={{ minHeight: 70 }} />
+        </div>
+
+        {error && <p style={{ color: 'var(--p-gold)', fontSize: 13 }}>{error}</p>}
+
+        <button
+          type="button"
+          className="btn-portal-primary"
+          onClick={() => handleSubmit(false)}
+          disabled={loading}
+        >
+          {loading ? 'Submitting…' : 'Submit Intake →'}
+        </button>
+      </form>
+    );
+  }
+
+  // ── Website only ────────────────────────────────────────────────────────────
+  return (
+    <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
+        Fill in what you can — the more detail you share, the better we can tailor your site.
+        Nothing is required except the page structure at the top.
+      </p>
+
+      {WebsiteCards}
+
       <div className="portal-card">
         <h3 className="intake-section-title">Files</h3>
         <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 10, lineHeight: 1.6 }}>
@@ -470,7 +496,6 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         <input type="file" name="files" multiple accept="image/*,.pdf,.doc,.docx,.zip" />
       </div>
 
-      {/* Notes */}
       <div className="portal-card">
         <h3 className="intake-section-title">Anything else?</h3>
         <textarea name="additional_notes" placeholder="Any other details, questions, or requests…" style={{ minHeight: 70 }} />
