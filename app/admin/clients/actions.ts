@@ -127,7 +127,22 @@ export async function updateClientStatusAction(formData: FormData) {
 export async function onboardClientAction(formData: FormData) {
   const clientId = formData.get('client_id') as string;
   const title = (formData.get('title') as string).trim();
-  const depositAmount = parseFloat(formData.get('deposit_amount') as string);
+  const carePlan = formData.get('care_plan') === 'true';
+
+  let scopeItems: { name: string; price: number }[] = [];
+  try {
+    scopeItems = JSON.parse((formData.get('scope') as string) || '[]');
+  } catch { scopeItems = []; }
+
+  if (scopeItems.length === 0) throw new Error('Select at least one service before onboarding.');
+
+  const total = scopeItems.reduce((a, b) => a + b.price, 0);
+  const deposit = Math.round((total / 2) * 100) / 100;
+  const final = Math.round((total - deposit) * 100) / 100;
+
+  function fmt(n: number) {
+    return `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
+  }
 
   const supabase = await createClient();
 
@@ -138,46 +153,72 @@ export async function onboardClientAction(formData: FormData) {
 
   if (!client) throw new Error('Client not found');
 
-  // Create project
-  const { data: project } = await supabase
-    .from('projects')
-    .insert({ title, client_id: clientId, stage: 'discovery' })
-    .select()
-    .single();
+  // Build deliverables block for the contract
+  const itemLines = scopeItems.map(i => `  • ${i.name} — ${fmt(i.price)}`).join('\n');
+  const carePlanLine = carePlan
+    ? `\n  • Monthly Care Plan — $75/month (begins 30 days after launch; set up recurring billing separately)`
+    : '';
+  const deliverablesBlock = [
+    'SCOPE OF WORK',
+    '',
+    'The following services are included in this agreement:',
+    '',
+    itemLines + carePlanLine,
+    '',
+    `Project Total: ${fmt(total)}`,
+    `Deposit (50%): ${fmt(deposit)} — due at signing`,
+    `Final (50%): ${fmt(final)} — due before launch`,
+  ].join('\n');
 
-  if (!project) throw new Error('Failed to create project');
-
-  // Generate contract content from template
-  const content = (template?.content ?? '')
+  let content = (template?.content ?? '')
     .replace(/\{\{client_name\}\}/g, client.name)
     .replace(/\{\{project_title\}\}/g, title)
     .replace(/\{\{date\}\}/g, new Date().toLocaleDateString('en-US', {
       year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Chicago',
     }));
 
+  content = content.includes('{{deliverables}}')
+    ? content.replace('{{deliverables}}', deliverablesBlock)
+    : deliverablesBlock + '\n\n---\n\n' + content;
+
+  const projectNotes = carePlan
+    ? '⚠️ Care Plan selected — set up $75/mo recurring billing in Stripe.'
+    : null;
+
+  // Create project
+  const { data: project } = await supabase
+    .from('projects')
+    .insert({ title, client_id: clientId, stage: 'discovery', notes: projectNotes })
+    .select()
+    .single();
+
+  if (!project) throw new Error('Failed to create project');
+
   // Create contract, portal session, and deposit invoice in parallel
-  const [, { data: portalSession }, { data: invoice }] = await Promise.all([
+  const [, { data: portalSession }, { data: depositInvoice }] = await Promise.all([
     supabase.from('contracts').insert({ project_id: project.id, content }),
     supabase.from('portal_sessions').insert({ project_id: project.id }).select('token').single(),
     supabase.from('invoices').insert({
-      project_id: project.id,
-      amount: depositAmount,
-      type: 'deposit',
-      status: 'unpaid',
+      project_id: project.id, amount: deposit, type: 'deposit', status: 'unpaid',
     }).select().single(),
   ]);
 
-  // Generate Stripe payment link upfront so it's ready when client hits Step 2
-  if (portalSession && invoice) {
+  // Create final invoice
+  await supabase.from('invoices').insert({
+    project_id: project.id, amount: final, type: 'final', status: 'unpaid',
+  });
+
+  // Generate Stripe payment link for deposit — ready before client even signs
+  if (portalSession && depositInvoice) {
     try {
       const price = await stripe.prices.create({
         currency: 'usd',
-        unit_amount: Math.round(depositAmount * 100),
+        unit_amount: Math.round(deposit * 100),
         product_data: { name: `${title} — Deposit` },
       });
       const paymentLink = await stripe.paymentLinks.create({
         line_items: [{ price: price.id, quantity: 1 }],
-        metadata: { invoice_id: invoice.id },
+        metadata: { invoice_id: depositInvoice.id },
         after_completion: {
           type: 'redirect',
           redirect: {
@@ -188,13 +229,13 @@ export async function onboardClientAction(formData: FormData) {
       await supabase.from('invoices').update({
         stripe_payment_id: paymentLink.id,
         stripe_payment_url: paymentLink.url,
-      }).eq('id', invoice.id);
+      }).eq('id', depositInvoice.id);
     } catch (e) {
       console.error('Stripe link generation failed:', e);
     }
   }
 
-  // Mark client active and send portal email
+  // Mark client active and fire portal email
   await supabase.from('clients').update({ status: 'active' }).eq('id', clientId);
 
   if (portalSession) {

@@ -26,7 +26,7 @@ export default async function ContractTemplatePage() {
               Use these variables anywhere in the text — they'll be replaced automatically:
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-              {['{{client_name}}', '{{project_title}}', '{{date}}'].map(v => (
+              {['{{client_name}}', '{{project_title}}', '{{date}}', '{{deliverables}}'].map(v => (
                 <code key={v} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 12 }}>
                   {v}
                 </code>

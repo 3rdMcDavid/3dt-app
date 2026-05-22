@@ -2,6 +2,7 @@
 
 import { useFormStatus } from 'react-dom';
 import { onboardClientAction } from '@/app/admin/clients/actions';
+import ScopeSelector from './ScopeSelector';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -28,37 +29,25 @@ export default function OnboardForm({
       </div>
       <div className="card-body">
         <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20, lineHeight: 1.6 }}>
-          Creates a project, generates the contract, sets up the deposit invoice with a Stripe
-          payment link, marks the client active, and sends their portal link — all in one step.
+          Select the agreed scope, adjust prices if needed, then hit Onboard. Creates the project,
+          contract with deliverables, both invoices, a live Stripe deposit link, and sends the
+          client their portal — one click.
         </p>
         <form action={onboardClientAction}>
           <input type="hidden" name="client_id" value={clientId} />
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">Project Title</label>
-              <input
-                name="title"
-                type="text"
-                required
-                defaultValue={`${firstName}'s Website`}
-                placeholder="e.g. Johnson's Landscaping Website"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Deposit Amount ($)</label>
-              <input
-                name="deposit_amount"
-                type="number"
-                step="0.01"
-                min="1"
-                required
-                defaultValue="250"
-                placeholder="250.00"
-                style={{ maxWidth: 160 }}
-              />
-            </div>
+          <div className="form-group" style={{ marginBottom: 24 }}>
+            <label className="form-label">Project Title</label>
+            <input
+              name="title"
+              type="text"
+              required
+              defaultValue={`${firstName}'s Website`}
+              placeholder="e.g. Johnson's Landscaping Website"
+              style={{ maxWidth: 400 }}
+            />
           </div>
-          <div className="form-actions">
+          <ScopeSelector />
+          <div className="form-actions" style={{ marginTop: 20 }}>
             <SubmitButton />
           </div>
         </form>
