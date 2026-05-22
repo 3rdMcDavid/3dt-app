@@ -66,7 +66,9 @@ export default async function ProjectHubPage({
 
   const revisionStage = project?.revision_stage ?? 'awaiting_intake';
   const projectType = project?.project_type ?? 'website';
-  const isTool = projectType === 'tool' || projectType === 'website_tool';
+  const isTool      = projectType === 'tool' || projectType === 'website_tool';
+  const isToolOnly  = projectType === 'tool';
+  const isBoth      = projectType === 'website_tool';
 
   const draftWord = projectType === 'website_tool' ? 'Build & Draft' : isTool ? 'Build' : 'Draft';
   const REVISION_STAGE_LABEL: Record<string, string> = {
@@ -534,9 +536,9 @@ export default async function ProjectHubPage({
         {/* ── Launch / Delivery ────────────────────────────────────────────── */}
         <div className="hub-section">
           <div className="hub-section-header">
-            <span className="section-title">{isTool ? 'Delivery' : 'Launch'}</span>
+            <span className="section-title">{isToolOnly ? 'Delivery' : isBoth ? 'Launch & Delivery' : 'Launch'}</span>
             {project.launch_submitted_at ? (
-              <span className="badge badge-accepted">{isTool ? 'Ready to Deliver' : 'Info Received'}</span>
+              <span className="badge badge-accepted">{isToolOnly ? 'Ready to Deliver' : 'Info Received'}</span>
             ) : (
               <span className="badge badge-draft">Pending</span>
             )}
@@ -545,7 +547,7 @@ export default async function ProjectHubPage({
             {project.launch_submitted_at ? (
               <>
                 <div className="detail-grid" style={{ marginBottom: 16 }}>
-                  {!isTool && (
+                  {!isToolOnly && (
                     <div className="detail-item">
                       <label>Vercel Email</label>
                       <span>{project.client_vercel_email || '—'}</span>
@@ -570,20 +572,20 @@ export default async function ProjectHubPage({
                 </div>
                 {project.launch_confirmed_at ? (
                   <p style={{ fontSize: 13, color: 'var(--green)' }}>
-                    ✓ {isTool ? 'Delivered' : 'Launched'} on {new Date(project.launch_confirmed_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
+                    ✓ {isToolOnly ? 'Delivered' : 'Launched'} on {new Date(project.launch_confirmed_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
                   </p>
                 ) : (
                   <form action={markAsLaunchedAction}>
                     <input type="hidden" name="project_id" value={id} />
                     <button type="submit" className="btn btn-primary btn-sm">
-                      {isTool ? 'Mark as Delivered ✓' : 'Mark as Launched ✓'}
+                      {isToolOnly ? 'Mark as Delivered ✓' : 'Mark as Launched ✓'}
                     </button>
                   </form>
                 )}
               </>
             ) : (
               <p style={{ fontSize: 13, color: 'var(--muted)' }}>
-                {isTool
+                {isToolOnly
                   ? `Waiting for final payment. Once paid, you can deliver the tool to ${client?.name} and mark as delivered.`
                   : `Waiting for ${client?.name} to submit their Vercel account info via the portal Launch tab.`}
               </p>

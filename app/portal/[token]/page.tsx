@@ -185,7 +185,7 @@ export default async function PortalHomePage({
                 ? 'Complete — delivered & transferred!'
                 : 'Complete — site transferred!'
               : clientCompleted && launchSubmitted && !isToolOnly
-              ? 'Transfer in progress'
+              ? projectType === 'website_tool' ? 'Launch & delivery in progress' : 'Transfer in progress'
               : clientCompleted && isToolOnly
               ? 'Delivery in progress'
               : clientCompleted
