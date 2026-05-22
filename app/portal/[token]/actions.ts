@@ -80,24 +80,34 @@ export async function signContractFromPortalAction(formData: FormData) {
     `,
   }).catch(() => {});
 
-  // Create deposit + final invoices
-  const { data: depositInvoice } = await supabase
+  // Use existing invoices if onboarded via the new flow; otherwise create them
+  let depositInvoice = (await supabase
     .from('invoices')
-    .insert({ project_id: session.project_id, amount: 250, type: 'deposit', status: 'unpaid' })
-    .select()
-    .single();
+    .select('id, amount, stripe_payment_url')
+    .eq('project_id', session.project_id)
+    .eq('type', 'deposit')
+    .maybeSingle()).data;
 
-  await supabase
-    .from('invoices')
-    .insert({ project_id: session.project_id, amount: 250, type: 'final', status: 'unpaid' });
+  if (!depositInvoice) {
+    const { data: newDeposit } = await supabase
+      .from('invoices')
+      .insert({ project_id: session.project_id, amount: 250, type: 'deposit', status: 'unpaid' })
+      .select('id, amount, stripe_payment_url')
+      .single();
+    depositInvoice = newDeposit;
 
-  // Generate Stripe deposit payment link
-  let depositPaymentUrl: string | null = null;
-  if (depositInvoice) {
+    await supabase
+      .from('invoices')
+      .insert({ project_id: session.project_id, amount: 250, type: 'final', status: 'unpaid' });
+  }
+
+  // Generate Stripe deposit payment link only if not already created
+  let depositPaymentUrl: string | null = depositInvoice?.stripe_payment_url ?? null;
+  if (depositInvoice && !depositPaymentUrl) {
     try {
       const price = await stripe.prices.create({
         currency: 'usd',
-        unit_amount: 25000,
+        unit_amount: Math.round(depositInvoice.amount * 100),
         product_data: { name: `${project.title} — Deposit` },
       });
       const paymentLink = await stripe.paymentLinks.create({
@@ -127,6 +137,8 @@ export async function signContractFromPortalAction(formData: FormData) {
       day: 'numeric',
       timeZone: 'America/Chicago',
     });
+    const depositAmount = depositInvoice?.amount ?? 250;
+    const fmt = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
 
     // Format contract for email
     const contractHtml = (contract.content ?? '')
@@ -141,17 +153,17 @@ export async function signContractFromPortalAction(formData: FormData) {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: client.email,
-      subject: `Contract signed — your $250 deposit is due`,
+      subject: `Contract signed — your ${fmt(depositAmount)} deposit is due`,
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1A1A1A;">
           <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
           <p style="margin-bottom:16px;line-height:1.6;">
             Thanks for signing your contract for <strong>${project.title}</strong>!
-            Your next step is to pay your <strong>$250 deposit</strong> to kick off the project.
+            Your next step is to pay your <strong>${fmt(depositAmount)} deposit</strong> to kick off the project.
           </p>
           ${depositPaymentUrl ? `
           <a href="${depositPaymentUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin-bottom:24px;">
-            Pay $250 Deposit →
+            Pay ${fmt(depositAmount)} Deposit →
           </a>
           ` : ''}
           <p style="margin-bottom:8px;font-size:13px;color:#6B6B60;">

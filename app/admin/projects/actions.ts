@@ -83,7 +83,8 @@ export async function createProjectAction(formData: FormData) {
       const content = (template?.content ?? '')
         .replace(/\{\{client_name\}\}/g, client.name)
         .replace(/\{\{project_title\}\}/g, project.title)
-        .replace(/\{\{date\}\}/g, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Chicago' }));
+        .replace(/\{\{date\}\}/g, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Chicago' }))
+        .replace(/\{\{deliverables\}\}/g, '[Scope of work to be defined]');
 
       await supabase.from('contracts').insert({ project_id: project.id, content });
 
