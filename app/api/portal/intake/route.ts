@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
   // ── Final payment automation (fires when client approves at any stage) ──────
   if (approved && ['post_final', 'revision_1', 'revision_2'].includes(submissionType)) {
     try {
-      const [{ data: project }, { data: finalInvoice }, { data: portalSessions }] = await Promise.all([
-        supabase.from('projects').select('title, clients(name, email)').eq('id', projectId).single(),
+      const [{ data: project }, { data: finalInvoice }, { data: portalSessions }, { data: depositInvoice }] = await Promise.all([
+        supabase.from('projects').select('title, project_type, clients(name, email)').eq('id', projectId).single(),
         supabase
           .from('invoices')
           .select('*')
@@ -137,10 +137,23 @@ export async function POST(req: NextRequest) {
           .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false })
           .limit(1),
+        supabase
+          .from('invoices')
+          .select('amount')
+          .eq('project_id', projectId)
+          .eq('type', 'deposit')
+          .eq('status', 'paid')
+          .maybeSingle(),
       ]);
 
       if (finalInvoice && project) {
         const client = (project as any).clients;
+        const pt = (project as any).project_type ?? 'website';
+        const isToolProject = pt === 'tool' || pt === 'website_tool';
+        const handoffWord = isToolProject ? 'delivery' : 'launch';
+        const depositAmt = Number(depositInvoice?.amount ?? 0);
+        const finalAmt = Number(finalInvoice.amount);
+        const totalAmt = depositAmt > 0 ? depositAmt + finalAmt : null;
         let paymentUrl = finalInvoice.stripe_payment_url;
 
         if (!paymentUrl) {
@@ -179,15 +192,15 @@ export async function POST(req: NextRequest) {
                 <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
                 <p style="margin-bottom:16px;line-height:1.6;">
                   Your final version of <strong>${project.title}</strong> has been approved — great choice!
-                  Your final payment of <strong>$${Number(finalInvoice.amount).toFixed(2)}</strong> is now due.
-                  Once paid, we'll handle the launch and send you everything you need.
+                  Your final payment of <strong>$${finalAmt.toFixed(2)}</strong> is now due.
+                  Once paid, we'll handle the ${handoffWord} and send you everything you need.
                 </p>
                 <a href="${paymentUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
                   Pay Final Invoice →
                 </a>
-                <p style="margin-top:24px;color:#6B6B60;font-size:13px;">
-                  Total project: $500 &nbsp;·&nbsp; Deposit: $250 (paid) &nbsp;·&nbsp; Final: $${Number(finalInvoice.amount).toFixed(2)} (due now)
-                </p>
+                ${totalAmt ? `<p style="margin-top:24px;color:#6B6B60;font-size:13px;">
+                  Total project: $${totalAmt.toFixed(2)} &nbsp;·&nbsp; Deposit: $${depositAmt.toFixed(2)} (paid) &nbsp;·&nbsp; Final: $${finalAmt.toFixed(2)} (due now)
+                </p>` : ''}
                 ${portalInvoiceUrl ? `<p style="margin-top:8px;color:#6B6B60;font-size:12px;"><a href="${portalInvoiceUrl}" style="color:#22764A;">View in your portal →</a></p>` : ''}
                 <p style="color:#6B6B60;font-size:12px;margin-top:16px;">Questions? Email us at 3rddavidstechnology@gmail.com</p>
               </div>

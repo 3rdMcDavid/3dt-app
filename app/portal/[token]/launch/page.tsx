@@ -29,7 +29,7 @@ export default async function PortalLaunchPage({
 
   const submitted = !!(project as any).launch_submitted_at;
   const confirmed = !!(project as any).launch_confirmed_at;
-  const isTool = (project as any).project_type === 'tool' || (project as any).project_type === 'website_tool';
+  const isTool = (project as any).project_type === 'tool';
 
   // ── Tool delivery page ─────────────────────────────────────────────────────
   if (isTool) {

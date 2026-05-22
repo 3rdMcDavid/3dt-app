@@ -6,17 +6,18 @@ import type { RevisionStage, IntakeSubmissionType, ProjectType } from '@/lib/typ
 import IntakeForm from '../components/IntakeForm';
 
 function stageLabels(projectType: ProjectType): Record<RevisionStage, string> {
-  const isTool = projectType === 'tool' || projectType === 'website_tool';
+  const isToolOnly = projectType === 'tool';
+  const isBoth = projectType === 'website_tool';
   return {
-    awaiting_intake:        'Initial Intake',
-    intake_received:        isTool ? 'Build In Progress'         : 'Draft In Progress',
-    revision_1_open:        isTool ? 'Review Build 1'            : 'Review Draft 1',
-    revision_1_received:    isTool ? 'Updates In Progress'       : 'Revision In Progress',
-    revision_2_open:        isTool ? 'Review Build 2'            : 'Review Draft 2',
-    revision_2_received:    isTool ? 'Final Build In Progress'   : 'Final In Progress',
-    post_final_open:        'Final Review',
+    awaiting_intake:          'Initial Intake',
+    intake_received:          isBoth ? 'Build & Draft In Progress'      : isToolOnly ? 'Build In Progress'       : 'Draft In Progress',
+    revision_1_open:          isBoth ? 'Review Build & Draft 1'         : isToolOnly ? 'Review Build 1'          : 'Review Draft 1',
+    revision_1_received:      isBoth ? 'Updates In Progress'            : isToolOnly ? 'Updates In Progress'     : 'Revision In Progress',
+    revision_2_open:          isBoth ? 'Review Build & Draft 2'         : isToolOnly ? 'Review Build 2'          : 'Review Draft 2',
+    revision_2_received:      isBoth ? 'Final Build & Draft In Progress': isToolOnly ? 'Final Build In Progress' : 'Final In Progress',
+    post_final_open:          'Final Review',
     extra_revision_requested: 'Changes Requested',
-    complete:               'Complete',
+    complete:                 'Complete',
   };
 }
 
@@ -70,13 +71,19 @@ export default async function PortalIntakePage({
   const isTool = projectType === 'tool' || projectType === 'website_tool';
   const isBoth = projectType === 'website_tool';
   const waitingMessages: Partial<Record<RevisionStage, string>> = {
-    intake_received:          isTool
+    intake_received: isBoth
+      ? "Your intake has been received! David is working on your first build and draft. We'll be in touch soon."
+      : isTool
       ? "Your intake has been received! David is working on your first build. We'll be in touch soon."
       : "Your intake has been received! David is working on your first draft. We'll be in touch soon.",
-    revision_1_received:      isTool
+    revision_1_received: isBoth
+      ? "Your feedback has been received! David is preparing your updates."
+      : isTool
       ? "Your feedback has been received! David is preparing your updates."
       : "Your feedback has been received! David is preparing your updated draft.",
-    revision_2_received:      isTool
+    revision_2_received: isBoth
+      ? "Your feedback has been received! David is preparing the final build and draft."
+      : isTool
       ? "Your feedback has been received! David is preparing the final build."
       : "Your feedback has been received! David is preparing your final version.",
     extra_revision_requested: "Your change request has been received. David will prepare an updated version and be in touch shortly.",
@@ -97,7 +104,9 @@ export default async function PortalIntakePage({
           <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Project Complete!</h2>
           <p style={{ color: 'var(--p-muted)', fontSize: 14 }}>
-            {isTool
+            {isBoth
+              ? 'Your website and tool have been approved. Check your portal home for next steps.'
+              : isTool
               ? 'Your build has been approved. Check your portal home for next steps.'
               : 'Your website has been approved. Check your portal home for next steps on your launch.'}
           </p>

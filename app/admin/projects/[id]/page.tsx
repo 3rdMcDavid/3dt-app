@@ -68,7 +68,7 @@ export default async function ProjectHubPage({
   const projectType = project?.project_type ?? 'website';
   const isTool = projectType === 'tool' || projectType === 'website_tool';
 
-  const draftWord = isTool ? 'Build' : 'Draft';
+  const draftWord = projectType === 'website_tool' ? 'Build & Draft' : isTool ? 'Build' : 'Draft';
   const REVISION_STAGE_LABEL: Record<string, string> = {
     awaiting_intake:          'Awaiting Intake',
     intake_received:          `Intake Received — Ready for ${draftWord} 1`,
@@ -82,8 +82,8 @@ export default async function ProjectHubPage({
   };
 
   const CAN_SEND_DRAFT: Record<string, string> = {
-    intake_received: 'Send Draft 1',
-    revision_1_received: 'Send Draft 2',
+    intake_received: `Send ${draftWord} 1`,
+    revision_1_received: `Send ${draftWord} 2`,
     revision_2_received: 'Send Final',
     extra_revision_requested: 'Re-send Final',
   };

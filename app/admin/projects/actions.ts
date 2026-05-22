@@ -132,7 +132,7 @@ export async function advanceRevisionStageAction(formData: FormData) {
 
   try {
     const [{ data: project }, { data: sessions }] = await Promise.all([
-      supabase.from('projects').select('title, clients(name, email)').eq('id', projectId).single(),
+      supabase.from('projects').select('title, project_type, clients(name, email)').eq('id', projectId).single(),
       supabase
         .from('portal_sessions')
         .select('token')
@@ -147,20 +147,27 @@ export async function advanceRevisionStageAction(formData: FormData) {
       const client = (project as any).clients;
       const reviewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${session.token}/intake`;
 
+      const pt         = (project as any).project_type ?? 'website';
+      const isBothPT   = pt === 'website_tool';
+      const isToolOnly = pt === 'tool';
+      const buildWord  = isBothPT ? 'build and draft' : isToolOnly ? 'build' : 'draft';
+      const BuildWord  = isBothPT ? 'Build & Draft'   : isToolOnly ? 'Build' : 'Draft';
+      const handoffWord = (isToolOnly || isBothPT) ? 'delivery' : 'launch';
+
       const STAGE_EMAIL: Record<string, { subject: string; body: string; cta: string }> = {
         revision_1_open: {
-          subject: `Your first draft is ready — ${project.title}`,
-          body: `Your first draft for <strong>${project.title}</strong> is ready! Head to your portal to review it and let us know what you think.`,
-          cta: 'Review Draft 1 →',
+          subject: `Your first ${buildWord} is ready — ${project.title}`,
+          body: `Your first ${buildWord} for <strong>${project.title}</strong> is ready! Head to your portal to review it and let us know what you think.`,
+          cta: `Review ${BuildWord} 1 →`,
         },
         revision_2_open: {
-          subject: `Your updated draft is ready — ${project.title}`,
-          body: `Your updated draft for <strong>${project.title}</strong> is ready. Please review the changes and let us know if you'd like anything adjusted.`,
-          cta: 'Review Draft 2 →',
+          subject: `Your updated ${buildWord} is ready — ${project.title}`,
+          body: `Your updated ${buildWord} for <strong>${project.title}</strong> is ready. Please review the changes and let us know if you'd like anything adjusted.`,
+          cta: `Review ${BuildWord} 2 →`,
         },
         post_final_open: {
           subject: `Your final version is ready for approval — ${project.title}`,
-          body: `Your final version of <strong>${project.title}</strong> is ready! Please review and approve — once confirmed, we'll send your final invoice and prepare for launch.`,
+          body: `Your final version of <strong>${project.title}</strong> is ready! Please review and approve — once confirmed, we'll send your final invoice and prepare for ${handoffWord}.`,
           cta: 'Approve Final →',
         },
       };

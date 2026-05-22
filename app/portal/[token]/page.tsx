@@ -2,21 +2,30 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-const ACTION_CTA: Partial<Record<string, { label: string; href: string; urgent: boolean }>> = {
-  awaiting_intake:    { label: 'Complete your intake form →', href: 'intake', urgent: true },
-  revision_1_open:    { label: 'Review Draft 1 →',            href: 'intake', urgent: true },
-  revision_2_open:    { label: 'Review Draft 2 →',            href: 'intake', urgent: true },
-  post_final_open:    { label: 'Review & approve final →',    href: 'intake', urgent: true },
-};
+function getActionCta(stage: string, projectType: string): { label: string; href: string } | undefined {
+  const isBoth     = projectType === 'website_tool';
+  const isToolOnly = projectType === 'tool';
+  const BuildWord  = isBoth ? 'Build & Draft' : isToolOnly ? 'Build' : 'Draft';
+  const map: Partial<Record<string, { label: string; href: string }>> = {
+    awaiting_intake: { label: 'Complete your intake form →',     href: 'intake' },
+    revision_1_open: { label: `Review ${BuildWord} 1 →`,         href: 'intake' },
+    revision_2_open: { label: `Review ${BuildWord} 2 →`,         href: 'intake' },
+    post_final_open: { label: 'Review & approve final →',        href: 'intake' },
+  };
+  return map[stage];
+}
 
-function progressLabel(stage: string, isTool: boolean): string {
-  const build = isTool ? 'build' : 'draft';
+function progressLabel(stage: string, projectType: string): string {
+  const isBoth     = projectType === 'website_tool';
+  const isToolOnly = projectType === 'tool';
+  const buildWord  = isBoth ? 'build and draft' : isToolOnly ? 'build' : 'draft';
+  const BuildWord  = isBoth ? 'Build & Draft'   : isToolOnly ? 'Build' : 'Draft';
   const map: Record<string, string> = {
     awaiting_intake:          'Complete your intake form to get started',
-    intake_received:          `Intake received — first ${build} in progress`,
-    revision_1_open:          `${isTool ? 'Build' : 'Draft'} 1 is ready for your review`,
+    intake_received:          `Intake received — first ${buildWord} in progress`,
+    revision_1_open:          `${BuildWord} 1 is ready for your review`,
     revision_1_received:      'Feedback received — updates in progress',
-    revision_2_open:          `${isTool ? 'Build' : 'Draft'} 2 is ready for your review`,
+    revision_2_open:          `${BuildWord} 2 is ready for your review`,
     revision_2_received:      'Feedback received — final version in progress',
     post_final_open:          'Final version is ready for your approval',
     extra_revision_requested: 'Extra revision requested — updates in progress',
@@ -56,7 +65,8 @@ export default async function PortalHomePage({
   const revisionStage = (project as any).revision_stage as string;
   const projectType = (project as any).project_type ?? 'website';
   const isTool = projectType === 'tool' || projectType === 'website_tool';
-  const cta = ACTION_CTA[revisionStage];
+  const isToolOnly = projectType === 'tool';
+  const cta = getActionCta(revisionStage, projectType);
   const clientCompleted = client?.status === 'completed';
   const launchSubmitted = !!(project as any).launch_submitted_at;
   const launchConfirmed = !!(project as any).launch_confirmed_at;
@@ -115,8 +125,8 @@ export default async function PortalHomePage({
         </Link>
       )}
 
-      {/* Paid — website: prompt for launch details / tool: delivery in progress info */}
-      {clientCompleted && !launchConfirmed && !isTool && !launchSubmitted && (
+      {/* Paid — website + website_tool: prompt for Vercel launch details */}
+      {clientCompleted && !launchConfirmed && !isToolOnly && !launchSubmitted && (
         <Link
           href={`/portal/${token}/launch`}
           style={{ display: 'block', background: 'var(--p-green)', color: '#fff', borderRadius: 12, padding: '18px 20px', marginBottom: 16, textDecoration: 'none' }}
@@ -126,8 +136,8 @@ export default async function PortalHomePage({
         </Link>
       )}
 
-      {/* Tool: delivery in progress */}
-      {clientCompleted && !launchConfirmed && isTool && (
+      {/* Tool-only: delivery in progress (no action from client) */}
+      {clientCompleted && !launchConfirmed && isToolOnly && (
         <div className="portal-card" style={{ padding: '20px', marginBottom: 16 }}>
           <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Delivery in progress</p>
           <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6 }}>
@@ -136,12 +146,16 @@ export default async function PortalHomePage({
         </div>
       )}
 
-      {/* Website: transfer in progress */}
-      {clientCompleted && launchSubmitted && !launchConfirmed && !isTool && (
+      {/* Website / website+tool: transfer in progress after launch info submitted */}
+      {clientCompleted && launchSubmitted && !launchConfirmed && !isToolOnly && (
         <div className="portal-card" style={{ padding: '20px', marginBottom: 16 }}>
-          <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Transfer in progress</p>
+          <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
+            {projectType === 'website_tool' ? 'Launch & delivery in progress' : 'Transfer in progress'}
+          </p>
           <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6 }}>
-            We're transferring your site to your accounts. We'll reach out once everything is set up!
+            {projectType === 'website_tool'
+              ? "We're transferring your site and preparing your tool delivery. We'll be in touch once everything is ready!"
+              : "We're transferring your site to your accounts. We'll reach out once everything is set up!"}
           </p>
         </div>
       )}
@@ -166,16 +180,20 @@ export default async function PortalHomePage({
           <span className="portal-status-label">Status</span>
           <span className="portal-status-value" style={{ fontSize: 13 }}>
             {launchConfirmed
-              ? (isTool ? 'Complete — delivered!' : 'Complete — site transferred!')
-              : clientCompleted && launchSubmitted && !isTool
+              ? isToolOnly
+                ? 'Complete — delivered!'
+                : projectType === 'website_tool'
+                ? 'Complete — delivered & transferred!'
+                : 'Complete — site transferred!'
+              : clientCompleted && launchSubmitted && !isToolOnly
               ? 'Transfer in progress'
-              : clientCompleted && isTool
+              : clientCompleted && isToolOnly
               ? 'Delivery in progress'
               : clientCompleted
               ? 'Paid — completing your launch details'
               : revisionStage === 'complete'
               ? 'Final approved — final payment due'
-              : progressLabel(revisionStage, isTool)}
+              : progressLabel(revisionStage, projectType)}
           </span>
         </div>
       </div>
