@@ -38,6 +38,7 @@ export interface Project {
   revision_stage: RevisionStage;
   draft_url: string | null;
   tool_draft_url: string | null;
+  revision_components: 'website' | 'tool' | 'both';
   launch_confirmed_at: string | null;
 }
 

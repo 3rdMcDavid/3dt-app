@@ -37,7 +37,7 @@ export default async function PortalIntakePage({
 
   const { data: session } = await supabase
     .from('portal_sessions')
-    .select('project_id, projects(title, revision_stage, draft_url, tool_draft_url, project_type)')
+    .select('project_id, projects(title, revision_stage, draft_url, tool_draft_url, project_type, revision_components)')
     .eq('token', token)
     .gt('expires_at', new Date().toISOString())
     .single();
@@ -49,6 +49,7 @@ export default async function PortalIntakePage({
   const draftUrl = project?.draft_url as string | null;
   const toolDraftUrl = project?.tool_draft_url as string | null;
   const projectType = (project?.project_type ?? 'website') as ProjectType;
+  const revisionComponents = (project?.revision_components ?? 'both') as 'website' | 'tool' | 'both';
   const STAGE_LABELS = stageLabels(projectType);
 
   const { data: submissions } = await supabase
@@ -131,7 +132,7 @@ export default async function PortalIntakePage({
       {/* Revision approval forms */}
       {(stage === 'revision_1_open' || stage === 'revision_2_open' || stage === 'post_final_open') && (
         <>
-          {/* Single preview button for website or tool-only */}
+          {/* Single preview button — non-website_tool projects */}
           {!isBoth && draftUrl && (
             <a
               href={draftUrl}
@@ -144,10 +145,10 @@ export default async function PortalIntakePage({
             </a>
           )}
 
-          {/* Two preview buttons for website + tool */}
-          {isBoth && (draftUrl || toolDraftUrl) && (
+          {/* website_tool: show only the component(s) being reviewed this round */}
+          {isBoth && (
             <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-              {draftUrl && (
+              {(revisionComponents === 'both' || revisionComponents === 'website') && draftUrl && (
                 <a
                   href={draftUrl}
                   target="_blank"
@@ -158,7 +159,7 @@ export default async function PortalIntakePage({
                   View Website ↗
                 </a>
               )}
-              {toolDraftUrl && (
+              {(revisionComponents === 'both' || revisionComponents === 'tool') && toolDraftUrl && (
                 <a
                   href={toolDraftUrl}
                   target="_blank"
@@ -176,6 +177,7 @@ export default async function PortalIntakePage({
             token={token}
             submissionType={REVISION_TYPE[stage]!}
             projectType={projectType}
+            revisionComponents={isBoth ? revisionComponents : undefined}
             isApproval
             extraRevision={stage === 'post_final_open' && extraRevisionCount > 0}
           />

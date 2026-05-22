@@ -8,6 +8,7 @@ type Props = {
   token: string;
   submissionType: 'initial' | 'revision_1' | 'revision_2' | 'post_final';
   projectType?: ProjectType;
+  revisionComponents?: 'website' | 'tool' | 'both';
   isApproval?: boolean;
   extraRevision?: boolean;
 };
@@ -56,7 +57,7 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
-export default function IntakeForm({ token, submissionType, projectType = 'website', isApproval, extraRevision }: Props) {
+export default function IntakeForm({ token, submissionType, projectType = 'website', revisionComponents, isApproval, extraRevision }: Props) {
   const isTool    = projectType === 'tool';
   const isWebsite = projectType === 'website';
   const isBoth    = projectType === 'website_tool';
@@ -96,8 +97,8 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
     fd.delete('special_features');
     selectedFeatures.forEach(f => fd.append('special_features', f));
 
-    // Merge split feedback fields into additional_notes for website_tool approval
-    if (isBoth && isApproval) {
+    // Merge split feedback fields into additional_notes for website_tool approval (both components)
+    if (isBoth && isApproval && (revisionComponents === 'both' || !revisionComponents)) {
       const wNotes = ((fd.get('website_notes') as string) ?? '').trim();
       const tNotes = ((fd.get('tool_notes') as string) ?? '').trim();
       const parts = [
@@ -153,8 +154,8 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         )}
 
         <form ref={formRef}>
-          {/* Split feedback for website + tool projects */}
-          {isBoth ? (
+          {/* Split feedback for website + tool projects (both components) */}
+          {isBoth && (revisionComponents === 'both' || !revisionComponents) ? (
             <>
               <SectionDivider label="Website Feedback" />
               <div className="form-group" style={{ marginBottom: 16, marginTop: 12 }}>
@@ -184,13 +185,15 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
           ) : (
             <div className="form-group" style={{ marginBottom: 20 }}>
               <label className="portal-label">
-                {isTool ? 'What needs to change?' : 'Changes requested'}{' '}
+                {revisionComponents === 'website' ? 'Website changes' : (isTool || revisionComponents === 'tool') ? 'What needs to change?' : 'Changes requested'}{' '}
                 <span style={{ fontWeight: 400, color: 'var(--p-muted)' }}>(optional)</span>
               </label>
               <textarea
                 name="additional_notes"
                 placeholder={
-                  isTool
+                  revisionComponents === 'website'
+                    ? "Describe any changes you'd like to the website…"
+                    : (isTool || revisionComponents === 'tool')
                     ? "Describe what's not working as expected, or any new requirements…"
                     : "Describe any changes you'd like…"
                 }

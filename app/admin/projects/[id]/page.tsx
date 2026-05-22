@@ -320,19 +320,45 @@ export default async function ProjectHubPage({
                   />
                 </div>
                 {projectType === 'website_tool' && (
-                  <div className="form-group" style={{ marginBottom: 12 }}>
-                    <label className="form-label">
-                      Tool Build URL{' '}
-                      <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional)</span>
-                    </label>
-                    <input
-                      name="tool_draft_url"
-                      type="url"
-                      placeholder="https://your-tool.vercel.app"
-                      defaultValue={project.tool_draft_url ?? ''}
-                      style={{ maxWidth: 420 }}
-                    />
-                  </div>
+                  <>
+                    <div className="form-group" style={{ marginBottom: 12 }}>
+                      <label className="form-label">
+                        Tool Build URL{' '}
+                        <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional)</span>
+                      </label>
+                      <input
+                        name="tool_draft_url"
+                        type="url"
+                        placeholder="https://your-tool.vercel.app"
+                        defaultValue={project.tool_draft_url ?? ''}
+                        style={{ maxWidth: 420 }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 12 }}>
+                      <label className="form-label">What's ready for client review?</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
+                        {([
+                          { value: 'both',    label: 'Both website & tool' },
+                          { value: 'website', label: 'Website only' },
+                          { value: 'tool',    label: 'Tool only' },
+                        ] as const).map(opt => (
+                          <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              name="revision_components"
+                              value={opt.value}
+                              defaultChecked={opt.value === 'both'}
+                              style={{ width: 'auto' }}
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+                {projectType !== 'website_tool' && (
+                  <input type="hidden" name="revision_components" value="both" />
                 )}
                 <button type="submit" className="btn btn-primary btn-sm">
                   {CAN_SEND_DRAFT[revisionStage]} →

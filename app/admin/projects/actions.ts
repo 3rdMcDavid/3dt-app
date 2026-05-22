@@ -121,13 +121,14 @@ export async function advanceRevisionStageAction(formData: FormData) {
   const currentStage = formData.get('current_stage') as string;
   const draftUrl = (formData.get('draft_url') as string)?.trim() || null;
   const toolDraftUrl = (formData.get('tool_draft_url') as string)?.trim() || null;
+  const revisionComponents = (formData.get('revision_components') as string) || 'both';
   const nextStage = NEXT_REVISION_STAGE[currentStage];
   if (!nextStage) return;
 
   const supabase = await createClient();
   await supabase
     .from('projects')
-    .update({ revision_stage: nextStage, draft_url: draftUrl, tool_draft_url: toolDraftUrl })
+    .update({ revision_stage: nextStage, draft_url: draftUrl, tool_draft_url: toolDraftUrl, revision_components: revisionComponents })
     .eq('id', projectId);
 
   try {
@@ -150,9 +151,12 @@ export async function advanceRevisionStageAction(formData: FormData) {
       const pt         = (project as any).project_type ?? 'website';
       const isBothPT   = pt === 'website_tool';
       const isToolOnly = pt === 'tool';
-      const buildWord  = isBothPT ? 'build and draft' : isToolOnly ? 'build' : 'draft';
-      const BuildWord  = isBothPT ? 'Build & Draft'   : isToolOnly ? 'Build' : 'Draft';
       const handoffWord = (isToolOnly || isBothPT) ? 'delivery' : 'launch';
+
+      // For website_tool, resolve word based on which component(s) are being reviewed
+      const rc = isBothPT ? revisionComponents : (isToolOnly ? 'tool' : 'website');
+      const buildWord = rc === 'both' ? 'build and draft' : rc === 'tool' ? 'build' : 'draft';
+      const BuildWord = rc === 'both' ? 'Build & Draft'   : rc === 'tool' ? 'Build' : 'Draft';
 
       const STAGE_EMAIL: Record<string, { subject: string; body: string; cta: string }> = {
         revision_1_open: {
