@@ -147,6 +147,14 @@ select option { background: var(--surface); }
   .topbar-actions .btn { padding: 6px 10px; font-size: 12px; }
 }
 
+/* ── Filter tabs ── */
+.filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-tab { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--muted); background: var(--surface); border: 1px solid var(--border); text-decoration: none; transition: all 0.15s; }
+.filter-tab:hover { color: var(--text); border-color: var(--accent-lt); }
+.filter-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
+.filter-tab-count { font-size: 11px; background: rgba(255,255,255,0.2); border-radius: 10px; padding: 1px 6px; font-weight: 600; }
+.filter-tab:not(.active) .filter-tab-count { background: var(--border); color: var(--muted); }
+
 /* ── Client cards ── */
 .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
 .client-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
