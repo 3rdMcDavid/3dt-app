@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { sendPortalGetStartedEmail } from '@/app/admin/projects/actions';
 import { sendPushNotification } from '@/lib/push';
+import { stripe } from '@/lib/stripe';
 
 async function firePortalEmailForClient(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -121,6 +122,99 @@ export async function updateClientStatusAction(formData: FormData) {
   }
 
   revalidatePath('/admin/clients');
+}
+
+export async function onboardClientAction(formData: FormData) {
+  const clientId = formData.get('client_id') as string;
+  const title = (formData.get('title') as string).trim();
+  const depositAmount = parseFloat(formData.get('deposit_amount') as string);
+
+  const supabase = await createClient();
+
+  const [{ data: client }, { data: template }] = await Promise.all([
+    supabase.from('clients').select('name, email').eq('id', clientId).single(),
+    supabase.from('contract_templates').select('content').single(),
+  ]);
+
+  if (!client) throw new Error('Client not found');
+
+  // Create project
+  const { data: project } = await supabase
+    .from('projects')
+    .insert({ title, client_id: clientId, stage: 'discovery' })
+    .select()
+    .single();
+
+  if (!project) throw new Error('Failed to create project');
+
+  // Generate contract content from template
+  const content = (template?.content ?? '')
+    .replace(/\{\{client_name\}\}/g, client.name)
+    .replace(/\{\{project_title\}\}/g, title)
+    .replace(/\{\{date\}\}/g, new Date().toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Chicago',
+    }));
+
+  // Create contract, portal session, and deposit invoice in parallel
+  const [, { data: portalSession }, { data: invoice }] = await Promise.all([
+    supabase.from('contracts').insert({ project_id: project.id, content }),
+    supabase.from('portal_sessions').insert({ project_id: project.id }).select('token').single(),
+    supabase.from('invoices').insert({
+      project_id: project.id,
+      amount: depositAmount,
+      type: 'deposit',
+      status: 'unpaid',
+    }).select().single(),
+  ]);
+
+  // Generate Stripe payment link upfront so it's ready when client hits Step 2
+  if (portalSession && invoice) {
+    try {
+      const price = await stripe.prices.create({
+        currency: 'usd',
+        unit_amount: Math.round(depositAmount * 100),
+        product_data: { name: `${title} — Deposit` },
+      });
+      const paymentLink = await stripe.paymentLinks.create({
+        line_items: [{ price: price.id, quantity: 1 }],
+        metadata: { invoice_id: invoice.id },
+        after_completion: {
+          type: 'redirect',
+          redirect: {
+            url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success?token=${portalSession.token}`,
+          },
+        },
+      });
+      await supabase.from('invoices').update({
+        stripe_payment_id: paymentLink.id,
+        stripe_payment_url: paymentLink.url,
+      }).eq('id', invoice.id);
+    } catch (e) {
+      console.error('Stripe link generation failed:', e);
+    }
+  }
+
+  // Mark client active and send portal email
+  await supabase.from('clients').update({ status: 'active' }).eq('id', clientId);
+
+  if (portalSession) {
+    try {
+      await sendPortalGetStartedEmail(client.name, client.email, title, portalSession.token);
+      await supabase
+        .from('portal_sessions')
+        .update({ sent_at: new Date().toISOString() })
+        .eq('token', portalSession.token);
+      await sendPushNotification(
+        '🚀 Client Onboarded',
+        `${client.name} — portal sent`,
+        `/admin/projects/${project.id}`
+      );
+    } catch (e) {
+      console.error('Portal email failed:', e);
+    }
+  }
+
+  redirect(`/admin/projects/${project.id}`);
 }
 
 export async function deleteClientAction(formData: FormData) {

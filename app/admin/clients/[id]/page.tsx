@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Client } from '@/lib/types';
 import DeleteClientButton from './components/DeleteClientButton';
-import { updateClientStatusAction } from '@/app/admin/clients/actions';
+import OnboardForm from './components/OnboardForm';
 
 export default async function ClientDetailPage({
   params,
@@ -39,18 +39,7 @@ export default async function ClientDetailPage({
         <div className="card section">
           <div className="card-header">
             <span className="card-title">Client Info</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className={`badge badge-${client.status}`}>{client.status}</span>
-              {client.status === 'lead' && (
-                <form action={updateClientStatusAction} style={{ display: 'inline' }}>
-                  <input type="hidden" name="id" value={id} />
-                  <input type="hidden" name="status" value="active" />
-                  <button type="submit" className="btn btn-primary btn-sm">
-                    Convert to Active Client →
-                  </button>
-                </form>
-              )}
-            </div>
+            <span className={`badge badge-${client.status}`}>{client.status}</span>
           </div>
           <div className="card-body">
             <div className="detail-grid">
@@ -75,6 +64,11 @@ export default async function ClientDetailPage({
             )}
           </div>
         </div>
+
+        {/* Onboard — shown only for leads with no active project */}
+        {client.status === 'lead' && !projects?.length && (
+          <OnboardForm clientId={id} clientName={client.name} />
+        )}
 
         {/* Projects */}
         <div className="section">
