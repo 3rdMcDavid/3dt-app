@@ -96,6 +96,19 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
     fd.delete('special_features');
     selectedFeatures.forEach(f => fd.append('special_features', f));
 
+    // Merge split feedback fields into additional_notes for website_tool approval
+    if (isBoth && isApproval) {
+      const wNotes = ((fd.get('website_notes') as string) ?? '').trim();
+      const tNotes = ((fd.get('tool_notes') as string) ?? '').trim();
+      const parts = [
+        wNotes ? `Website: ${wNotes}` : '',
+        tNotes ? `Tool: ${tNotes}` : '',
+      ].filter(Boolean);
+      fd.set('additional_notes', parts.join('\n\n'));
+      fd.delete('website_notes');
+      fd.delete('tool_notes');
+    }
+
     const res = await fetch('/api/portal/intake', { method: 'POST', body: fd });
     const json = await res.json();
 
@@ -140,21 +153,51 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
         )}
 
         <form ref={formRef}>
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label className="portal-label">
-              {isTool || isBoth ? 'What needs to change?' : 'Changes requested'}{' '}
-              <span style={{ fontWeight: 400, color: 'var(--p-muted)' }}>(optional)</span>
-            </label>
-            <textarea
-              name="additional_notes"
-              placeholder={
-                isTool || isBoth
-                  ? "Describe what's not working as expected, or any new requirements…"
-                  : "Describe any changes you'd like…"
-              }
-              style={{ minHeight: 100 }}
-            />
-          </div>
+          {/* Split feedback for website + tool projects */}
+          {isBoth ? (
+            <>
+              <SectionDivider label="Website Feedback" />
+              <div className="form-group" style={{ marginBottom: 16, marginTop: 12 }}>
+                <label className="portal-label">
+                  Website changes{' '}
+                  <span style={{ fontWeight: 400, color: 'var(--p-muted)' }}>(optional)</span>
+                </label>
+                <textarea
+                  name="website_notes"
+                  placeholder="Describe any changes you'd like to the website…"
+                  style={{ minHeight: 90 }}
+                />
+              </div>
+              <SectionDivider label="Tool Feedback" />
+              <div className="form-group" style={{ marginBottom: 20, marginTop: 12 }}>
+                <label className="portal-label">
+                  Tool changes{' '}
+                  <span style={{ fontWeight: 400, color: 'var(--p-muted)' }}>(optional)</span>
+                </label>
+                <textarea
+                  name="tool_notes"
+                  placeholder="Describe what's not working as expected, or any new requirements for the tool…"
+                  style={{ minHeight: 90 }}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="form-group" style={{ marginBottom: 20 }}>
+              <label className="portal-label">
+                {isTool ? 'What needs to change?' : 'Changes requested'}{' '}
+                <span style={{ fontWeight: 400, color: 'var(--p-muted)' }}>(optional)</span>
+              </label>
+              <textarea
+                name="additional_notes"
+                placeholder={
+                  isTool
+                    ? "Describe what's not working as expected, or any new requirements…"
+                    : "Describe any changes you'd like…"
+                }
+                style={{ minHeight: 100 }}
+              />
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button type="button" className="btn-portal-primary" onClick={() => handleSubmit(true)} disabled={loading}>
               {loading ? 'Submitting…' : submissionType === 'post_final' ? 'Approve Final ✓' : isEarlyApproval ? 'Approve & Skip Remaining Revisions ✓' : 'Looks Good →'}

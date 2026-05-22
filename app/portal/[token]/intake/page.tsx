@@ -36,7 +36,7 @@ export default async function PortalIntakePage({
 
   const { data: session } = await supabase
     .from('portal_sessions')
-    .select('project_id, projects(title, revision_stage, draft_url, project_type)')
+    .select('project_id, projects(title, revision_stage, draft_url, tool_draft_url, project_type)')
     .eq('token', token)
     .gt('expires_at', new Date().toISOString())
     .single();
@@ -46,6 +46,7 @@ export default async function PortalIntakePage({
   const project = (session as any).projects;
   const stage = project?.revision_stage as RevisionStage;
   const draftUrl = project?.draft_url as string | null;
+  const toolDraftUrl = project?.tool_draft_url as string | null;
   const projectType = (project?.project_type ?? 'website') as ProjectType;
   const STAGE_LABELS = stageLabels(projectType);
 
@@ -67,6 +68,7 @@ export default async function PortalIntakePage({
     stage === 'extra_revision_requested';
 
   const isTool = projectType === 'tool' || projectType === 'website_tool';
+  const isBoth = projectType === 'website_tool';
   const waitingMessages: Partial<Record<RevisionStage, string>> = {
     intake_received:          isTool
       ? "Your intake has been received! David is working on your first build. We'll be in touch soon."
@@ -120,7 +122,8 @@ export default async function PortalIntakePage({
       {/* Revision approval forms */}
       {(stage === 'revision_1_open' || stage === 'revision_2_open' || stage === 'post_final_open') && (
         <>
-          {draftUrl && (
+          {/* Single preview button for website or tool-only */}
+          {!isBoth && draftUrl && (
             <a
               href={draftUrl}
               target="_blank"
@@ -131,6 +134,35 @@ export default async function PortalIntakePage({
               {isTool ? 'View Your Build ↗' : 'View Your Draft ↗'}
             </a>
           )}
+
+          {/* Two preview buttons for website + tool */}
+          {isBoth && (draftUrl || toolDraftUrl) && (
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+              {draftUrl && (
+                <a
+                  href={draftUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="portal-btn"
+                  style={{ flex: 1, textAlign: 'center', minWidth: 140 }}
+                >
+                  View Website ↗
+                </a>
+              )}
+              {toolDraftUrl && (
+                <a
+                  href={toolDraftUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="portal-btn"
+                  style={{ flex: 1, textAlign: 'center', minWidth: 140 }}
+                >
+                  View Tool Build ↗
+                </a>
+              )}
+            </div>
+          )}
+
           <IntakeForm
             token={token}
             submissionType={REVISION_TYPE[stage]!}

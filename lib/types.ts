@@ -36,6 +36,8 @@ export interface Project {
   stage: ProjectStage;
   notes: string | null;
   revision_stage: RevisionStage;
+  draft_url: string | null;
+  tool_draft_url: string | null;
   launch_confirmed_at: string | null;
 }
 

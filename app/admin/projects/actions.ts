@@ -120,13 +120,14 @@ export async function advanceRevisionStageAction(formData: FormData) {
   const projectId = formData.get('project_id') as string;
   const currentStage = formData.get('current_stage') as string;
   const draftUrl = (formData.get('draft_url') as string)?.trim() || null;
+  const toolDraftUrl = (formData.get('tool_draft_url') as string)?.trim() || null;
   const nextStage = NEXT_REVISION_STAGE[currentStage];
   if (!nextStage) return;
 
   const supabase = await createClient();
   await supabase
     .from('projects')
-    .update({ revision_stage: nextStage, draft_url: draftUrl })
+    .update({ revision_stage: nextStage, draft_url: draftUrl, tool_draft_url: toolDraftUrl })
     .eq('id', projectId);
 
   try {

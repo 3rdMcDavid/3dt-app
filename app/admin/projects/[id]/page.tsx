@@ -276,13 +276,29 @@ export default async function ProjectHubPage({
             </span>
           </div>
           <div className="hub-section-body">
-            {project.draft_url && !CAN_SEND_DRAFT[revisionStage] && (
-              <div style={{ marginBottom: 16, fontSize: 13 }}>
-                <label className="form-label" style={{ marginBottom: 4 }}>Draft URL</label>
-                <a href={project.draft_url} target="_blank" rel="noopener noreferrer"
-                  style={{ color: 'var(--accent-lt)', wordBreak: 'break-all' }}>
-                  {project.draft_url} ↗
-                </a>
+            {/* Draft URL display when not in send-draft state */}
+            {!CAN_SEND_DRAFT[revisionStage] && (project.draft_url || project.tool_draft_url) && (
+              <div style={{ marginBottom: 16, fontSize: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {project.draft_url && (
+                  <div>
+                    <label className="form-label" style={{ marginBottom: 4 }}>
+                      {projectType === 'website_tool' ? 'Website URL' : 'Draft URL'}
+                    </label>
+                    <a href={project.draft_url} target="_blank" rel="noopener noreferrer"
+                      style={{ color: 'var(--accent-lt)', wordBreak: 'break-all' }}>
+                      {project.draft_url} ↗
+                    </a>
+                  </div>
+                )}
+                {projectType === 'website_tool' && project.tool_draft_url && (
+                  <div>
+                    <label className="form-label" style={{ marginBottom: 4 }}>Tool Build URL</label>
+                    <a href={project.tool_draft_url} target="_blank" rel="noopener noreferrer"
+                      style={{ color: 'var(--accent-lt)', wordBreak: 'break-all' }}>
+                      {project.tool_draft_url} ↗
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
@@ -291,7 +307,10 @@ export default async function ProjectHubPage({
                 <input type="hidden" name="project_id" value={id} />
                 <input type="hidden" name="current_stage" value={revisionStage} />
                 <div className="form-group" style={{ marginBottom: 12 }}>
-                  <label className="form-label">Draft Preview URL <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional — included in client email)</span></label>
+                  <label className="form-label">
+                    {projectType === 'website_tool' ? 'Website Preview URL' : 'Draft Preview URL'}{' '}
+                    <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional — included in client email)</span>
+                  </label>
                   <input
                     name="draft_url"
                     type="url"
@@ -300,6 +319,21 @@ export default async function ProjectHubPage({
                     style={{ maxWidth: 420 }}
                   />
                 </div>
+                {projectType === 'website_tool' && (
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label className="form-label">
+                      Tool Build URL{' '}
+                      <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional)</span>
+                    </label>
+                    <input
+                      name="tool_draft_url"
+                      type="url"
+                      placeholder="https://your-tool.vercel.app"
+                      defaultValue={project.tool_draft_url ?? ''}
+                      style={{ maxWidth: 420 }}
+                    />
+                  </div>
+                )}
                 <button type="submit" className="btn btn-primary btn-sm">
                   {CAN_SEND_DRAFT[revisionStage]} →
                 </button>
