@@ -156,9 +156,12 @@ export async function onboardClientAction(formData: FormData) {
   if (!client) throw new Error('Client not found');
 
   // Build deliverables block for the contract
+  const isToolProject  = projectType === 'tool' || projectType === 'website_tool';
+  const handoffWord    = isToolProject ? 'delivery' : 'launch';
+
   const itemLines = scopeItems.map(i => `  • ${i.name} — ${fmt(i.price)}`).join('\n');
   const carePlanLine = carePlan
-    ? `\n  • Monthly Care Plan — $75/month (begins 30 days after launch; set up recurring billing separately)`
+    ? `\n  • Monthly Care Plan — $75/month (begins 30 days after ${handoffWord}; set up recurring billing separately)`
     : '';
   const deliverablesBlock = [
     'SCOPE OF WORK',
@@ -169,7 +172,7 @@ export async function onboardClientAction(formData: FormData) {
     '',
     `Project Total: ${fmt(total)}`,
     `Deposit (50%): ${fmt(deposit)} — due at signing`,
-    `Final (50%): ${fmt(final)} — due before launch`,
+    `Final (50%): ${fmt(final)} — due before ${handoffWord}`,
   ].join('\n');
 
   let content = (template?.content ?? '')

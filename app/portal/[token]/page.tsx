@@ -64,7 +64,6 @@ export default async function PortalHomePage({
   const client = (project as any).clients;
   const revisionStage = (project as any).revision_stage as string;
   const projectType = (project as any).project_type ?? 'website';
-  const isTool = projectType === 'tool' || projectType === 'website_tool';
   const isToolOnly = projectType === 'tool';
   const cta = getActionCta(revisionStage, projectType);
   const clientCompleted = client?.status === 'completed';

@@ -217,7 +217,7 @@ export async function saveLaunchInfoAction(formData: FormData) {
 
   const { data: project } = await supabase
     .from('projects')
-    .select('title, clients(name)')
+    .select('title, project_type, clients(name)')
     .eq('id', projectId)
     .single();
 
@@ -231,26 +231,39 @@ export async function saveLaunchInfoAction(formData: FormData) {
     })
     .eq('id', projectId);
 
-  const clientName = (project as any)?.clients?.name ?? 'Client';
+  const clientName  = (project as any)?.clients?.name ?? 'Client';
   const projectTitle = (project as any)?.title ?? '';
-  const isTool = !vercelEmail;
+  const pt           = (project as any)?.project_type ?? 'website';
+  const isTool       = pt === 'tool'; // pure tool-only delivery
+  const isBoth       = pt === 'website_tool';
 
-  await sendPushNotification(
-    isTool ? '📦 Delivery Notes Submitted' : '🚀 Launch Info Submitted',
-    isTool
-      ? `${clientName} submitted delivery notes for ${projectTitle}`
-      : `${clientName} submitted their Vercel account info for ${projectTitle}`,
-    `/admin/projects/${projectId}`
-  );
+  const pushTitle = isTool ? '📦 Delivery Notes Submitted' : '🚀 Launch Info Submitted';
+  const pushBody  = isTool
+    ? `${clientName} submitted delivery notes for ${projectTitle}`
+    : isBoth
+    ? `${clientName} submitted their Vercel info for ${projectTitle} — site transfer ready, also prepare tool delivery`
+    : `${clientName} submitted their Vercel account info for ${projectTitle}`;
+
+  await sendPushNotification(pushTitle, pushBody, `/admin/projects/${projectId}`);
+
+  const emailSubject = isTool ? `📦 Delivery Notes — ${projectTitle}` : `🚀 Launch Info Submitted — ${projectTitle}`;
+  const emailBody    = isTool
+    ? `submitted delivery notes for`
+    : `submitted their launch details for`;
+  const actionNote   = isTool
+    ? ''
+    : isBoth
+    ? 'Site transfer is ready to begin. Also prepare tool delivery for this client.'
+    : 'Transfer is ready to begin.';
 
   resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: '3rddavidstechnology@gmail.com',
-    subject: isTool ? `📦 Delivery Notes — ${projectTitle}` : `🚀 Launch Info Submitted — ${projectTitle}`,
+    subject: emailSubject,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
         <h2 style="margin-bottom:8px;">${isTool ? 'Delivery Notes Submitted' : 'Launch Info Submitted'}</h2>
-        <p style="line-height:1.6;"><strong>${clientName}</strong> ${isTool ? 'submitted delivery notes for' : 'submitted their launch details for'} <strong>${projectTitle}</strong>. ${isTool ? '' : 'Transfer is ready to begin.'}</p>
+        <p style="line-height:1.6;"><strong>${clientName}</strong> ${emailBody} <strong>${projectTitle}</strong>. ${actionNote}</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${projectId}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
       </div>
     `,

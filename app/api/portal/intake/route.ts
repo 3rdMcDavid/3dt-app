@@ -95,20 +95,32 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Fetch project type for push notification copy (before the approval block)
+  const { data: projectMeta } = await supabase
+    .from('projects')
+    .select('project_type')
+    .eq('id', projectId)
+    .single();
+
   await supabase
     .from('projects')
     .update({ revision_stage: nextStage })
     .eq('id', projectId);
 
   // ── Push notification to David ─────────────────────────────────────────────
+  const pt          = projectMeta?.project_type ?? 'website';
+  const isBothPT    = pt === 'website_tool';
+  const isToolOnlyPT = pt === 'tool';
+  const BuildWord   = isBothPT ? 'Build & Draft' : isToolOnlyPT ? 'Build' : 'Draft';
+
   const PUSH: Record<string, (a: boolean) => { title: string; body: string }> = {
     initial:    () => ({ title: '📋 Intake Submitted',      body: 'A client completed their intake — ready to build!' }),
     revision_1: (a) => a
-      ? { title: '🎉 Early Approval!',       body: 'Client approved Draft 1 and skipped remaining revisions — final invoice sent.' }
-      : { title: '📝 Revision 1 Feedback',  body: 'Client sent feedback on Draft 1 — check the hub.' },
+      ? { title: '🎉 Early Approval!',       body: `Client approved ${BuildWord} 1 and skipped remaining revisions — final invoice sent.` }
+      : { title: `📝 ${BuildWord} 1 Feedback`, body: `Client sent feedback on ${BuildWord} 1 — check the hub.` },
     revision_2: (a) => a
-      ? { title: '🎉 Early Approval!',       body: 'Client approved Draft 2 and skipped remaining revisions — final invoice sent.' }
-      : { title: '📝 Revision 2 Feedback',  body: 'Client sent feedback on Draft 2 — check the hub.' },
+      ? { title: '🎉 Early Approval!',       body: `Client approved ${BuildWord} 2 and skipped remaining revisions — final invoice sent.` }
+      : { title: `📝 ${BuildWord} 2 Feedback`, body: `Client sent feedback on ${BuildWord} 2 — check the hub.` },
     post_final: (a) => a
       ? { title: '🎉 Final Approved!',       body: 'Client approved the final — sending final invoice now.' }
       : { title: '⚠️ Extra Revision Requested', body: 'Client requested changes beyond included revisions.' },
