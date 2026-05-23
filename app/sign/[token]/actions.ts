@@ -62,6 +62,16 @@ export async function signContractAction(formData: FormData) {
     `/admin/projects/${contract.project_id}`
   );
 
+  // Look up existing invoices (created by the onboarding flow)
+  const depositInvoice = (await supabase
+    .from('invoices')
+    .select('id, amount, stripe_payment_url')
+    .eq('project_id', contract.project_id)
+    .eq('type', 'deposit')
+    .maybeSingle()).data;
+
+  const hasInvoice = !!depositInvoice;
+
   resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: '3rddavidstechnology@gmail.com',
@@ -69,34 +79,13 @@ export async function signContractAction(formData: FormData) {
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
         <h2 style="margin-bottom:8px;">Contract Signed</h2>
-        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>. Deposit invoice is being sent to them now.</p>
+        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>.${hasInvoice ? ' Deposit invoice is being sent to them now.' : ' <strong>No invoices are set up yet — add pricing in the project hub to send the deposit.</strong>'}</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${contract.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
       </div>
     `,
   }).catch(() => {});
 
-  // Use existing invoices if created by the onboarding flow; otherwise create $250 defaults
-  let depositInvoice = (await supabase
-    .from('invoices')
-    .select('id, amount, stripe_payment_url')
-    .eq('project_id', contract.project_id)
-    .eq('type', 'deposit')
-    .maybeSingle()).data;
-
-  if (!depositInvoice) {
-    const { data: newDeposit } = await supabase
-      .from('invoices')
-      .insert({ project_id: contract.project_id, amount: 250, type: 'deposit', status: 'unpaid' })
-      .select('id, amount, stripe_payment_url')
-      .single();
-    depositInvoice = newDeposit;
-
-    await supabase
-      .from('invoices')
-      .insert({ project_id: contract.project_id, amount: 250, type: 'final', status: 'unpaid' });
-  }
-
-  // Generate Stripe link + email only if not already set up by the onboarding flow
+  // Send deposit email only if invoice + Stripe link were set up beforehand (onboarding flow)
   if (depositInvoice && client && !depositInvoice.stripe_payment_url) {
     try {
       const { data: portalSessions } = await supabase

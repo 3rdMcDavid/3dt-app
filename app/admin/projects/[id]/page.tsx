@@ -171,6 +171,11 @@ export default async function ProjectHubPage({
                     <div className="detail-item"><label>Email Sent</label><span>{new Date(contract.sign_email_sent_at).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</span></div>
                   )}
                 </div>
+                {!invoices?.some((inv: any) => inv.type === 'deposit') && (
+                  <div style={{ background: '#fff8ed', border: '1px solid #f5a623', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#7a4f00' }}>
+                    ⚠️ <strong>Set pricing before sharing this link.</strong> No invoices exist yet — add a deposit and final invoice below so the client gets the right payment request when they sign.
+                  </div>
+                )}
                 <div>
                   <label className="form-label" style={{ marginBottom: 8 }}>Signing Link</label>
                   <SigningLink url={`${process.env.NEXT_PUBLIC_APP_URL}/sign/${contract.sign_token}`} />
