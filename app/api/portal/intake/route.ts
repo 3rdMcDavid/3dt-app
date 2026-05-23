@@ -25,6 +25,25 @@ export async function POST(req: NextRequest) {
 
   const projectId = session.project_id;
 
+  // Validate that the submitted type matches the current project stage
+  const ALLOWED_TYPE_FOR_STAGE: Record<string, string> = {
+    awaiting_intake: 'initial',
+    revision_1_open: 'revision_1',
+    revision_2_open: 'revision_2',
+    post_final_open: 'post_final',
+  };
+
+  const { data: currentProject } = await supabase
+    .from('projects')
+    .select('revision_stage')
+    .eq('id', projectId)
+    .single();
+
+  const allowedType = ALLOWED_TYPE_FOR_STAGE[currentProject?.revision_stage ?? ''];
+  if (allowedType !== submissionType) {
+    return NextResponse.json({ error: 'Submission not allowed at current stage' }, { status: 409 });
+  }
+
   const NEXT_STAGE: Record<string, string> = {
     initial: 'intake_received',
     revision_1: approved ? 'complete' : 'revision_1_received',

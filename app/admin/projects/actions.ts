@@ -263,12 +263,16 @@ export async function upsertContractAction(formData: FormData) {
   };
 
   if (contractId) {
-    await supabase.from('contracts').update({
-      ...payload,
-      signed_at: null,
-      signature_name: null,
-      signature_ip: null,
-    }).eq('id', contractId);
+    const { data: existing } = await supabase
+      .from('contracts')
+      .select('signed_at')
+      .eq('id', contractId)
+      .single();
+    if (existing?.signed_at) {
+      revalidatePath(`/admin/projects/${projectId}`);
+      redirect(`/admin/projects/${projectId}`);
+    }
+    await supabase.from('contracts').update(payload).eq('id', contractId);
   } else {
     await supabase.from('contracts').insert(payload);
   }
@@ -359,6 +363,10 @@ export async function generateStripePaymentLinkAction(formData: FormData) {
   ]);
 
   if (!invoice || !project) throw new Error('Invoice or project not found');
+  if (invoice.stripe_payment_url) {
+    revalidatePath(`/admin/projects/${projectId}`);
+    redirect(`/admin/projects/${projectId}`);
+  }
 
   const portalToken = sessions?.[0]?.token ?? null;
 

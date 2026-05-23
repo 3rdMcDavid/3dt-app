@@ -20,11 +20,19 @@ export default async function SignContractPage({
 
   if (!contract) notFound();
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('title, clients(name)')
-    .eq('id', contract.project_id)
-    .single();
+  const [{ data: project }, { data: depositInvoice }] = await Promise.all([
+    supabase
+      .from('projects')
+      .select('title, clients(name)')
+      .eq('id', contract.project_id)
+      .single(),
+    supabase
+      .from('invoices')
+      .select('id')
+      .eq('project_id', contract.project_id)
+      .eq('type', 'deposit')
+      .maybeSingle(),
+  ]);
 
   const clientName = (project as any)?.clients?.name ?? '';
   const projectTitle = (project as any)?.title ?? '';
@@ -59,9 +67,11 @@ export default async function SignContractPage({
                 year: 'numeric', month: 'long', day: 'numeric',
               })}
             </p>
-            <p style={{ marginTop: 12, fontSize: 13 }}>
-              Check your email for your signed contract copy and deposit payment link.
-            </p>
+            {depositInvoice && (
+              <p style={{ marginTop: 12, fontSize: 13 }}>
+                Check your email for your deposit payment link.
+              </p>
+            )}
           </div>
         ) : (
           <div className="sign-card">

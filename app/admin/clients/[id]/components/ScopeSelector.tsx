@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 type SelectedMap = Record<string, number>;
 type CustomItem = { id: number; name: string; price: string };
@@ -77,7 +77,9 @@ export default function ScopeSelector({ projectType = 'website', onTotalChange }
   const total = catalogTotal + customTotal;
   const deposit = Math.round((total / 2) * 100) / 100;
 
-  useEffect(() => { onTotalChange?.(total); }, [total, onTotalChange]);
+  const onTotalChangeRef = useRef(onTotalChange);
+  useEffect(() => { onTotalChangeRef.current = onTotalChange; });
+  useEffect(() => { onTotalChangeRef.current?.(total); }, [total]);
 
   const scopeItems = [
     ...Object.entries(selected).map(([name, price]) => ({ name, price })),

@@ -24,6 +24,7 @@ export default async function ContractPrintPage({
   ]);
 
   if (!project || !contract) notFound();
+  if (!contract.signed_at) notFound();
 
   const clientName = (project as any).clients?.name ?? '';
   const signedDate = contract.signed_at

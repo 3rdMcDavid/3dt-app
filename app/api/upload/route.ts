@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createServiceClient();
-  const ext = file.name.split('.').pop();
   const filePath = `${projectId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
   const { error: uploadError } = await supabase.storage

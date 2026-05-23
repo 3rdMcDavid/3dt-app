@@ -222,7 +222,7 @@ export default async function PortalHomePage({
               <span className="portal-badge portal-badge-green">All Paid</span>
             ) : (
               <span className="portal-status-value" style={{ color: '#92400E' }}>
-                ${totalOwed.toFixed(2)}
+                ${totalOwed % 1 === 0 ? totalOwed.toLocaleString('en-US') : totalOwed.toFixed(2)}
               </span>
             )}
           </div>
