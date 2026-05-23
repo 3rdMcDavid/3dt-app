@@ -77,8 +77,8 @@ export async function signContractAction(formData: FormData) {
     `,
   }).catch(() => {});
 
-  // Send deposit email only if invoice + Stripe link were set up beforehand (onboarding flow)
-  if (depositInvoice && client && !depositInvoice.stripe_payment_url) {
+  // Send deposit email if invoice exists — generate Stripe link first if missing
+  if (depositInvoice && client?.email) {
     try {
       const { data: portalSessions } = await supabase
         .from('portal_sessions')
@@ -89,28 +89,31 @@ export async function signContractAction(formData: FormData) {
         .limit(1);
       const portalToken = portalSessions?.[0]?.token ?? null;
 
+      let depositPaymentUrl: string | null = depositInvoice.stripe_payment_url ?? null;
+
+      if (!depositPaymentUrl) {
+        const price = await stripe.prices.create({
+          currency: 'usd',
+          unit_amount: Math.round(Number(depositInvoice.amount) * 100),
+          product_data: { name: `${project.title} — Deposit` },
+        });
+        const paymentLink = await stripe.paymentLinks.create({
+          line_items: [{ price: price.id, quantity: 1 }],
+          metadata: { invoice_id: depositInvoice.id },
+          after_completion: {
+            type: 'redirect',
+            redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success${portalToken ? `?token=${portalToken}` : ''}` },
+          },
+        });
+        await supabase
+          .from('invoices')
+          .update({ stripe_payment_id: paymentLink.id, stripe_payment_url: paymentLink.url })
+          .eq('id', depositInvoice.id);
+        depositPaymentUrl = paymentLink.url;
+      }
+
       const depositAmt = Number(depositInvoice.amount);
       const fmt = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
-
-      const price = await stripe.prices.create({
-        currency: 'usd',
-        unit_amount: Math.round(depositAmt * 100),
-        product_data: { name: `${project.title} — Deposit` },
-      });
-
-      const paymentLink = await stripe.paymentLinks.create({
-        line_items: [{ price: price.id, quantity: 1 }],
-        metadata: { invoice_id: depositInvoice.id },
-        after_completion: {
-          type: 'redirect',
-          redirect: { url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success${portalToken ? `?token=${portalToken}` : ''}` },
-        },
-      });
-
-      await supabase
-        .from('invoices')
-        .update({ stripe_payment_id: paymentLink.id, stripe_payment_url: paymentLink.url })
-        .eq('id', depositInvoice.id);
 
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL!,
@@ -124,9 +127,11 @@ export async function signContractAction(formData: FormData) {
               To officially kick off your project, a deposit of <strong>${fmt(depositAmt)}</strong> is due now.
               Once paid, your portal will be fully unlocked.
             </p>
-            <a href="${paymentLink.url}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+            ${depositPaymentUrl ? `
+            <a href="${depositPaymentUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
               Pay ${fmt(depositAmt)} Deposit →
             </a>
+            ` : ''}
             <p style="color:#6B6B60;font-size:12px;margin-top:24px;">Questions? Email us at 3rddavidstechnology@gmail.com</p>
           </div>
         `,

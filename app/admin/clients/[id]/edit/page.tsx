@@ -48,6 +48,7 @@ export default async function EditClientPage({
                   <label className="form-label" htmlFor="status">Status</label>
                   <select id="status" name="status" defaultValue={client.status}>
                     <option value="lead">Lead</option>
+                    <option value="active">Active</option>
                     <option value="completed">Completed</option>
                   </select>
                 </div>

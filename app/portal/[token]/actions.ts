@@ -46,7 +46,6 @@ export async function signContractFromPortalAction(formData: FormData) {
   if (!project) return;
   const client = (project as any).clients;
 
-  // Sign the contract and activate client
   await supabase
     .from('contracts')
     .update({
@@ -112,8 +111,8 @@ export async function signContractFromPortalAction(formData: FormData) {
     }
   }
 
-  // Send signed contract copy + deposit payment link to client
-  if (client?.email) {
+  // Send signed contract copy + deposit payment link to client only when pricing is set
+  if (client?.email && hasInvoice) {
     const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${token}`;
     const signedDate = new Date().toLocaleDateString('en-US', {
       year: 'numeric',
@@ -121,7 +120,7 @@ export async function signContractFromPortalAction(formData: FormData) {
       day: 'numeric',
       timeZone: 'America/Chicago',
     });
-    const depositAmount = depositInvoice?.amount ?? 250;
+    const depositAmount = depositInvoice!.amount;
     const fmt = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
 
     // Format contract for email
