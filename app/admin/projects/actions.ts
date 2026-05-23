@@ -94,20 +94,6 @@ export async function createProjectAction(formData: FormData) {
         .select('token')
         .single();
 
-      // Fire the portal email immediately if client is already active
-      const { data: fullClient } = await supabase
-        .from('clients')
-        .select('status')
-        .eq('id', clientId)
-        .single();
-
-      if (portalSession && fullClient?.status === 'active') {
-        await sendPortalGetStartedEmail(client.name, client.email, project.title, portalSession.token);
-        await supabase
-          .from('portal_sessions')
-          .update({ sent_at: new Date().toISOString() })
-          .eq('token', portalSession.token);
-      }
     } catch (e) {
       console.error('Auto contract/portal setup failed:', e);
     }

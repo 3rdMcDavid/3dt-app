@@ -48,14 +48,6 @@ export async function signContractAction(formData: FormData) {
     })
     .eq('id', contract.id);
 
-  // Activate the client
-  if ((project as any)?.client_id) {
-    await supabase
-      .from('clients')
-      .update({ status: 'active' })
-      .eq('id', (project as any).client_id);
-  }
-
   await sendPushNotification(
     '✍️ Contract Signed',
     `${client.name} signed the contract for ${project.title}`,

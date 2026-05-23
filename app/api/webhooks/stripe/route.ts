@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
 
         const { data: project } = await supabase
           .from('projects')
-          .select('title, clients(name, email)')
+          .select('title, client_id, clients(name, email)')
           .eq('id', invoice.project_id)
           .single();
 
@@ -185,10 +185,10 @@ export async function POST(req: NextRequest) {
           portalToken = newSession?.token ?? null;
         }
 
-        await supabase
-          .from('projects')
-          .update({ revision_stage: 'awaiting_intake' })
-          .eq('id', invoice.project_id);
+        await Promise.all([
+          supabase.from('projects').update({ revision_stage: 'awaiting_intake' }).eq('id', invoice.project_id),
+          supabase.from('clients').update({ status: 'active' }).eq('id', (project as any)?.client_id),
+        ]);
 
         if (portalToken && project) {
           const client = (project as any).clients;

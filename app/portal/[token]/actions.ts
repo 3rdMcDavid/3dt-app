@@ -56,11 +56,6 @@ export async function signContractFromPortalAction(formData: FormData) {
     })
     .eq('id', contract.id);
 
-  await supabase
-    .from('clients')
-    .update({ status: 'active' })
-    .eq('id', (project as any).client_id);
-
   await sendPushNotification(
     '✍️ Contract Signed',
     `${client.name} signed the contract for ${project.title}`,

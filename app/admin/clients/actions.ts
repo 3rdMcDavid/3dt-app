@@ -182,9 +182,7 @@ export async function onboardClientAction(formData: FormData) {
     }
   }
 
-  // Mark client active and fire portal email
-  await supabase.from('clients').update({ status: 'active' }).eq('id', clientId);
-
+  // Fire portal email (client stays 'lead' until deposit is paid)
   if (portalSession) {
     try {
       await sendPortalGetStartedEmail(client.name, client.email, title, portalSession.token);
