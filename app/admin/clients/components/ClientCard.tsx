@@ -26,16 +26,6 @@ export default function ClientCard({ c }: { c: Client }) {
           View
         </Link>
 
-        {c.status === 'lead' && (
-          <form action={updateClientStatusAction} style={{ flex: 1 }}>
-            <input type="hidden" name="id" value={c.id} />
-            <input type="hidden" name="status" value="active" />
-            <button type="submit" className="btn btn-primary btn-sm" style={{ width: '100%' }}>
-              → Activate
-            </button>
-          </form>
-        )}
-
         {c.status === 'active' && (
           <form action={updateClientStatusAction} style={{ flex: 1 }}>
             <input type="hidden" name="id" value={c.id} />

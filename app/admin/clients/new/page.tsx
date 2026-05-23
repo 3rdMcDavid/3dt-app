@@ -26,14 +26,6 @@ export default function NewClientPage() {
                   <label className="form-label" htmlFor="phone">Phone</label>
                   <input id="phone" name="phone" type="tel" placeholder="(555) 000-0000" />
                 </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="status">Status</label>
-                  <select id="status" name="status">
-                    <option value="lead">Lead</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
               </div>
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary">Create Client</button>
