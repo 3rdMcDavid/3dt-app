@@ -3,16 +3,29 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 
+function getActionLabel(stage: string, projectType: string): string {
+  const pt = projectType ?? 'website';
+  const isToolOnly = pt === 'tool';
+  const isBoth = pt === 'website_tool';
+  const word = isBoth ? 'Build & Draft' : isToolOnly ? 'Build' : 'Draft';
+  switch (stage) {
+    case 'intake_received':          return `Intake received — build ${word} 1`;
+    case 'revision_1_received':      return `${word} 1 feedback — build ${word} 2`;
+    case 'revision_2_received':      return `${word} 2 feedback — build Final`;
+    case 'extra_revision_requested': return 'Extra revision requested — re-send Final';
+    default: return stage;
+  }
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const ACTION_STAGES = ['intake_received', 'revision_1_received', 'revision_2_received'];
-
-  const ACTION_LABELS: Record<string, string> = {
-    intake_received:    'Intake received — build Draft 1',
-    revision_1_received:'Revision 1 feedback — build Draft 2',
-    revision_2_received:'Revision 2 feedback — build Final',
-  };
+  const ACTION_STAGES = [
+    'intake_received',
+    'revision_1_received',
+    'revision_2_received',
+    'extra_revision_requested',
+  ];
 
   const [
     { count: clientCount },
@@ -26,7 +39,7 @@ export default async function DashboardPage() {
     supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('status', 'unpaid'),
     supabase
       .from('projects')
-      .select('id, title, revision_stage, clients(name)')
+      .select('id, title, revision_stage, project_type, clients(name)')
       .in('revision_stage', ACTION_STAGES)
       .order('created_at', { ascending: true }),
     supabase
@@ -123,7 +136,7 @@ export default async function DashboardPage() {
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: 2 }}>{p.title}</div>
                     <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                      {(p as any).clients?.name} &nbsp;·&nbsp; {ACTION_LABELS[p.revision_stage]}
+                      {(p as any).clients?.name} &nbsp;·&nbsp; {getActionLabel(p.revision_stage, (p as any).project_type)}
                     </div>
                   </div>
                   <span style={{ fontSize: 13, color: 'var(--accent-lt)' }}>Open →</span>

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export async function POST(request: NextRequest) {
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const formData = await request.formData();
   const file = formData.get('file') as File | null;
   const projectId = formData.get('project_id') as string;
