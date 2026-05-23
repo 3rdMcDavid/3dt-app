@@ -88,11 +88,7 @@ export async function createProjectAction(formData: FormData) {
 
       await supabase.from('contracts').insert({ project_id: project.id, content });
 
-      const { data: portalSession } = await supabase
-        .from('portal_sessions')
-        .insert({ project_id: project.id })
-        .select('token')
-        .single();
+      await supabase.from('portal_sessions').insert({ project_id: project.id });
 
     } catch (e) {
       console.error('Auto contract/portal setup failed:', e);
@@ -137,7 +133,7 @@ export async function advanceRevisionStageAction(formData: FormData) {
       const pt         = (project as any).project_type ?? 'website';
       const isBothPT   = pt === 'website_tool';
       const isToolOnly = pt === 'tool';
-      const handoffWord = (isToolOnly || isBothPT) ? 'delivery' : 'launch';
+      const handoffWord = isBothPT ? 'launch and delivery' : isToolOnly ? 'delivery' : 'launch';
 
       // For website_tool, resolve word based on which component(s) are being reviewed
       const rc = isBothPT ? revisionComponents : (isToolOnly ? 'tool' : 'website');
@@ -313,10 +309,17 @@ export async function markInvoicePaidAction(formData: FormData) {
   await supabase.from('invoices').update({ status: 'paid' }).eq('id', invoiceId);
 
   if (invoice?.type === 'deposit') {
-    await supabase
+    const { data: proj } = await supabase
       .from('projects')
-      .update({ revision_stage: 'awaiting_intake' })
-      .eq('id', projectId);
+      .select('client_id')
+      .eq('id', projectId)
+      .single();
+    await Promise.all([
+      supabase.from('projects').update({ revision_stage: 'awaiting_intake' }).eq('id', projectId),
+      proj?.client_id
+        ? supabase.from('clients').update({ status: 'active' }).eq('id', proj.client_id)
+        : Promise.resolve(),
+    ]);
   } else if (invoice?.type === 'final') {
     const { data: project } = await supabase
       .from('projects')
