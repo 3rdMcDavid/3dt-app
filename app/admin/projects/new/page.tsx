@@ -42,6 +42,14 @@ export default async function NewProjectPage({
                   </select>
                 </div>
                 <div className="form-group">
+                  <label className="form-label" htmlFor="project_type">Project Type</label>
+                  <select id="project_type" name="project_type">
+                    <option value="website">Website</option>
+                    <option value="tool">Custom Tool / Automation</option>
+                    <option value="website_tool">Website + Tool</option>
+                  </select>
+                </div>
+                <div className="form-group">
                   <label className="form-label" htmlFor="stage">Stage</label>
                   <select id="stage" name="stage">
                     <option value="discovery">Discovery</option>

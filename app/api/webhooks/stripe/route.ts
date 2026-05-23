@@ -185,13 +185,13 @@ export async function POST(req: NextRequest) {
           portalToken = newSession?.token ?? null;
         }
 
-        await Promise.all([
-          supabase.from('projects').update({ revision_stage: 'awaiting_intake' }).eq('id', invoice.project_id),
-          supabase.from('clients').update({ status: 'active' }).eq('id', (project as any)?.client_id),
-        ]);
-
         if (portalToken && project) {
           const client = (project as any).clients;
+
+          await Promise.all([
+            supabase.from('projects').update({ revision_stage: 'awaiting_intake' }).eq('id', invoice.project_id),
+            supabase.from('clients').update({ status: 'active' }).eq('id', (project as any).client_id),
+          ]);
           const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${portalToken}`;
 
           await sendPushNotification(

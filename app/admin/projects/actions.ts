@@ -63,6 +63,7 @@ export async function createProjectAction(formData: FormData) {
     .insert({
       title: (formData.get('title') as string).trim(),
       client_id: clientId,
+      project_type: (formData.get('project_type') as string) || 'website',
       stage: (formData.get('stage') as string) || 'discovery',
       notes: (formData.get('notes') as string)?.trim() || null,
     })
@@ -71,8 +72,7 @@ export async function createProjectAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  // Auto-create contract + portal session. Email fires now if client is already active,
-  // otherwise it waits until David activates them (lead → active).
+  // Auto-create contract + portal session on project creation
   if (client) {
     try {
       const { data: template } = await supabase

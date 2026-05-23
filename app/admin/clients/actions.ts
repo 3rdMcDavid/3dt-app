@@ -30,12 +30,6 @@ export async function updateClientAction(formData: FormData) {
   const newStatus = formData.get('status') as string;
   const supabase = await createClient();
 
-  const { data: existing } = await supabase
-    .from('clients')
-    .select('status, name, email')
-    .eq('id', id)
-    .single();
-
   await supabase
     .from('clients')
     .update({
@@ -55,12 +49,6 @@ export async function updateClientStatusAction(formData: FormData) {
   const id = formData.get('id') as string;
   const status = formData.get('status') as string;
   const supabase = await createClient();
-
-  const { data: existing } = await supabase
-    .from('clients')
-    .select('status, name, email')
-    .eq('id', id)
-    .single();
 
   await supabase.from('clients').update({ status }).eq('id', id);
 
@@ -99,7 +87,7 @@ export async function onboardClientAction(formData: FormData) {
 
   // Build deliverables block for the contract
   const isToolProject  = projectType === 'tool' || projectType === 'website_tool';
-  const handoffWord    = isToolProject ? 'delivery' : 'launch';
+  const handoffWord    = projectType === 'website_tool' ? 'launch and delivery' : isToolProject ? 'delivery' : 'launch';
 
   const itemLines = scopeItems.map(i => `  • ${i.name} — ${fmt(i.price)}`).join('\n');
   const carePlanLine = carePlan
