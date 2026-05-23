@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (invoice?.type === 'deposit') {
-        const depositAmount = invoice.amount ?? 250;
+        const depositAmount = Number(invoice.amount);
         const fmtAmt = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
 
         const { data: project } = await supabase
