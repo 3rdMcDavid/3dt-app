@@ -9,6 +9,7 @@ import DeleteProjectButton from './components/DeleteProjectButton';
 import DeleteInvoiceButton from './components/DeleteInvoiceButton';
 import DeleteDocumentButton from './components/DeleteDocumentButton';
 import SigningLink from './components/SigningLink';
+import AddScopeItems from './components/AddScopeItems';
 import {
   createInvoiceAction,
   markInvoicePaidAction,
@@ -34,6 +35,7 @@ export default async function ProjectHubPage({
     { data: documents },
     { data: portalSessions },
     { data: intakeSubmissions },
+    { data: scopeItems },
   ] = await Promise.all([
     supabase.from('projects').select('*, clients(*)').eq('id', id).single(),
     supabase.from('contracts').select('*').eq('project_id', id).maybeSingle(),
@@ -51,6 +53,11 @@ export default async function ProjectHubPage({
       .select('*, intake_files(*)')
       .eq('project_id', id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('project_scope_items')
+      .select('*')
+      .eq('project_id', id)
+      .order('created_at'),
   ]);
 
   const project = projectResult.data as any;
@@ -63,6 +70,16 @@ export default async function ProjectHubPage({
   const portalUrl = activeSession
     ? `${process.env.NEXT_PUBLIC_APP_URL}/portal/${activeSession.token}`
     : null;
+
+  const originalItems  = (scopeItems ?? []).filter((i: any) => !i.is_addon);
+  const addonItems     = (scopeItems ?? []).filter((i: any) => i.is_addon);
+  const originalTotal  = originalItems.reduce((a: number, i: any) => a + Number(i.price), 0);
+  const addonTotal     = addonItems.reduce((a: number, i: any) => a + Number(i.price), 0);
+  const existingNames  = (scopeItems ?? []).map((i: any) => i.name as string);
+
+  function fmtPrice(n: number) {
+    return `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
+  }
 
   const revisionStage = project?.revision_stage ?? 'awaiting_intake';
   const projectType = project?.project_type ?? 'website';
@@ -136,6 +153,102 @@ export default async function ProjectHubPage({
           <span className="badge badge-draft" style={{ fontSize: 11, opacity: 0.8 }}>
             {projectType === 'website' ? 'Website' : projectType === 'tool' ? 'Custom Tool' : 'Website + Tool'}
           </span>
+        </div>
+
+        {/* ── Scope of Work ────────────────────────────────────────────────── */}
+        <div className="hub-section">
+          <div className="hub-section-header">
+            <span className="section-title">Scope of Work</span>
+            {scopeItems && scopeItems.length > 0 && (
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                {scopeItems.length} item{scopeItems.length !== 1 ? 's' : ''} · {fmtPrice(originalTotal + addonTotal)} total
+              </span>
+            )}
+          </div>
+          <div className="hub-section-body">
+            {(!scopeItems || scopeItems.length === 0) ? (
+              <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 12 }}>
+                No scope items recorded yet. Add items below or they will appear here after onboarding.
+              </p>
+            ) : (
+              <>
+                {/* Original items */}
+                {originalItems.length > 0 && (
+                  <div style={{ marginBottom: addonItems.length > 0 ? 16 : 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: 6 }}>
+                      Original Scope
+                    </div>
+                    <div className="table-wrap">
+                      <table>
+                        <tbody>
+                          {originalItems.map((item: any) => (
+                            <tr key={item.id}>
+                              <td style={{ fontSize: 13 }}>{item.name}</td>
+                              <td style={{ fontSize: 13, fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmtPrice(Number(item.price))}</td>
+                            </tr>
+                          ))}
+                          <tr style={{ borderTop: '2px solid var(--border)' }}>
+                            <td style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>Subtotal</td>
+                            <td style={{ fontSize: 13, fontWeight: 700, textAlign: 'right' }}>{fmtPrice(originalTotal)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Add-on items grouped by invoice */}
+                {addonItems.length > 0 && (() => {
+                  // Group add-ons by invoice_id
+                  const groups = addonItems.reduce((acc: Record<string, any[]>, item: any) => {
+                    const key = item.invoice_id ?? 'ungrouped';
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push(item);
+                    return acc;
+                  }, {});
+                  return Object.entries(groups).map(([invoiceId, items], idx) => {
+                    const groupTotal = (items as any[]).reduce((a, i) => a + Number(i.price), 0);
+                    return (
+                      <div key={invoiceId} style={{ marginBottom: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)' }}>
+                            Add-On #{idx + 1}
+                          </div>
+                          <span className="badge badge-draft" style={{ fontSize: 10 }}>add-on</span>
+                        </div>
+                        <div className="table-wrap">
+                          <table>
+                            <tbody>
+                              {(items as any[]).map((item: any) => (
+                                <tr key={item.id}>
+                                  <td style={{ fontSize: 13 }}>{item.name}</td>
+                                  <td style={{ fontSize: 13, fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmtPrice(Number(item.price))}</td>
+                                </tr>
+                              ))}
+                              <tr style={{ borderTop: '2px solid var(--border)' }}>
+                                <td style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>Add-On Subtotal</td>
+                                <td style={{ fontSize: 13, fontWeight: 700, textAlign: 'right', color: 'var(--green)' }}>{fmtPrice(groupTotal)}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+
+                {/* Grand total when there are add-ons */}
+                {addonItems.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '2px solid var(--border)', marginTop: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>Grand Total</span>
+                    <span style={{ fontSize: 14, fontWeight: 700 }}>{fmtPrice(originalTotal + addonTotal)}</span>
+                  </div>
+                )}
+              </>
+            )}
+
+            <AddScopeItems projectId={id} existingNames={existingNames} />
+          </div>
         </div>
 
         {/* ── Contract ─────────────────────────────────────────────────────── */}

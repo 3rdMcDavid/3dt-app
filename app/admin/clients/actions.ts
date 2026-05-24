@@ -91,7 +91,7 @@ export async function onboardClientAction(formData: FormData) {
 
   const itemLines = scopeItems.map(i => `  • ${i.name} — ${fmt(i.price)}`).join('\n');
   const carePlanLine = carePlan
-    ? `\n  • Monthly Care Plan — $75/month (begins 30 days after ${handoffWord}; set up recurring billing separately)`
+    ? `\n  • Monthly Care Plan — $115/month (begins 30 days after ${handoffWord}; set up recurring billing separately)`
     : '';
   const deliverablesBlock = [
     'SCOPE OF WORK',
@@ -142,6 +142,18 @@ export async function onboardClientAction(formData: FormData) {
   await supabase.from('invoices').insert({
     project_id: project.id, amount: final, type: 'final', status: 'unpaid',
   });
+
+  // Persist scope items for reference and future add-ons
+  if (scopeItems.length > 0) {
+    await supabase.from('project_scope_items').insert(
+      scopeItems.map(item => ({
+        project_id: project.id,
+        name: item.name,
+        price: item.price,
+        is_addon: false,
+      }))
+    );
+  }
 
   // Generate Stripe payment link for deposit — ready before client even signs
   if (portalSession && depositInvoice) {

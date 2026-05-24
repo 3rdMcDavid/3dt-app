@@ -7,32 +7,32 @@ type CustomItem = { id: number; name: string; price: string };
 
 const CATALOG = [
   { label: 'Website', items: [
-    { name: 'Website Development', price: 500 },
+    { name: 'Website Development', price: 750 },
   ]},
   { label: 'Lead & Sales', items: [
-    { name: 'Instant Lead Follow-Up', price: 300 },
-    { name: 'Quote Generator', price: 400 },
-    { name: 'Referral Tracker', price: 450 },
+    { name: 'Instant Lead Follow-Up', price: 450 },
+    { name: 'Quote Generator', price: 600 },
+    { name: 'Referral Tracker', price: 675 },
   ]},
   { label: 'Client & Projects', items: [
-    { name: 'Client Onboarding Portal', price: 600 },
-    { name: 'Appointment Booking System', price: 400 },
-    { name: 'Project Status Page', price: 350 },
-    { name: 'Retainer Dashboard', price: 400 },
-    { name: 'Feedback & Testimonial Collector', price: 300 },
+    { name: 'Client Onboarding Portal', price: 900 },
+    { name: 'Appointment Booking System', price: 600 },
+    { name: 'Project Status Page', price: 525 },
+    { name: 'Retainer Dashboard', price: 600 },
+    { name: 'Feedback & Testimonial Collector', price: 450 },
   ]},
   { label: 'Operations', items: [
-    { name: 'Job / Order Tracker', price: 600 },
-    { name: 'Document Generator', price: 500 },
-    { name: 'Expense Logger', price: 350 },
-    { name: 'Inventory Tracker', price: 400 },
+    { name: 'Job / Order Tracker', price: 900 },
+    { name: 'Document Generator', price: 750 },
+    { name: 'Expense Logger', price: 525 },
+    { name: 'Inventory Tracker', price: 600 },
   ]},
   { label: 'Local Business', items: [
-    { name: 'Review Request Automation', price: 300 },
-    { name: 'Loyalty Points Tracker', price: 450 },
-    { name: 'Event Registration System', price: 400 },
-    { name: 'Service Catalog Manager', price: 350 },
-    { name: 'Before / After Showcase', price: 350 },
+    { name: 'Review Request Automation', price: 450 },
+    { name: 'Loyalty Points Tracker', price: 675 },
+    { name: 'Event Registration System', price: 600 },
+    { name: 'Service Catalog Manager', price: 525 },
+    { name: 'Before / After Showcase', price: 525 },
   ]},
 ];
 
@@ -197,12 +197,12 @@ export default function ScopeSelector({ projectType = 'website', onTotalChange }
             style={{ width: 'auto', accentColor: 'var(--green)', flexShrink: 0 }}
           />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Monthly Care Plan — $75/mo</div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>Monthly Care Plan — $115/mo</div>
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
               Added to contract. Begins 30 days post-launch. Set up recurring billing in Stripe separately.
             </div>
           </div>
-          <span style={{ fontSize: 12, color: 'var(--muted)', flexShrink: 0 }}>$75/mo</span>
+          <span style={{ fontSize: 12, color: 'var(--muted)', flexShrink: 0 }}>$115/mo</span>
         </label>
       </div>
 

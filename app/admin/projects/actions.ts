@@ -445,6 +445,96 @@ export async function markAsLaunchedAction(formData: FormData) {
   revalidatePath(`/admin/projects/${projectId}`);
 }
 
+// ─── Scope Add-Ons ───────────────────────────────────────────────────────────
+
+export async function addScopeItemsAction(formData: FormData) {
+  const projectId = formData.get('project_id') as string;
+  const note = (formData.get('note') as string)?.trim() || null;
+
+  let scopeItems: { name: string; price: number }[] = [];
+  try {
+    scopeItems = JSON.parse((formData.get('scope') as string) || '[]');
+  } catch { scopeItems = []; }
+
+  if (scopeItems.length === 0) throw new Error('Select at least one item to add.');
+
+  const total = scopeItems.reduce((a, b) => a + b.price, 0);
+
+  function fmt(n: number) {
+    return `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
+  }
+
+  const supabase = await createClient();
+
+  // Count existing add-on invoices for numbering
+  const { count } = await supabase
+    .from('invoices')
+    .select('id', { count: 'exact', head: true })
+    .eq('project_id', projectId)
+    .eq('type', 'addon');
+
+  const addonNumber = (count ?? 0) + 1;
+
+  // Create add-on invoice
+  const { data: addonInvoice } = await supabase
+    .from('invoices')
+    .insert({ project_id: projectId, amount: total, type: 'addon', status: 'unpaid' })
+    .select()
+    .single();
+
+  if (!addonInvoice) throw new Error('Failed to create add-on invoice.');
+
+  // Persist scope items
+  await supabase.from('project_scope_items').insert(
+    scopeItems.map(item => ({
+      project_id: projectId,
+      name: item.name,
+      price: item.price,
+      is_addon: true,
+      invoice_id: addonInvoice.id,
+    }))
+  );
+
+  // Append amendment to contract
+  const { data: contract } = await supabase
+    .from('contracts')
+    .select('id, content')
+    .eq('project_id', projectId)
+    .maybeSingle();
+
+  if (contract) {
+    const today = new Date().toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Chicago',
+    });
+    const itemLines = scopeItems.map(i => `  • ${i.name} — ${fmt(i.price)}`).join('\n');
+    const amendment = [
+      '',
+      '',
+      '─────────────────────────────────────────',
+      'CONTRACT AMENDMENT',
+      `Date: ${today}`,
+      '',
+      'The following scope additions were agreed upon:',
+      '',
+      itemLines,
+      '',
+      `Add-On Total: ${fmt(total)}`,
+      `Add-On Invoice #${addonNumber}: ${fmt(total)} (unpaid)`,
+      ...(note ? [`Note: ${note}`] : []),
+      '',
+      'All other terms of the original agreement remain in effect.',
+    ].join('\n');
+
+    await supabase
+      .from('contracts')
+      .update({ content: contract.content + amendment })
+      .eq('id', contract.id);
+  }
+
+  revalidatePath(`/admin/projects/${projectId}`);
+  redirect(`/admin/projects/${projectId}`);
+}
+
 export async function sendPortalEmailAction(formData: FormData) {
   const projectId = formData.get('project_id') as string;
   const token = formData.get('token') as string;
