@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { stripe } from '@/lib/stripe';
 import { resend } from '@/lib/resend';
+import { sendPushNotification } from '@/lib/push';
 
 // Shared helper — sends the initial "get started" portal email to the client
 export async function sendPortalGetStartedEmail(
@@ -458,6 +459,11 @@ export async function addScopeItemsAction(formData: FormData) {
 
   if (scopeItems.length === 0) throw new Error('Select at least one item to add.');
 
+  // Server-side price validation — guard against tampered hidden input values
+  if (scopeItems.some(i => typeof i.price !== 'number' || !isFinite(i.price) || i.price <= 0)) {
+    throw new Error('All items must have a valid price greater than zero.');
+  }
+
   const total = scopeItems.reduce((a, b) => a + b.price, 0);
 
   function fmt(n: number) {
@@ -466,14 +472,42 @@ export async function addScopeItemsAction(formData: FormData) {
 
   const supabase = await createClient();
 
-  // Count existing add-on invoices for numbering
-  const { count } = await supabase
-    .from('invoices')
-    .select('id', { count: 'exact', head: true })
-    .eq('project_id', projectId)
-    .eq('type', 'addon');
+  // Parallel fetch: addon count, project + client info, contract, active portal session
+  const [
+    { count },
+    { data: project },
+    { data: contract },
+    { data: portalSessions },
+  ] = await Promise.all([
+    supabase
+      .from('invoices')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+      .eq('type', 'addon'),
+    supabase
+      .from('projects')
+      .select('title, clients(name, email)')
+      .eq('id', projectId)
+      .single(),
+    supabase
+      .from('contracts')
+      .select('id, content')
+      .eq('project_id', projectId)
+      .maybeSingle(),
+    supabase
+      .from('portal_sessions')
+      .select('token')
+      .eq('project_id', projectId)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1),
+  ]);
 
-  const addonNumber = (count ?? 0) + 1;
+  if (!project) throw new Error('Project not found.');
+
+  const addonNumber    = (count ?? 0) + 1;
+  const client         = (project as any).clients as { name: string; email: string } | null;
+  const portalToken    = portalSessions?.[0]?.token ?? null;
 
   // Create add-on invoice
   const { data: addonInvoice } = await supabase
@@ -484,32 +518,56 @@ export async function addScopeItemsAction(formData: FormData) {
 
   if (!addonInvoice) throw new Error('Failed to create add-on invoice.');
 
-  // Persist scope items
-  await supabase.from('project_scope_items').insert(
-    scopeItems.map(item => ({
-      project_id: projectId,
-      name: item.name,
-      price: item.price,
-      is_addon: true,
-      invoice_id: addonInvoice.id,
-    }))
-  );
+  // Persist scope items (non-fatal)
+  try {
+    await supabase.from('project_scope_items').insert(
+      scopeItems.map(item => ({
+        project_id: projectId,
+        name: item.name,
+        price: item.price,
+        is_addon: true,
+        invoice_id: addonInvoice.id,
+      }))
+    );
+  } catch (e) {
+    console.error('Add-on scope items insert failed (non-fatal):', e);
+  }
 
-  // Append amendment to contract
-  const { data: contract } = await supabase
-    .from('contracts')
-    .select('id, content')
-    .eq('project_id', projectId)
-    .maybeSingle();
+  // Generate Stripe payment link so client can pay immediately (non-fatal)
+  let addonPaymentUrl: string | null = null;
+  try {
+    const price = await stripe.prices.create({
+      currency: 'usd',
+      unit_amount: Math.round(total * 100),
+      product_data: { name: `${project.title} — Add-On #${addonNumber}` },
+    });
+    const paymentLink = await stripe.paymentLinks.create({
+      line_items: [{ price: price.id, quantity: 1 }],
+      metadata: { invoice_id: addonInvoice.id },
+      after_completion: {
+        type: 'redirect',
+        redirect: {
+          url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success${portalToken ? `?token=${portalToken}` : ''}`,
+        },
+      },
+    });
+    await supabase
+      .from('invoices')
+      .update({ stripe_payment_id: paymentLink.id, stripe_payment_url: paymentLink.url })
+      .eq('id', addonInvoice.id);
+    addonPaymentUrl = paymentLink.url;
+  } catch (e) {
+    console.error('Stripe link for add-on failed (non-fatal):', e);
+  }
 
+  // Append contract amendment (non-fatal — invoice + scope already committed)
   if (contract) {
     const today = new Date().toLocaleDateString('en-US', {
       year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Chicago',
     });
     const itemLines = scopeItems.map(i => `  • ${i.name} — ${fmt(i.price)}`).join('\n');
     const amendment = [
-      '',
-      '',
+      '', '',
       '─────────────────────────────────────────',
       'CONTRACT AMENDMENT',
       `Date: ${today}`,
@@ -524,11 +582,57 @@ export async function addScopeItemsAction(formData: FormData) {
       '',
       'All other terms of the original agreement remain in effect.',
     ].join('\n');
+    try {
+      await supabase
+        .from('contracts')
+        .update({ content: contract.content + amendment })
+        .eq('id', contract.id);
+    } catch (e) {
+      console.error('Contract amendment failed (non-fatal):', e);
+    }
+  }
 
-    await supabase
-      .from('contracts')
-      .update({ content: contract.content + amendment })
-      .eq('id', contract.id);
+  // Push notification to David
+  try {
+    await sendPushNotification(
+      '➕ Scope Add-On Added',
+      `Add-On #${addonNumber} · ${fmt(total)} · ${project.title}${addonPaymentUrl ? ' · Stripe link ready' : ''}`,
+      `/admin/projects/${projectId}`
+    );
+  } catch (e) {
+    console.error('Push notification failed:', e);
+  }
+
+  // Email client about the new scope and invoice (fire-and-forget)
+  if (client?.email && portalToken) {
+    const portalInvoiceUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${portalToken}/invoice`;
+    const itemListHtml = scopeItems
+      .map(i => `<li style="margin-bottom:4px;">${i.name} &mdash; ${fmt(i.price)}</li>`)
+      .join('');
+    resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL!,
+      to: client.email,
+      subject: `Scope update — ${fmt(total)} add-on for ${project.title}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+          <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
+          <p style="margin-bottom:16px;line-height:1.6;">
+            We've added the following items to your project <strong>${project.title}</strong>:
+          </p>
+          <ul style="margin:0 0 16px;padding-left:20px;font-size:13px;line-height:1.8;">
+            ${itemListHtml}
+          </ul>
+          <p style="margin-bottom:20px;line-height:1.6;">
+            <strong>Add-On Total: ${fmt(total)}</strong>
+            ${note ? `<br/><span style="color:#6B6B60;font-size:13px;">Note: ${note}</span>` : ''}
+          </p>
+          <a href="${addonPaymentUrl ?? portalInvoiceUrl}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+            ${addonPaymentUrl ? `Pay ${fmt(total)} →` : 'View Invoice →'}
+          </a>
+          <p style="margin-top:24px;color:#6B6B60;font-size:12px;">Questions? Email us at 3rddavidstechnology@gmail.com</p>
+        </div>
+      `,
+    }).catch(() => {});
   }
 
   revalidatePath(`/admin/projects/${projectId}`);

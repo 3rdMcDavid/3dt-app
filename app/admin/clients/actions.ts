@@ -143,16 +143,20 @@ export async function onboardClientAction(formData: FormData) {
     project_id: project.id, amount: final, type: 'final', status: 'unpaid',
   });
 
-  // Persist scope items for reference and future add-ons
+  // Persist scope items for reference and future add-ons (non-fatal — project already exists)
   if (scopeItems.length > 0) {
-    await supabase.from('project_scope_items').insert(
-      scopeItems.map(item => ({
-        project_id: project.id,
-        name: item.name,
-        price: item.price,
-        is_addon: false,
-      }))
-    );
+    try {
+      await supabase.from('project_scope_items').insert(
+        scopeItems.map(item => ({
+          project_id: project.id,
+          name: item.name,
+          price: item.price,
+          is_addon: false,
+        }))
+      );
+    } catch (e) {
+      console.error('Scope items insert failed (non-fatal):', e);
+    }
   }
 
   // Generate Stripe payment link for deposit — ready before client even signs

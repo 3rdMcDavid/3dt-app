@@ -19,11 +19,19 @@ export default async function PortalLaunchPage({
 
   if (!session) notFound();
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('title, project_type, client_vercel_email, client_github_username, launch_notes, launch_submitted_at, launch_confirmed_at')
-    .eq('id', session.project_id)
-    .single();
+  const [{ data: project }, { data: finalInvoice }] = await Promise.all([
+    supabase
+      .from('projects')
+      .select('title, project_type, client_vercel_email, client_github_username, launch_notes, launch_submitted_at, launch_confirmed_at')
+      .eq('id', session.project_id)
+      .single(),
+    supabase
+      .from('invoices')
+      .select('amount, status, stripe_payment_url')
+      .eq('project_id', session.project_id)
+      .eq('type', 'final')
+      .maybeSingle(),
+  ]);
 
   if (!project) notFound();
 
@@ -31,6 +39,30 @@ export default async function PortalLaunchPage({
   const confirmed = !!(project as any).launch_confirmed_at;
   const isTool = (project as any).project_type === 'tool';
   const isBoth = (project as any).project_type === 'website_tool';
+
+  // Gate: final invoice must be paid before proceeding to launch/delivery setup
+  const finalPaid = !finalInvoice || (finalInvoice as any).status === 'paid';
+  if (!finalPaid) {
+    const fmtGate = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
+    return (
+      <>
+        <div className="portal-header">
+          <p className="portal-subtitle">{(project as any).title}</p>
+          <h1 className="portal-welcome">{isTool ? 'Delivery' : 'Launch Setup'}</h1>
+        </div>
+        <div className="portal-card" style={{ textAlign: 'center', padding: '32px 20px' }}>
+          <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>Final Payment Required</p>
+          <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.65, marginBottom: 20 }}>
+            Your final payment of <strong>{fmtGate(Number((finalInvoice as any).amount))}</strong> must be
+            received before we can proceed with {isTool ? 'delivery' : 'launch setup'}.
+          </p>
+          <a href={`/portal/${token}/invoice`} className="portal-btn" style={{ display: 'inline-block' }}>
+            View Invoice →
+          </a>
+        </div>
+      </>
+    );
+  }
 
   // ── Tool delivery page ─────────────────────────────────────────────────────
   if (isTool) {

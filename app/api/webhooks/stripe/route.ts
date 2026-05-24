@@ -26,17 +26,28 @@ export async function POST(req: NextRequest) {
     let paidInvoiceId: string | null = null;
 
     if (invoiceId) {
-      await supabase.from('invoices').update({ status: 'paid' }).eq('id', invoiceId);
-      paidInvoiceId = invoiceId;
+      // Guard against duplicate webhook delivery — only update if still unpaid
+      const { data: updated } = await supabase
+        .from('invoices')
+        .update({ status: 'paid' })
+        .eq('id', invoiceId)
+        .eq('status', 'unpaid')
+        .select('id')
+        .single();
+      paidInvoiceId = updated?.id ?? null;
     } else if (paymentLinkId) {
       const { data: inv } = await supabase
         .from('invoices')
         .update({ status: 'paid' })
         .eq('stripe_payment_id', paymentLinkId)
+        .eq('status', 'unpaid')
         .select('id')
         .single();
       paidInvoiceId = inv?.id ?? null;
     }
+
+    // Nothing was updated — this event was already processed (duplicate delivery)
+    if (!paidInvoiceId) return NextResponse.json({ received: true });
 
     // If a deposit was just paid, auto-generate portal and email client
     if (paidInvoiceId) {
@@ -150,6 +161,39 @@ export async function POST(req: NextRequest) {
             `${client?.name ?? 'Client'} paid their final invoice — ${project.title} is done!`,
             `/admin/projects/${invoice.project_id}`
           );
+        }
+      }
+
+      if (invoice?.type === 'addon') {
+        const { data: addonProject } = await supabase
+          .from('projects')
+          .select('title, clients(name, email)')
+          .eq('id', invoice.project_id)
+          .single();
+
+        if (addonProject) {
+          const addonClient = (addonProject as any).clients;
+          const addonAmount = Number(invoice.amount);
+          const fmtAddon = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
+
+          await sendPushNotification(
+            '💳 Add-On Paid',
+            `${addonClient?.name ?? 'Client'} paid ${fmtAddon(addonAmount)} for add-on — ${addonProject.title}`,
+            `/admin/projects/${invoice.project_id}`
+          );
+
+          resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL!,
+            to: '3rddavidstechnology@gmail.com',
+            subject: `💳 Add-On Paid — ${addonProject.title}`,
+            html: `
+              <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+                <h2 style="margin-bottom:8px;">Add-On Payment Received</h2>
+                <p style="line-height:1.6;"><strong>${addonClient?.name ?? 'Client'}</strong> paid their <strong>${fmtAddon(addonAmount)}</strong> add-on invoice for <strong>${addonProject.title}</strong>.</p>
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${invoice.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
+              </div>
+            `,
+          }).catch(() => {});
         }
       }
 

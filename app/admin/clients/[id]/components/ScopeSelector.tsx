@@ -1,40 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { SCOPE_CATALOG, CARE_PLAN_MONTHLY } from '@/lib/catalog';
 
 type SelectedMap = Record<string, number>;
 type CustomItem = { id: number; name: string; price: string };
-
-const CATALOG = [
-  { label: 'Website', items: [
-    { name: 'Website Development', price: 750 },
-  ]},
-  { label: 'Lead & Sales', items: [
-    { name: 'Instant Lead Follow-Up', price: 450 },
-    { name: 'Quote Generator', price: 600 },
-    { name: 'Referral Tracker', price: 675 },
-  ]},
-  { label: 'Client & Projects', items: [
-    { name: 'Client Onboarding Portal', price: 900 },
-    { name: 'Appointment Booking System', price: 600 },
-    { name: 'Project Status Page', price: 525 },
-    { name: 'Retainer Dashboard', price: 600 },
-    { name: 'Feedback & Testimonial Collector', price: 450 },
-  ]},
-  { label: 'Operations', items: [
-    { name: 'Job / Order Tracker', price: 900 },
-    { name: 'Document Generator', price: 750 },
-    { name: 'Expense Logger', price: 525 },
-    { name: 'Inventory Tracker', price: 600 },
-  ]},
-  { label: 'Local Business', items: [
-    { name: 'Review Request Automation', price: 450 },
-    { name: 'Loyalty Points Tracker', price: 675 },
-    { name: 'Event Registration System', price: 600 },
-    { name: 'Service Catalog Manager', price: 525 },
-    { name: 'Before / After Showcase', price: 525 },
-  ]},
-];
 
 function fmt(n: number) {
   return `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
@@ -99,7 +69,7 @@ export default function ScopeSelector({ projectType = 'website', onTotalChange }
       </div>
 
       {/* Catalog */}
-      {CATALOG.map(cat => (
+      {SCOPE_CATALOG.map(cat => (
         <div key={cat.label} style={{ marginBottom: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: 6, paddingBottom: 4, borderBottom: '1px solid var(--border)' }}>
             {cat.label}
@@ -197,12 +167,12 @@ export default function ScopeSelector({ projectType = 'website', onTotalChange }
             style={{ width: 'auto', accentColor: 'var(--green)', flexShrink: 0 }}
           />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Monthly Care Plan — $115/mo</div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>Monthly Care Plan — ${CARE_PLAN_MONTHLY}/mo</div>
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
               Added to contract. Begins 30 days post-launch. Set up recurring billing in Stripe separately.
             </div>
           </div>
-          <span style={{ fontSize: 12, color: 'var(--muted)', flexShrink: 0 }}>$115/mo</span>
+          <span style={{ fontSize: 12, color: 'var(--muted)', flexShrink: 0 }}>${CARE_PLAN_MONTHLY}/mo</span>
         </label>
       </div>
 

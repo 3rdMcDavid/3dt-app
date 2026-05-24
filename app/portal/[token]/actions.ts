@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { stripe } from '@/lib/stripe';
 import { resend } from '@/lib/resend';
 import { sendPushNotification } from '@/lib/push';
+import { escHtml } from '@/lib/html';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
@@ -78,7 +79,7 @@ export async function signContractFromPortalAction(formData: FormData) {
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
         <h2 style="margin-bottom:8px;">Contract Signed</h2>
-        <p style="line-height:1.6;"><strong>${client.name}</strong> signed the contract for <strong>${project.title}</strong>.${hasInvoice ? ' Deposit invoice is being sent to them now.' : ' <strong>No invoices are set up yet — add pricing in the project hub to send the deposit.</strong>'}</p>
+        <p style="line-height:1.6;"><strong>${escHtml(client.name)}</strong> signed the contract for <strong>${escHtml(project.title)}</strong>.${hasInvoice ? ' Deposit invoice is being sent to them now.' : ' <strong>No invoices are set up yet — add pricing in the project hub to send the deposit.</strong>'}</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/projects/${session.project_id}" style="display:inline-block;background:#1B4D2E;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-top:12px;">View Project →</a>
       </div>
     `,
@@ -123,12 +124,12 @@ export async function signContractFromPortalAction(formData: FormData) {
     const depositAmount = depositInvoice!.amount;
     const fmt = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
 
-    // Format contract for email
+    // Format contract for email — escape each line before embedding in HTML
     const contractHtml = (contract.content ?? '')
       .split('\n')
       .map((line: string) =>
         line.trim()
-          ? `<p style="margin:0 0 10px;font-size:13px;color:#374151;line-height:1.6;">${line}</p>`
+          ? `<p style="margin:0 0 10px;font-size:13px;color:#374151;line-height:1.6;">${escHtml(line)}</p>`
           : '<br/>'
       )
       .join('');
@@ -139,9 +140,9 @@ export async function signContractFromPortalAction(formData: FormData) {
       subject: `Contract signed — your ${fmt(depositAmount)} deposit is due`,
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1A1A1A;">
-          <h2 style="margin-bottom:8px;">Hi ${client.name},</h2>
+          <h2 style="margin-bottom:8px;">Hi ${escHtml(client.name)},</h2>
           <p style="margin-bottom:16px;line-height:1.6;">
-            Thanks for signing your contract for <strong>${project.title}</strong>!
+            Thanks for signing your contract for <strong>${escHtml(project.title)}</strong>!
             Your next step is to pay your <strong>${fmt(depositAmount)} deposit</strong> to kick off the project.
           </p>
           ${depositPaymentUrl ? `
@@ -156,10 +157,10 @@ export async function signContractFromPortalAction(formData: FormData) {
           <hr style="border:none;border-top:1px solid #E5E7EB;margin:32px 0;" />
 
           <p style="font-size:13px;font-weight:600;color:#374151;margin-bottom:4px;">
-            📄 Your Signed Contract — ${project.title}
+            📄 Your Signed Contract — ${escHtml(project.title)}
           </p>
           <p style="font-size:12px;color:#9CA3AF;margin-bottom:20px;">
-            Signed by ${signatureName} on ${signedDate}
+            Signed by ${escHtml(signatureName)} on ${signedDate}
           </p>
 
           <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:20px 24px;margin-bottom:24px;">

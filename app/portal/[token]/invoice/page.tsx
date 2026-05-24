@@ -56,7 +56,7 @@ export default async function PortalInvoicePage({
                 {(invoices || []).map((inv: any) => (
                   <tr key={inv.id}>
                     <td style={{ textTransform: 'capitalize' }}>
-                      {inv.type === 'deposit' ? 'Deposit' : 'Final Payment'}
+                      {inv.type === 'deposit' ? 'Deposit' : inv.type === 'addon' ? 'Add-On' : 'Final Payment'}
                       {inv.due_date && (
                         <span style={{ display: 'block', fontSize: 11, color: 'var(--p-muted)', marginTop: 2 }}>
                           Due {new Date(inv.due_date).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}
