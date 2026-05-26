@@ -14,16 +14,15 @@ export default async function ProjectsPage() {
     <>
       <div className="admin-topbar">
         <span className="topbar-title">Projects</span>
-        <div className="topbar-actions">
-          <Link href="/admin/projects/new" className="btn btn-primary btn-sm">+ New Project</Link>
-        </div>
       </div>
       <div className="admin-content">
         <div className="card">
           {!projects?.length ? (
             <div className="empty-state card-body">
               <p>No projects yet.</p>
-              <p><Link href="/admin/projects/new" className="btn btn-primary btn-sm" style={{ marginTop: 12 }}>Add your first project</Link></p>
+              <p style={{ marginTop: 8, fontSize: 13, color: 'var(--muted)' }}>
+                Open a client and use <strong>Onboard</strong> or <strong>Add Another Project</strong> to create one.
+              </p>
             </div>
           ) : (
             <div className="table-wrap">

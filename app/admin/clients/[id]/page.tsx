@@ -71,20 +71,21 @@ export default async function ClientDetailPage({
           </div>
         </div>
 
-        {/* Onboard — shown only for leads with no active project */}
-        {client.status === 'lead' && !projects?.length && (
-          <OnboardForm clientId={id} clientName={client.name} />
-        )}
+        {/* Onboard / Add Another Project — always available */}
+        <OnboardForm
+          clientId={id}
+          clientName={client.name}
+          defaultOpen={client.status === 'lead' && !projects?.length}
+        />
 
         {/* Projects */}
         <div className="section">
           <div className="section-header">
             <span className="section-title">Projects ({projects?.length ?? 0})</span>
-            <Link href={`/admin/projects/new?client_id=${id}`} className="btn btn-primary btn-sm">+ New Project</Link>
           </div>
           <div className="card">
             {!projects?.length ? (
-              <div className="hub-section-empty">No projects yet. <Link href={`/admin/projects/new?client_id=${id}`}>Create one →</Link></div>
+              <div className="hub-section-empty">No projects yet — use the form above to create one.</div>
             ) : (
               <div className="table-wrap">
                 <table>
