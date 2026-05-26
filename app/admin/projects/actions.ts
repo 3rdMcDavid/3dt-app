@@ -227,61 +227,6 @@ export async function deleteProjectAction(formData: FormData) {
   redirect('/admin/projects');
 }
 
-// ─── Proposals ────────────────────────────────────────────────────────────────
-
-export async function upsertProposalAction(formData: FormData) {
-  const projectId = formData.get('project_id') as string;
-  const proposalId = formData.get('proposal_id') as string;
-  const supabase = await createClient();
-
-  const payload = {
-    project_id: projectId,
-    deliverables: (formData.get('deliverables') as string).trim(),
-    price: parseFloat(formData.get('price') as string),
-    status: (formData.get('status') as string) || 'draft',
-  };
-
-  if (proposalId) {
-    await supabase.from('proposals').update(payload).eq('id', proposalId);
-  } else {
-    await supabase.from('proposals').insert(payload);
-  }
-
-  revalidatePath(`/admin/projects/${projectId}`);
-  redirect(`/admin/projects/${projectId}`);
-}
-
-// ─── Contracts ────────────────────────────────────────────────────────────────
-
-export async function upsertContractAction(formData: FormData) {
-  const projectId = formData.get('project_id') as string;
-  const contractId = formData.get('contract_id') as string;
-  const supabase = await createClient();
-
-  const payload = {
-    project_id: projectId,
-    content: (formData.get('content') as string).trim(),
-  };
-
-  if (contractId) {
-    const { data: existing } = await supabase
-      .from('contracts')
-      .select('signed_at')
-      .eq('id', contractId)
-      .single();
-    if (existing?.signed_at) {
-      revalidatePath(`/admin/projects/${projectId}`);
-      redirect(`/admin/projects/${projectId}`);
-    }
-    await supabase.from('contracts').update(payload).eq('id', contractId);
-  } else {
-    await supabase.from('contracts').insert(payload);
-  }
-
-  revalidatePath(`/admin/projects/${projectId}`);
-  redirect(`/admin/projects/${projectId}`);
-}
-
 // ─── Invoices ─────────────────────────────────────────────────────────────────
 
 export async function createInvoiceAction(formData: FormData) {

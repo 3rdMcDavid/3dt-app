@@ -4,33 +4,33 @@
 
 export const SCOPE_CATALOG = [
   { label: 'Website', items: [
-    { name: 'Website Development', price: 750 },
+    { name: 'Website Development', price: 1500 },
   ]},
   { label: 'Lead & Sales', items: [
-    { name: 'Instant Lead Follow-Up', price: 450 },
-    { name: 'Quote Generator', price: 600 },
-    { name: 'Referral Tracker', price: 675 },
+    { name: 'Instant Lead Follow-Up', price: 750 },
+    { name: 'Quote Generator', price: 900 },
+    { name: 'Referral Tracker', price: 900 },
   ]},
   { label: 'Client & Projects', items: [
-    { name: 'Client Onboarding Portal', price: 900 },
-    { name: 'Appointment Booking System', price: 600 },
-    { name: 'Project Status Page', price: 525 },
-    { name: 'Retainer Dashboard', price: 600 },
-    { name: 'Feedback & Testimonial Collector', price: 450 },
+    { name: 'Client Onboarding Portal', price: 1350 },
+    { name: 'Appointment Booking System', price: 900 },
+    { name: 'Project Status Page', price: 750 },
+    { name: 'Retainer Dashboard', price: 900 },
+    { name: 'Feedback & Testimonial Collector', price: 675 },
   ]},
   { label: 'Operations', items: [
-    { name: 'Job / Order Tracker', price: 900 },
-    { name: 'Document Generator', price: 750 },
-    { name: 'Expense Logger', price: 525 },
-    { name: 'Inventory Tracker', price: 600 },
+    { name: 'Job / Order Tracker', price: 1350 },
+    { name: 'Document Generator', price: 1125 },
+    { name: 'Expense Logger', price: 750 },
+    { name: 'Inventory Tracker', price: 900 },
   ]},
   { label: 'Local Business', items: [
-    { name: 'Review Request Automation', price: 450 },
-    { name: 'Loyalty Points Tracker', price: 675 },
-    { name: 'Event Registration System', price: 600 },
-    { name: 'Service Catalog Manager', price: 525 },
-    { name: 'Before / After Showcase', price: 525 },
+    { name: 'Review Request Automation', price: 675 },
+    { name: 'Loyalty Points Tracker', price: 1000 },
+    { name: 'Event Registration System', price: 900 },
+    { name: 'Service Catalog Manager', price: 750 },
+    { name: 'Before / After Showcase', price: 750 },
   ]},
 ] as const;
 
-export const CARE_PLAN_MONTHLY = 115;
+export const CARE_PLAN_MONTHLY = 150;

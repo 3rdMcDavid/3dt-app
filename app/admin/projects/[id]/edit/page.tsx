@@ -49,7 +49,6 @@ export default async function EditProjectPage({
                   <label className="form-label" htmlFor="stage">Stage</label>
                   <select id="stage" name="stage" defaultValue={project.stage}>
                     <option value="discovery">Discovery</option>
-                    <option value="proposal">Proposal</option>
                     <option value="contract">Contract</option>
                     <option value="build">Build</option>
                     <option value="review">Review</option>

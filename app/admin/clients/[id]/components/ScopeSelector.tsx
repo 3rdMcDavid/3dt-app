@@ -169,7 +169,7 @@ export default function ScopeSelector({ projectType = 'website', onTotalChange }
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600 }}>Monthly Care Plan — ${CARE_PLAN_MONTHLY}/mo</div>
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-              Added to contract. Begins 30 days post-launch. Set up recurring billing in Stripe separately.
+              Hosting oversight, uptime monitoring, minor content updates (≤1 hr/mo), priority support, and annual security review. Begins 30 days post-launch. Set up recurring billing in Stripe separately.
             </div>
           </div>
           <span style={{ fontSize: 12, color: 'var(--muted)', flexShrink: 0 }}>${CARE_PLAN_MONTHLY}/mo</span>

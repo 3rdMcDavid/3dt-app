@@ -91,7 +91,7 @@ export async function onboardClientAction(formData: FormData) {
 
   const itemLines = scopeItems.map(i => `  • ${i.name} — ${fmt(i.price)}`).join('\n');
   const carePlanLine = carePlan
-    ? `\n  • Monthly Care Plan — $115/month (begins 30 days after ${handoffWord}; set up recurring billing separately)`
+    ? `\n  • Monthly Care Plan — $150/month (begins 30 days after ${handoffWord}; set up recurring billing separately)`
     : '';
   const deliverablesBlock = [
     'SCOPE OF WORK',
@@ -117,7 +117,7 @@ export async function onboardClientAction(formData: FormData) {
     : deliverablesBlock + '\n\n---\n\n' + content;
 
   const projectNotes = carePlan
-    ? '⚠️ Care Plan selected — set up $75/mo recurring billing in Stripe.'
+    ? '⚠️ Care Plan selected — set up $150/mo recurring billing in Stripe.'
     : null;
 
   // Create project

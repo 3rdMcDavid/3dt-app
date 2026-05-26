@@ -53,10 +53,10 @@ export default async function NewProjectPage({
                   <label className="form-label" htmlFor="stage">Stage</label>
                   <select id="stage" name="stage">
                     <option value="discovery">Discovery</option>
-                    <option value="proposal">Proposal</option>
                     <option value="contract">Contract</option>
                     <option value="build">Build</option>
                     <option value="review">Review</option>
+                    <option value="handoff_pending">Handoff Pending</option>
                     <option value="launched">Launched</option>
                   </select>
                 </div>
