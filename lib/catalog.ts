@@ -4,7 +4,7 @@
 
 export const SCOPE_CATALOG = [
   { label: 'Website', items: [
-    { name: 'Website Development', price: 1500 },
+    { name: 'Website Development', price: 750 },
   ]},
   { label: 'Lead & Sales', items: [
     { name: 'Instant Lead Follow-Up', price: 750 },
