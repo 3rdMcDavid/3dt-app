@@ -84,7 +84,7 @@ export default async function PortalInvoicePage({
           {/* Payment CTA */}
           {firstUnpaid ? (
             <a
-              href={firstUnpaid.stripe_payment_url}
+              href={firstUnpaid.stripe_payment_url ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
               className="portal-btn"

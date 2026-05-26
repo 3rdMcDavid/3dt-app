@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
 
   await supabase
     .from('projects')
-    .update({ revision_stage: nextStage })
+    .update({ revision_stage: nextStage as import('@/lib/types').RevisionStage })
     .eq('id', projectId);
 
   // ── Push notification to David ─────────────────────────────────────────────
