@@ -144,7 +144,7 @@ export default async function PortalLaunchPage({
       <div className="portal-card">
         <p style={{ fontSize: 14, color: 'var(--p-muted)', lineHeight: 1.65, marginBottom: 0 }}>
           {isBoth
-            ? 'To transfer your site, David needs your Vercel account email. Your tool delivery will be handled separately — David will reach out with files and access details.'
+            ? 'Both your website and your custom tool are deployed on Vercel — so to transfer full ownership of both, David needs your Vercel account email. He handles all the domain setup, hosting configuration, and the transfer itself.'
             : 'To hand off your finished website, David just needs your Vercel account email. He handles everything else — including the domain, hosting setup, and transfer.'}
         </p>
       </div>
@@ -158,7 +158,9 @@ export default async function PortalLaunchPage({
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--p-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>Vercel Email</p>
+              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--p-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>
+                Vercel Email {isBoth ? '(Website & Tool Transfer)' : ''}
+              </p>
               <p style={{ fontSize: 14 }}>{(project as any).client_vercel_email || '—'}</p>
             </div>
             {(project as any).client_github_username && (
@@ -203,7 +205,7 @@ export default async function PortalLaunchPage({
           <div className="portal-card" style={{ marginBottom: 12 }}>
             <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Step 2 — GitHub <span style={{ fontWeight: 400, color: 'var(--p-muted)' }}>(optional)</span></p>
             <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, marginBottom: 16 }}>
-              If you have a GitHub account and want your website's code transferred to you, enter your username.
+              If you have a GitHub account and want your {isBoth ? "website and tool's" : "website's"} code transferred to you, enter your username.
               This is optional — most clients skip it.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

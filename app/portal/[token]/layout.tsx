@@ -34,7 +34,7 @@ export default async function PortalLayout({
     );
   }
 
-  const [{ data: contract }, { data: depositInvoice }, { data: project }] = await Promise.all([
+  const [{ data: contract }, { data: depositInvoice }, { data: finalInvoice }, { data: project }] = await Promise.all([
     supabase
       .from('contracts')
       .select('id, signed_at, content, signature_name')
@@ -45,6 +45,12 @@ export default async function PortalLayout({
       .select('id, status, stripe_payment_url, amount')
       .eq('project_id', session.project_id)
       .eq('type', 'deposit')
+      .maybeSingle(),
+    supabase
+      .from('invoices')
+      .select('amount')
+      .eq('project_id', session.project_id)
+      .eq('type', 'final')
       .maybeSingle(),
     supabase
       .from('projects')
@@ -86,6 +92,8 @@ export default async function PortalLayout({
               stripeUrl={depositInvoice?.stripe_payment_url ?? null}
               signatureName={contract.signature_name ?? ''}
               depositAmount={depositInvoice?.amount ?? null}
+              finalAmount={finalInvoice?.amount ?? null}
+              projectType={projectType}
             />
           </main>
         </div>

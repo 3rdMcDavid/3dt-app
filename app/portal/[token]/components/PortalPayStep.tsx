@@ -3,11 +3,20 @@ type Props = {
   stripeUrl: string | null;
   signatureName: string;
   depositAmount: number | null;
+  finalAmount: number | null;
+  projectType?: string;
 };
 
-export default function PortalPayStep({ projectTitle, stripeUrl, signatureName, depositAmount }: Props) {
-  const amount = depositAmount != null ? depositAmount : null;
-  const fmt = (n: number) => `$${n.toFixed(2).replace(/\.00$/, '')}`;
+export default function PortalPayStep({ projectTitle, stripeUrl, signatureName, depositAmount, finalAmount, projectType }: Props) {
+  const fmt = (n: number) => `$${n % 1 === 0 ? n.toLocaleString('en-US') : n.toFixed(2)}`;
+
+  const isBoth    = projectType === 'website_tool';
+  const isToolOnly = projectType === 'tool';
+  const transferWord = isBoth
+    ? 'website and tool ownership transfer'
+    : isToolOnly
+    ? 'tool delivery'
+    : 'website ownership transfer';
 
   return (
     <div style={{ padding: '24px 16px 80px' }}>
@@ -15,7 +24,7 @@ export default function PortalPayStep({ projectTitle, stripeUrl, signatureName, 
         <p className="portal-subtitle">Step 2 of 2</p>
         <h1 className="portal-welcome">Pay Your Deposit</h1>
         <p style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 4 }}>
-          Contract signed{signatureName ? ` by ${signatureName}` : ''}. Pay your deposit to unlock your project portal.
+          Contract signed{signatureName ? ` by ${signatureName}` : ''}. Pay your deposit to kick off your project.
         </p>
       </div>
 
@@ -25,19 +34,78 @@ export default function PortalPayStep({ projectTitle, stripeUrl, signatureName, 
         <div style={{ flex: 1, height: 4, borderRadius: 4, background: 'var(--p-green)' }} />
       </div>
 
-      {/* Deposit card */}
+      {/* Payment breakdown card */}
       <div className="portal-card" style={{ marginBottom: 16 }}>
-        <p className="portal-section-title" style={{ marginBottom: 16 }}>Deposit Due</p>
+        <p className="portal-section-title" style={{ marginBottom: 16 }}>Payment Schedule</p>
+
         <div className="portal-status-row">
           <span className="portal-status-label">Project</span>
           <span className="portal-status-value">{projectTitle}</span>
         </div>
-        {amount != null && (
-          <div className="portal-status-row">
-            <span className="portal-status-label">Due Now</span>
-            <span className="portal-status-value" style={{ color: '#92400E', fontWeight: 700 }}>{fmt(amount)} deposit</span>
+
+        {/* Deposit row — highlighted */}
+        {depositAmount != null && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px 0',
+            borderTop: '1px solid var(--p-border)',
+            borderBottom: '1px solid var(--p-border)',
+            margin: '8px 0',
+          }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--p-text)', marginBottom: 2 }}>
+                Deposit — Due Now
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--p-muted)' }}>
+                50% of project total · paid to begin work
+              </p>
+            </div>
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#92400E' }}>
+              {fmt(depositAmount)}
+            </span>
           </div>
         )}
+
+        {/* Final row — grayed out / upcoming */}
+        {finalAmount != null && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '10px 0',
+            opacity: 0.55,
+          }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-text)', marginBottom: 2 }}>
+                Final Payment — Due Before {isBoth ? 'Launch & Delivery' : isToolOnly ? 'Delivery' : 'Launch'}
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--p-muted)' }}>
+                50% remaining · due before {transferWord}
+              </p>
+            </div>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--p-text)' }}>
+              {fmt(finalAmount)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Info note */}
+      <div style={{
+        background: 'rgba(27,77,46,0.06)',
+        border: '1px solid rgba(27,77,46,0.15)',
+        borderRadius: 10,
+        padding: '12px 14px',
+        marginBottom: 20,
+        fontSize: 12,
+        color: 'var(--p-muted)',
+        lineHeight: 1.6,
+      }}>
+        💡 <strong style={{ color: 'var(--p-text)' }}>How payments work:</strong> Your deposit today starts the project.
+        The final payment of {finalAmount != null ? fmt(finalAmount) : '50%'} is only due once you have
+        approved the final version — and {transferWord} happens only after the final is received.
       </div>
 
       {stripeUrl ? (
@@ -48,7 +116,7 @@ export default function PortalPayStep({ projectTitle, stripeUrl, signatureName, 
           className="portal-btn"
           style={{ display: 'block', textAlign: 'center' }}
         >
-          {amount != null ? `Pay ${fmt(amount)} Deposit →` : 'Pay Deposit →'}
+          {depositAmount != null ? `Pay ${fmt(depositAmount)} Deposit →` : 'Pay Deposit →'}
         </a>
       ) : (
         <div className="portal-card" style={{ textAlign: 'center', padding: 20 }}>
