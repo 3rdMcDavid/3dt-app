@@ -131,7 +131,7 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
           Otherwise, describe what you'd like adjusted.
         </p>
         {isEarlyApproval && (
-          <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 20, lineHeight: 1.6, background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 8, padding: '10px 14px' }}>
+          <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 20, lineHeight: 1.6, background: 'var(--p-bg)', border: '1px solid var(--p-border)', borderRadius: 8, padding: '10px 14px' }}>
             Approving will skip your remaining revision round and send your final invoice.
           </p>
         )}
@@ -446,7 +446,7 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
   if (isBoth) {
     return (
       <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
+        <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-bg)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
           There are two parts below — first your custom tool, then your website. Fill in what you can;
           the more detail you share, the better David can tailor everything to what you actually need.
           Website structure is the only required field.
@@ -489,7 +489,7 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
   if (isTool) {
     return (
       <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
+        <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-bg)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
           The more detail you share about your situation, the better David can build something that
           actually solves the problem — not just a generic tool.
         </p>
@@ -527,7 +527,7 @@ export default function IntakeForm({ token, submissionType, projectType = 'websi
   // ── Website only ────────────────────────────────────────────────────────────
   return (
     <form ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-card)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
+      <p style={{ fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'var(--p-bg)', border: '1px solid var(--p-border)', borderRadius: 10 }}>
         Fill in what you can — the more detail you share, the better we can tailor your site.
         Nothing is required except the page structure at the top.
       </p>

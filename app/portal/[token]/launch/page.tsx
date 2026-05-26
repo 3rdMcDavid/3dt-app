@@ -86,8 +86,8 @@ export default async function PortalLaunchPage({
           <>
             <div className="portal-card">
               <p style={{ fontSize: 14, color: 'var(--p-muted)', lineHeight: 1.65 }}>
-                Your tool is complete! David is preparing everything for delivery — files, access credentials, and instructions will be sent to your email shortly.
-                No action is needed on your end right now.
+                Your tool is complete! David is preparing your files, access credentials, and
+                instructions — everything will be sent to your email shortly.
               </p>
             </div>
 
@@ -95,18 +95,19 @@ export default async function PortalLaunchPage({
               <form action={saveLaunchInfoAction}>
                 <input type="hidden" name="token" value={token} />
                 <input type="hidden" name="project_id" value={session.project_id} />
-                <div className="portal-card" style={{ marginBottom: 20 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--p-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Questions or notes for David <span style={{ fontWeight: 400 }}>(optional)</span>
-                    </label>
-                    <textarea
-                      name="notes"
-                      rows={3}
-                      placeholder="Any questions about how to use your tool, preferred format for files, or anything else..."
-                      style={{ fontSize: 14, resize: 'vertical' }}
-                    />
-                  </div>
+                <div className="portal-card" style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-text)', marginBottom: 6 }}>
+                    Anything David should know before delivery?
+                  </p>
+                  <p style={{ fontSize: 13, color: 'var(--p-muted)', marginBottom: 14, lineHeight: 1.6 }}>
+                    Questions about how to use your tool, preferred file format, or any last-minute details — add them here. This is optional; if you have nothing to add, just hit Submit.
+                  </p>
+                  <textarea
+                    name="notes"
+                    rows={3}
+                    placeholder="e.g. Please send as a Google Sheet. I have a question about how the automation handles..."
+                    style={{ fontSize: 14, resize: 'vertical' }}
+                  />
                 </div>
                 <button type="submit" className="portal-btn">
                   Submit →
