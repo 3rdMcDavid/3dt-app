@@ -33,4 +33,4 @@ export const SCOPE_CATALOG = [
   ]},
 ] as const;
 
-export const CARE_PLAN_MONTHLY = 150;
+export const CARE_PLAN_MONTHLY = 100;
