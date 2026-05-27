@@ -15,7 +15,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT      = join(__dirname, '..');
 
 const INPUT     = 'C:/Users/wideo/Downloads/Sophisticated Leaf Logo with Organic Flow (2).png';
-const BG        = { r: 27, g: 61, b: 42, alpha: 1 };  // #1b3d2a
+const BG        = { r: 245, g: 243, b: 237, alpha: 1 };  // #f5f3ed cream
 
 // ─── output targets ────────────────────────────────────────────────────────
 const TARGETS = [
