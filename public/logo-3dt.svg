@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" width="200" height="200">
+  <defs>
+    <clipPath id="leafL"><path d="M40 74C40 74 9 57 9 29C9 13 23 6 40 6L40 74Z"/></clipPath>
+    <clipPath id="leafR"><path d="M40 6C57 6 71 13 71 29C71 57 40 74 40 74L40 6Z"/></clipPath>
+  </defs>
+
+  <!-- Left half: forest green -->
+  <path d="M40 74C40 74 9 57 9 29C9 13 23 6 40 6L40 74Z" fill="#1b3d2a"/>
+
+  <!-- Right top: amber -->
+  <path d="M40 6C57 6 71 13 71 29C71 40 40 40 40 40L40 6Z" fill="#e8a020"/>
+
+  <!-- Right bottom: cream -->
+  <path d="M40 40C40 40 71 40 71 40C71 57 40 74 40 74L40 40Z" fill="#f5f3ed"/>
+
+  <!-- Right half circuit details -->
+  <g clip-path="url(#leafR)">
+    <line x1="52" y1="10" x2="52" y2="70" stroke="#1b3d2a" stroke-width="0.9" opacity="0.2"/>
+    <line x1="40" y1="40" x2="71" y2="40" stroke="#1b3d2a" stroke-width="1" opacity="0.25"/>
+    <circle cx="52" cy="28" r="2.8" fill="#1b3d2a" opacity="0.45"/>
+    <circle cx="52" cy="52" r="2.8" fill="#e8a020" opacity="0.9"/>
+    <circle cx="62" cy="40" r="2.2" fill="#1b3d2a" opacity="0.3"/>
+  </g>
+
+  <!-- Left half circuit details -->
+  <g clip-path="url(#leafL)">
+    <line x1="40" y1="28" x2="10" y2="40" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+    <circle cx="23" cy="38" r="3" fill="#e8a020" opacity="0.85"/>
+  </g>
+
+  <!-- Center spine -->
+  <line x1="40" y1="7" x2="40" y2="73" stroke="rgba(255,255,255,0.65)" stroke-width="1.5"/>
+
+  <!-- Top node (white ring, green core) -->
+  <circle cx="40" cy="28" r="5.5" fill="#fff"/>
+  <circle cx="40" cy="28" r="2.8" fill="#1b3d2a"/>
+
+  <!-- Mid node / zone junction (amber ring, green core) -->
+  <circle cx="40" cy="40" r="3.5" fill="#e8a020"/>
+  <circle cx="40" cy="40" r="1.8" fill="#1b3d2a"/>
+</svg>
