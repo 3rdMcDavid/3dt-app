@@ -29,11 +29,13 @@ export async function POST(req: NextRequest) {
   }
 
   const SERVICE_LABELS: Record<string, string> = {
-    'website':       'New Website',
-    'website-tools': 'Website + Business Tools',
-    'tool':          'Business Tool / Custom Build',
-    'care-plan':     'Monthly Care Plan ($75/mo)',
-    'other':         "Not sure — let's talk",
+    'digital-presence': 'Digital Presence System',
+    'business-ops':     'Business Operations System',
+    'care-plan':        'Monthly Care Plan ($100/mo)',
+    'other':            "Not sure — let's talk",
+    'website':          'New Website',
+    'website-tools':    'Website + Business Tools',
+    'tool':             'Business Tool / Custom Build',
   };
 
   const BUDGET_LABELS: Record<string, string> = {
