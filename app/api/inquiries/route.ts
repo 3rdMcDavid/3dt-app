@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   const SERVICE_LABELS: Record<string, string> = {
     'digital-presence': 'Digital Presence System',
     'business-ops':     'Business Operations System',
-    'care-plan':        'Monthly Care Plan ($100/mo)',
+    'care-plan':        'Monthly Care Plan ($150/mo)',
     'other':            "Not sure — let's talk",
     'website':          'New Website',
     'website-tools':    'Website + Business Tools',
