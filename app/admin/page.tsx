@@ -2,12 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-
-function fmtMoney(n: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'USD', maximumFractionDigits: 0,
-  }).format(n);
-}
+import DashboardStatCards from '@/app/admin/components/DashboardStatCards';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -38,46 +33,20 @@ export default async function DashboardPage() {
       </div>
       <div className="admin-content">
 
-        {/* 6 stat cards — forced 2-col; drill-downs wired in Step 3 */}
-        <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-          <div className="stat-card">
-            <div className="stat-label">Total Leads</div>
-            <div className="stat-value">{totalLeads ?? 0}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Qualified</div>
-            <div className="stat-value">{qualifiedLeads ?? 0}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Approved</div>
-            <div className="stat-value">{approvedLeads ?? 0}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Interested</div>
-            <div className="stat-value">{interestedLeads ?? 0}</div>
-          </div>
-          <Link href="/admin/clients" className="stat-card stat-card-link">
-            <div className="stat-label">Active Clients</div>
-            <div className="stat-value">{activeClients ?? 0}</div>
-          </Link>
-          <Link href="/admin/invoices" className="stat-card stat-card-link">
-            <div className="stat-label">Open Invoices</div>
-            <div className="stat-value">{openCount}</div>
-            {openTotal > 0 && (
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
-                {fmtMoney(openTotal)}
-              </div>
-            )}
-          </Link>
-        </div>
+        <DashboardStatCards
+          totalLeads={totalLeads ?? 0}
+          qualifiedLeads={qualifiedLeads ?? 0}
+          approvedLeads={approvedLeads ?? 0}
+          interestedLeads={interestedLeads ?? 0}
+          activeClients={activeClients ?? 0}
+          openInvoiceCount={openCount}
+          openInvoiceTotal={openTotal}
+        />
 
         {/* Agent Activity shell — wired to pipeline_runs in Step 11 */}
         <div className="card">
-          <div className="card-header" style={{ justifyContent: 'space-between' }}>
-            <span style={{
-              fontSize: 11, fontWeight: 700, letterSpacing: '0.8px',
-              textTransform: 'uppercase', color: 'var(--muted)',
-            }}>
+          <div className="card-header" style={{ justifyContent:'space-between' }}>
+            <span style={{ fontSize:11, fontWeight:700, letterSpacing:'0.8px', textTransform:'uppercase', color:'var(--muted)' }}>
               Agent Activity
             </span>
             <Link href="/admin/scout" className="btn btn-primary btn-sm">
@@ -85,7 +54,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
           <div className="card-body">
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>No pipeline runs yet.</span>
+            <span style={{ fontSize:13, color:'var(--muted)' }}>No pipeline runs yet.</span>
           </div>
         </div>
 
