@@ -1,11 +1,45 @@
-export default function ScoutPage() {
+export const dynamic = 'force-dynamic';
+
+import { createClient } from '@/lib/supabase/server';
+import PendingReviewSection from './components/PendingReviewSection';
+
+export default async function ScoutPage() {
+  const supabase = await createClient();
+
+  const { data: pending } = await supabase
+    .from('leads')
+    .select('id,business_name,business_type,city,state,fit_score,phone,address,website,rating,review_count,outreach_draft')
+    .eq('state', 'qualified')
+    .or('outreach_approved.is.null,outreach_approved.eq.false')
+    .order('fit_score', { ascending: false });
+
   return (
     <>
       <div className="admin-topbar">
         <span className="topbar-title">Scout</span>
+        {/* Live status dot — wired to pipeline_runs in step 9 */}
+        <span style={{
+          display:'flex', alignItems:'center', gap:5,
+          fontSize:11, fontWeight:700, letterSpacing:'0.8px',
+          textTransform:'uppercase', color:'var(--muted)',
+        }}>
+          <span style={{ width:7, height:7, borderRadius:'50%', background:'var(--border)', display:'inline-block' }} />
+          IDLE
+        </span>
       </div>
+
       <div className="admin-content">
-        <p style={{ color: 'var(--muted)', fontSize: 14 }}>Coming soon.</p>
+        {/* Run Scout button — wired in step 8 */}
+        <button
+          type="button"
+          className="btn btn-primary btn-full"
+          disabled
+          style={{ opacity: 0.45, marginBottom: 4 }}
+        >
+          Run Scout ▶
+        </button>
+
+        <PendingReviewSection initialLeads={pending ?? []} />
       </div>
     </>
   );
