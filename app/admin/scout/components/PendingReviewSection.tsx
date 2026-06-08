@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export type PendingLead = {
   id: string;
@@ -44,10 +45,12 @@ function ScoreTag({ score }: { score: number | null }) {
 
 function LeadCard({
   lead,
+  loading,
   onApprove,
   onReject,
 }: {
   lead: PendingLead;
+  loading: boolean;
   onApprove: () => void;
   onReject: () => void;
 }) {
@@ -149,9 +152,11 @@ function LeadCard({
           type="button"
           className="btn btn-sm"
           onClick={onReject}
+          disabled={loading}
           style={{
             flex:1, background:'rgba(239,68,68,0.12)', border:'1px solid rgba(239,68,68,0.3)',
-            color:'var(--red)', fontWeight:600, borderRadius:8, cursor:'pointer',
+            color:'var(--red)', fontWeight:600, borderRadius:8, cursor: loading ? 'default' : 'pointer',
+            opacity: loading ? 0.5 : 1,
           }}
         >
           ✗ Reject
@@ -160,9 +165,11 @@ function LeadCard({
           type="button"
           className="btn btn-sm"
           onClick={onApprove}
+          disabled={loading}
           style={{
             flex:1, background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.3)',
-            color:'var(--green)', fontWeight:600, borderRadius:8, cursor:'pointer',
+            color:'var(--green)', fontWeight:600, borderRadius:8, cursor: loading ? 'default' : 'pointer',
+            opacity: loading ? 0.5 : 1,
           }}
         >
           ✓ Approve
@@ -173,16 +180,46 @@ function LeadCard({
 }
 
 export default function PendingReviewSection({ initialLeads, onApprove, onReject }: Props) {
-  const [leads, setLeads] = useState<PendingLead[]>(initialLeads);
+  const [leads, setLeads]       = useState<PendingLead[]>(initialLeads);
+  const [inFlight, setInFlight] = useState<Set<string>>(new Set());
+  const supabase = createClient();
 
-  function handleApprove(id: string) {
+  async function handleApprove(id: string) {
+    if (inFlight.has(id)) return;
+    const snapshot = leads.find(l => l.id === id);
+    setInFlight(s => new Set(s).add(id));
     setLeads(prev => prev.filter(l => l.id !== id));
-    onApprove?.(id);
+
+    const { error } = await supabase
+      .from('leads')
+      .update({ outreach_approved: true, state: 'approved' })
+      .eq('id', id);
+
+    if (error) {
+      if (snapshot) setLeads(prev => [snapshot, ...prev]);
+    } else {
+      onApprove?.(id);
+    }
+    setInFlight(s => { const n = new Set(s); n.delete(id); return n; });
   }
 
-  function handleReject(id: string) {
+  async function handleReject(id: string) {
+    if (inFlight.has(id)) return;
+    const snapshot = leads.find(l => l.id === id);
+    setInFlight(s => new Set(s).add(id));
     setLeads(prev => prev.filter(l => l.id !== id));
-    onReject?.(id);
+
+    const { error } = await supabase
+      .from('leads')
+      .update({ state: 'rejected' })
+      .eq('id', id);
+
+    if (error) {
+      if (snapshot) setLeads(prev => [snapshot, ...prev]);
+    } else {
+      onReject?.(id);
+    }
+    setInFlight(s => { const n = new Set(s); n.delete(id); return n; });
   }
 
   return (
@@ -215,6 +252,7 @@ export default function PendingReviewSection({ initialLeads, onApprove, onReject
             <LeadCard
               key={lead.id}
               lead={lead}
+              loading={inFlight.has(lead.id)}
               onApprove={() => handleApprove(lead.id)}
               onReject={() => handleReject(lead.id)}
             />
