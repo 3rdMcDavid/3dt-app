@@ -4,11 +4,12 @@ import { createClient } from '@/lib/supabase/server';
 import PendingReviewSection from './components/PendingReviewSection';
 import ApprovedLeadsSection from './components/ApprovedLeadsSection';
 import RunScoutButton from './components/RunScoutButton';
+import ScoutStatus from './components/ScoutStatus';
 
 export default async function ScoutPage() {
   const supabase = await createClient();
 
-  const [{ data: pending }, { data: approved }] = await Promise.all([
+  const [{ data: pending }, { data: approved }, { data: latestRun }] = await Promise.all([
     supabase
       .from('leads')
       .select('id,business_name,business_type,city,state,fit_score,phone,address,website,rating,review_count,outreach_draft')
@@ -20,21 +21,19 @@ export default async function ScoutPage() {
       .select('id,business_name,business_type,city,state,fit_score,phone,address,call_notes,follow_up_date,call_attempted_at,interested_at,created_at')
       .eq('outreach_approved', true)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('pipeline_runs')
+      .select('id,status,started_at,leads_found,leads_qualified')
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   return (
     <>
       <div className="admin-topbar">
         <span className="topbar-title">Scout</span>
-        {/* Live status dot — wired to pipeline_runs in step 9 */}
-        <span style={{
-          display:'flex', alignItems:'center', gap:5,
-          fontSize:11, fontWeight:700, letterSpacing:'0.8px',
-          textTransform:'uppercase', color:'var(--muted)',
-        }}>
-          <span style={{ width:7, height:7, borderRadius:'50%', background:'var(--border)', display:'inline-block' }} />
-          IDLE
-        </span>
+        <ScoutStatus initialRun={latestRun} />
       </div>
 
       <div className="admin-content">

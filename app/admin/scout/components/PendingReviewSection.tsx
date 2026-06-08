@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 export type PendingLead = {
@@ -183,6 +183,25 @@ export default function PendingReviewSection({ initialLeads, onApprove, onReject
   const [leads, setLeads]       = useState<PendingLead[]>(initialLeads);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const supabase = createClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('scout-pending-leads')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'leads' },
+        (payload) => {
+          const lead = payload.new as PendingLead & { outreach_approved: boolean | null };
+          if (lead.state === 'qualified' && !lead.outreach_approved) {
+            setLeads(prev => prev.some(l => l.id === lead.id) ? prev : [lead, ...prev]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleApprove(id: string) {
     if (inFlight.has(id)) return;

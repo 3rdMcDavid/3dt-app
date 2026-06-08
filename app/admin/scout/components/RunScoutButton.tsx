@@ -1,11 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function RunScoutButton() {
   const [running, setRunning] = useState(false);
   const router = useRouter();
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => { cleanupRef.current?.(); };
+  }, []);
 
   async function handleRun() {
     if (running) return;
@@ -23,21 +29,30 @@ export default function RunScoutButton() {
 
     if (!runId) { setRunning(false); return; }
 
-    // Poll every 5s until complete — replaced by Realtime in step 9
-    const poll = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/scout/status?runId=${runId}`);
-        if (!res.ok) return;
-        const { status } = await res.json();
-        if (status === 'complete' || status === 'error') {
-          clearInterval(poll);
-          setRunning(false);
-          router.refresh();
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`scout-run-${runId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pipeline_runs',
+          filter: `id=eq.${runId}`,
+        },
+        (payload) => {
+          const { status } = payload.new as { status: string };
+          if (status === 'complete' || status === 'error') {
+            supabase.removeChannel(channel);
+            cleanupRef.current = null;
+            setRunning(false);
+            router.refresh();
+          }
         }
-      } catch {
-        // keep polling
-      }
-    }, 5000);
+      )
+      .subscribe();
+
+    cleanupRef.current = () => supabase.removeChannel(channel);
   }
 
   return (

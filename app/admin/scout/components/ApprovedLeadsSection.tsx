@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/types';
 
@@ -228,7 +228,26 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
 }
 
 export default function ApprovedLeadsSection({ initialLeads }: { initialLeads: ApprovedLead[] }) {
-  const [leads] = useState<ApprovedLead[]>(initialLeads);
+  const [leads, setLeads] = useState<ApprovedLead[]>(initialLeads);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel('scout-approved-leads')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'leads', filter: 'outreach_approved=eq.true' },
+        (payload) => {
+          const lead = payload.new as ApprovedLead & { outreach_approved: boolean };
+          if (lead.outreach_approved) {
+            setLeads(prev => prev.some(l => l.id === lead.id) ? prev : [lead, ...prev]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   return (
     <div>
