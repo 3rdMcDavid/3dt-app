@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import PendingReviewSection from './components/PendingReviewSection';
 import ApprovedLeadsSection from './components/ApprovedLeadsSection';
+import RunScoutButton from './components/RunScoutButton';
 
 export default async function ScoutPage() {
   const supabase = await createClient();
@@ -37,15 +38,7 @@ export default async function ScoutPage() {
       </div>
 
       <div className="admin-content">
-        {/* Run Scout button — wired in step 8 */}
-        <button
-          type="button"
-          className="btn btn-primary btn-full"
-          disabled
-          style={{ opacity:0.45, marginBottom:4 }}
-        >
-          Run Scout ▶
-        </button>
+        <RunScoutButton />
 
         <PendingReviewSection initialLeads={pending ?? []} />
 
