@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import LeadDetailSheet from './LeadDetailSheet';
 
 const TABS = ['all','new','qualified','approved','interested','follow_up','rejected','won','lost'] as const;
 const TAB_LABEL: Record<string, string> = {
@@ -43,11 +44,12 @@ function scoreDot(score: number | null) {
 }
 
 export default function LeadsSheet({ initialFilter, onClose }: Props) {
-  const [leads, setLeads]   = useState<Lead[]>([]);
-  const [loading, setLoad]  = useState(true);
-  const [filter, setFilter] = useState(initialFilter);
-  const [search, setSearch] = useState('');
-  const [sort, setSort]     = useState('newest');
+  const [leads, setLeads]       = useState<Lead[]>([]);
+  const [loading, setLoad]      = useState(true);
+  const [filter, setFilter]     = useState(initialFilter);
+  const [search, setSearch]     = useState('');
+  const [sort, setSort]         = useState('newest');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const touchY = useRef(0);
 
   useEffect(() => {
@@ -167,9 +169,12 @@ export default function LeadsSheet({ initialFilter, onClose }: Props) {
           ) : visible.length === 0 ? (
             <p style={{ padding:28, color:'var(--muted)', fontSize:13, textAlign:'center' }}>No leads match.</p>
           ) : visible.map((lead, i) => (
-            <div
+            <button
               key={lead.id}
+              type="button"
+              onClick={() => setSelectedId(lead.id)}
               style={{
+                width:'100%', background:'none', border:'none', cursor:'pointer', textAlign:'left',
                 padding:'13px 16px',
                 borderTop: i === 0 ? 'none' : '1px solid var(--border)',
                 display:'flex', alignItems:'center', gap:12,
@@ -207,10 +212,23 @@ export default function LeadsSheet({ initialFilter, onClose }: Props) {
                   {lead.state.replace(/_/g, ' ')}
                 </span>
               )}
-            </div>
+
+              {/* Tap indicator */}
+              <span style={{ color:'var(--muted)', fontSize:16, flexShrink:0 }}>›</span>
+            </button>
           ))}
         </div>
       </div>
+
+      {selectedId !== null && (
+        <LeadDetailSheet
+          leadId={selectedId}
+          onClose={() => setSelectedId(null)}
+          onLeadUpdate={(id, updates) =>
+            setLeads(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
+          }
+        />
+      )}
     </>
   );
 }
