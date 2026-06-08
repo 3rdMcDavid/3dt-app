@@ -547,6 +547,105 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          id: string
+          created_at: string
+          business_name: string
+          business_type: string | null
+          city: string | null
+          state: string | null
+          fit_score: number | null
+          fit_reason: string | null
+          phone: string | null
+          address: string | null
+          website: string | null
+          rating: number | null
+          review_count: number | null
+          outreach_draft: string | null
+          outreach_approved: boolean | null
+          call_attempted_at: string | null
+          call_outcome: string | null
+          call_notes: string | null
+          follow_up_date: string | null
+          interested_at: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          business_name: string
+          business_type?: string | null
+          city?: string | null
+          state?: string | null
+          fit_score?: number | null
+          fit_reason?: string | null
+          phone?: string | null
+          address?: string | null
+          website?: string | null
+          rating?: number | null
+          review_count?: number | null
+          outreach_draft?: string | null
+          outreach_approved?: boolean | null
+          call_attempted_at?: string | null
+          call_outcome?: string | null
+          call_notes?: string | null
+          follow_up_date?: string | null
+          interested_at?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          business_name?: string
+          business_type?: string | null
+          city?: string | null
+          state?: string | null
+          fit_score?: number | null
+          fit_reason?: string | null
+          phone?: string | null
+          address?: string | null
+          website?: string | null
+          rating?: number | null
+          review_count?: number | null
+          outreach_draft?: string | null
+          outreach_approved?: boolean | null
+          call_attempted_at?: string | null
+          call_outcome?: string | null
+          call_notes?: string | null
+          follow_up_date?: string | null
+          interested_at?: string | null
+        }
+        Relationships: []
+      }
+      pipeline_runs: {
+        Row: {
+          id: string
+          started_at: string
+          completed_at: string | null
+          status: 'running' | 'complete' | 'error'
+          leads_found: number
+          leads_qualified: number
+          triggered_by: string
+        }
+        Insert: {
+          id?: string
+          started_at?: string
+          completed_at?: string | null
+          status?: 'running' | 'complete' | 'error'
+          leads_found?: number
+          leads_qualified?: number
+          triggered_by?: string
+        }
+        Update: {
+          id?: string
+          started_at?: string
+          completed_at?: string | null
+          status?: 'running' | 'complete' | 'error'
+          leads_found?: number
+          leads_qualified?: number
+          triggered_by?: string
+        }
+        Relationships: []
+      }
     }
     Views:     { [_ in never]: never }
     Functions: { [_ in never]: never }
