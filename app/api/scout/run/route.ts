@@ -17,7 +17,9 @@ export async function POST() {
 
   const runId = run.id;
 
-  const child = spawn('node', ['pipeline.js', '10'], {
+  // Split so Turbopack never sees a standalone 'pipeline.js' string to resolve
+  const script = ['pipeline', '.js'].join('');
+  const child = spawn('node', [script, '10'], {
     cwd: '/home/kentaru/3dt-agents/scout',
     stdio: 'ignore',
   });
