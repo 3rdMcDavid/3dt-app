@@ -2,16 +2,24 @@ export const dynamic = 'force-dynamic';
 
 import { createClient } from '@/lib/supabase/server';
 import PendingReviewSection from './components/PendingReviewSection';
+import ApprovedLeadsSection from './components/ApprovedLeadsSection';
 
 export default async function ScoutPage() {
   const supabase = await createClient();
 
-  const { data: pending } = await supabase
-    .from('leads')
-    .select('id,business_name,business_type,city,state,fit_score,phone,address,website,rating,review_count,outreach_draft')
-    .eq('state', 'qualified')
-    .or('outreach_approved.is.null,outreach_approved.eq.false')
-    .order('fit_score', { ascending: false });
+  const [{ data: pending }, { data: approved }] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('id,business_name,business_type,city,state,fit_score,phone,address,website,rating,review_count,outreach_draft')
+      .eq('state', 'qualified')
+      .or('outreach_approved.is.null,outreach_approved.eq.false')
+      .order('fit_score', { ascending: false }),
+    supabase
+      .from('leads')
+      .select('id,business_name,business_type,city,state,fit_score,phone,address,call_notes,follow_up_date,call_attempted_at,interested_at,created_at')
+      .eq('outreach_approved', true)
+      .order('created_at', { ascending: false }),
+  ]);
 
   return (
     <>
@@ -34,12 +42,14 @@ export default async function ScoutPage() {
           type="button"
           className="btn btn-primary btn-full"
           disabled
-          style={{ opacity: 0.45, marginBottom: 4 }}
+          style={{ opacity:0.45, marginBottom:4 }}
         >
           Run Scout ▶
         </button>
 
         <PendingReviewSection initialLeads={pending ?? []} />
+
+        <ApprovedLeadsSection initialLeads={approved ?? []} />
       </div>
     </>
   );
