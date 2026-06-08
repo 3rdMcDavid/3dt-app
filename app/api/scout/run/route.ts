@@ -17,8 +17,12 @@ export async function POST() {
 
   const runId = run.id;
 
-  const child = spawn('node', ['pipeline.js', '10'], {
-    cwd: '/home/kentaru/3dt-agents/scout',
+  // Paths come from env so Turbopack can't statically resolve them as modules
+  const scoutDir = process.env.SCOUT_DIR ?? '/home/kentaru/3dt-agents/scout';
+  const scoutScript = process.env.SCOUT_SCRIPT ?? 'pipeline.js';
+
+  const child = spawn('node', [scoutScript, '10'], {
+    cwd: scoutDir,
     stdio: 'ignore',
   });
 
