@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
 import DashboardStatCards from '@/app/admin/components/DashboardStatCards';
+import DashboardAgentActivity from '@/app/admin/components/DashboardAgentActivity';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -14,6 +14,7 @@ export default async function DashboardPage() {
     { count: interestedLeads },
     { count: activeClients },
     { data: unpaidInvoices },
+    { data: latestRun },
   ] = await Promise.all([
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('state', 'qualified'),
@@ -21,6 +22,12 @@ export default async function DashboardPage() {
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('state', 'interested'),
     supabase.from('clients').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('invoices').select('amount').eq('status', 'unpaid'),
+    supabase
+      .from('pipeline_runs')
+      .select('id,status,started_at,leads_found,leads_qualified')
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const openCount = unpaidInvoices?.length ?? 0;
@@ -43,20 +50,7 @@ export default async function DashboardPage() {
           openInvoiceTotal={openTotal}
         />
 
-        {/* Agent Activity shell — wired to pipeline_runs in Step 11 */}
-        <div className="card">
-          <div className="card-header" style={{ justifyContent:'space-between' }}>
-            <span style={{ fontSize:11, fontWeight:700, letterSpacing:'0.8px', textTransform:'uppercase', color:'var(--muted)' }}>
-              Agent Activity
-            </span>
-            <Link href="/admin/scout" className="btn btn-primary btn-sm">
-              Run Scout ▶
-            </Link>
-          </div>
-          <div className="card-body">
-            <span style={{ fontSize:13, color:'var(--muted)' }}>No pipeline runs yet.</span>
-          </div>
-        </div>
+        <DashboardAgentActivity initialRun={latestRun ?? null} />
 
       </div>
     </>
