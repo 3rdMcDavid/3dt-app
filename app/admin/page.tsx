@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import DashboardStatCards from '@/app/admin/components/DashboardStatCards';
 import DashboardAgentActivity from '@/app/admin/components/DashboardAgentActivity';
+import DashboardNewLeads from '@/app/admin/components/DashboardNewLeads';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -15,6 +16,7 @@ export default async function DashboardPage() {
     { count: activeClients },
     { data: unpaidInvoices },
     { data: latestRun },
+    { data: newLeads },
   ] = await Promise.all([
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('state', 'qualified'),
@@ -28,6 +30,13 @@ export default async function DashboardPage() {
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('leads')
+      .select('id,business_name,business_type,city,fit_score,state,created_at')
+      .eq('state', 'qualified')
+      .eq('outreach_approved', false)
+      .order('created_at', { ascending: false })
+      .limit(5),
   ]);
 
   const openCount = unpaidInvoices?.length ?? 0;
@@ -49,6 +58,8 @@ export default async function DashboardPage() {
           openInvoiceCount={openCount}
           openInvoiceTotal={openTotal}
         />
+
+        <DashboardNewLeads initialLeads={newLeads ?? []} />
 
         <DashboardAgentActivity initialRun={latestRun ?? null} />
 

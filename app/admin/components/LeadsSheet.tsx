@@ -177,44 +177,42 @@ export default function LeadsSheet({ initialFilter, onClose }: Props) {
                 width:'100%', background:'none', border:'none', cursor:'pointer', textAlign:'left',
                 padding:'13px 16px',
                 borderTop: i === 0 ? 'none' : '1px solid var(--border)',
-                display:'flex', alignItems:'center', gap:12,
+                display:'flex', alignItems:'flex-start', gap:12,
               }}
             >
               {/* Score dot */}
               <div style={{
-                width:10, height:10, borderRadius:'50%', flexShrink:0,
+                width:10, height:10, borderRadius:'50%', flexShrink:0, marginTop:3,
                 background: scoreDot(lead.fit_score),
               }} />
 
               {/* Name + meta */}
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontWeight:600, fontSize:14, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                <div style={{ fontWeight:600, fontSize:14 }}>
                   {lead.business_name}
                 </div>
-                <div style={{ fontSize:12, color:'var(--muted)', display:'flex', gap:6, alignItems:'center', marginTop:2, flexWrap:'wrap' }}>
+                <div style={{ fontSize:12, color:'var(--muted)', display:'flex', gap:6, alignItems:'center', marginTop:3, flexWrap:'wrap' }}>
                   {lead.city && <span>{lead.city}</span>}
                   {lead.business_type && (
                     <span style={{ background:'var(--border)', borderRadius:4, padding:'1px 6px', fontSize:11 }}>
                       {lead.business_type}
                     </span>
                   )}
+                  {lead.state && (
+                    <span style={{
+                      fontSize:11, fontWeight:600, padding:'1px 6px', borderRadius:4,
+                      border:'1px solid var(--border)', color:'var(--muted)',
+                      textTransform:'capitalize', whiteSpace:'nowrap',
+                    }}>
+                      {lead.state.replace(/_/g, ' ')}
+                    </span>
+                  )}
                   <span style={{ marginLeft:'auto', flexShrink:0 }}>{relativeDate(lead.created_at)}</span>
                 </div>
               </div>
 
-              {/* State badge */}
-              {lead.state && (
-                <span style={{
-                  fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:4,
-                  border:'1px solid var(--border)', color:'var(--muted)',
-                  flexShrink:0, textTransform:'capitalize', whiteSpace:'nowrap',
-                }}>
-                  {lead.state.replace(/_/g, ' ')}
-                </span>
-              )}
-
               {/* Tap indicator */}
-              <span style={{ color:'var(--muted)', fontSize:16, flexShrink:0 }}>›</span>
+              <span style={{ color:'var(--muted)', fontSize:16, flexShrink:0, marginTop:1 }}>›</span>
             </button>
           ))}
         </div>
