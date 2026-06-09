@@ -5,11 +5,12 @@ import PendingReviewSection from './components/PendingReviewSection';
 import ApprovedLeadsSection from './components/ApprovedLeadsSection';
 import RunScoutButton from './components/RunScoutButton';
 import ScoutStatus from './components/ScoutStatus';
+import PipelineLog from './components/PipelineLog';
 
 export default async function ScoutPage() {
   const supabase = await createClient();
 
-  const [{ data: pending }, { data: approved }, { data: latestRun }] = await Promise.all([
+  const [{ data: pending }, { data: approved }, { data: recentRuns }] = await Promise.all([
     supabase
       .from('leads')
       .select('id,business_name,business_type,city,state,fit_score,phone,address,website,rating,review_count,outreach_draft')
@@ -25,9 +26,10 @@ export default async function ScoutPage() {
       .from('pipeline_runs')
       .select('id,status,started_at,leads_found,leads_qualified')
       .order('started_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(10),
   ]);
+
+  const latestRun = recentRuns?.[0] ?? null;
 
   return (
     <>
@@ -42,6 +44,8 @@ export default async function ScoutPage() {
         <PendingReviewSection initialLeads={pending ?? []} />
 
         <ApprovedLeadsSection initialLeads={approved ?? []} />
+
+        <PipelineLog initialRuns={recentRuns ?? []} />
       </div>
     </>
   );
