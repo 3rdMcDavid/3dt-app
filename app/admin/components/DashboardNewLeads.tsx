@@ -72,7 +72,7 @@ export default function DashboardNewLeads({ initialLeads }: { initialLeads: Lead
               }} />
 
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
                   {lead.business_name}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--muted)', display: 'flex', gap: 6, alignItems: 'center', marginTop: 3, flexWrap: 'wrap' }}>

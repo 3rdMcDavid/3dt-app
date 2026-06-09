@@ -119,7 +119,7 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
     }}>
       {/* Name + status */}
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
-        <div style={{ fontWeight:700, fontSize:15, lineHeight:1.3 }}>{lead.business_name}</div>
+        <div style={{ fontWeight:700, fontSize:15, lineHeight:1.3, color:'var(--text)' }}>{lead.business_name}</div>
         <StatusBadge state={currentState} />
       </div>
 
