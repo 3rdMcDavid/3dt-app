@@ -91,20 +91,24 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
 
   async function handleConvert() {
     setConverting(true);
-    const email = convertEmail.trim() || `noemail-${lead.id}@placeholder`;
-    const { error } = await supabase.from('clients').insert({
-      name: lead.business_name,
-      email,
-      phone: lead.phone,
-      company: lead.business_name,
-      status: 'active',
-    });
-    if (!error) {
-      await save({ interested_at: new Date().toISOString() });
-      setConvertDone(true);
-      setShowConvert(false);
+    try {
+      const res = await fetch('/api/leads/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: lead.id,
+          email: convertEmail.trim() || null,
+          businessName: lead.business_name,
+          phone: lead.phone,
+        }),
+      });
+      if (res.ok) {
+        setConvertDone(true);
+        setShowConvert(false);
+      }
+    } finally {
+      setConverting(false);
     }
-    setConverting(false);
   }
 
   return (
