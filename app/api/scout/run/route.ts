@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import { createServiceClient } from '@/lib/supabase/service';
 
-export async function POST() {
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => ({}));
+  const count: number = Number(body.count) || 10;
   const supabase = createServiceClient();
 
   const { data: run, error } = await supabase
@@ -19,7 +21,7 @@ export async function POST() {
 
   // Split so Turbopack never sees a standalone 'pipeline.js' string to resolve
   const script = ['pipeline', '.js'].join('');
-  const child = spawn('node', [script, '10'], {
+  const child = spawn('node', [script, String(count)], {
     cwd: '/home/kentaru/3dt-agents/scout',
     stdio: 'ignore',
   });

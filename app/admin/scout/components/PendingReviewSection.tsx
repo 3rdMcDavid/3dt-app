@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+
 export type PendingLead = {
   id: string;
   business_name: string;
@@ -182,6 +183,7 @@ function LeadCard({
 export default function PendingReviewSection({ initialLeads, onApprove, onReject }: Props) {
   const [leads, setLeads]       = useState<PendingLead[]>(initialLeads);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
+  const [errMsg, setErrMsg]     = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -208,16 +210,22 @@ export default function PendingReviewSection({ initialLeads, onApprove, onReject
     const snapshot = leads.find(l => l.id === id);
     setInFlight(s => new Set(s).add(id));
     setLeads(prev => prev.filter(l => l.id !== id));
+    setErrMsg(null);
 
-    const { error } = await supabase
-      .from('leads')
-      .update({ outreach_approved: true, state: 'approved' })
-      .eq('id', id);
-
-    if (error) {
-      if (snapshot) setLeads(prev => [snapshot, ...prev]);
-    } else {
+    try {
+      const res = await fetch('/api/leads/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
       onApprove?.(id);
+    } catch (e) {
+      if (snapshot) setLeads(prev => [snapshot, ...prev]);
+      setErrMsg(`Approve failed: ${(e as Error).message}`);
     }
     setInFlight(s => { const n = new Set(s); n.delete(id); return n; });
   }
@@ -243,6 +251,17 @@ export default function PendingReviewSection({ initialLeads, onApprove, onReject
 
   return (
     <div>
+      {errMsg && (
+        <div style={{
+          background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)',
+          borderRadius:8, padding:'8px 12px', marginBottom:10,
+          fontSize:12, color:'var(--red)', display:'flex', justifyContent:'space-between', alignItems:'center',
+        }}>
+          {errMsg}
+          <button type="button" onClick={() => setErrMsg(null)}
+            style={{ background:'none', border:'none', color:'var(--red)', cursor:'pointer', padding:'0 4px', fontSize:14, lineHeight:1 }}>✕</button>
+        </div>
+      )}
       {/* Section header */}
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
         <span style={{
