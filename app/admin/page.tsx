@@ -32,7 +32,7 @@ export default async function DashboardPage() {
       .maybeSingle(),
     supabase
       .from('leads')
-      .select('id,business_name,business_type,city,fit_score,state,created_at')
+      .select('id,business_name,business_type,city,address,fit_score,state,created_at')
       .eq('state', 'qualified')
       .eq('outreach_approved', false)
       .order('created_at', { ascending: false })

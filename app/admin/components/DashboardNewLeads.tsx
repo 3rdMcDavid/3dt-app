@@ -9,6 +9,7 @@ type Lead = {
   business_name: string;
   business_type: string | null;
   city: string | null;
+  address: string | null;
   fit_score: number | null;
   state: string | null;
   created_at: string;
@@ -21,6 +22,17 @@ function relativeDate(d: string) {
   if (days < 7)  return `${days}d ago`;
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function cityState(city: string | null, address: string | null): string | null {
+  if (address) {
+    const parts = address.split(',').map(p => p.trim());
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const m = parts[i].match(/^([A-Z]{2})(?:\s+\d{5}(-\d{4})?)?$/);
+      if (m && i > 0) return `${parts[i - 1]}, ${m[1]}`;
+    }
+  }
+  return city ?? null;
 }
 
 function scoreDot(score: number | null) {
@@ -76,7 +88,7 @@ export default function DashboardNewLeads({ initialLeads }: { initialLeads: Lead
                   {lead.business_name}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--muted)', display: 'flex', gap: 6, alignItems: 'center', marginTop: 3, flexWrap: 'wrap' }}>
-                  {lead.city && <span>{lead.city}</span>}
+                  {cityState(lead.city, lead.address) && <span>{cityState(lead.city, lead.address)}</span>}
                   {lead.business_type && (
                     <span style={{ background: 'var(--border)', borderRadius: 4, padding: '1px 6px', fontSize: 11 }}>
                       {lead.business_type}
