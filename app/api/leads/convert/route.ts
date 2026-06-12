@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { requireAdmin } from '@/lib/apiAuth';
 
 export async function POST(req: Request) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   const { leadId, email, businessName, phone } = await req.json();
   if (!leadId || !businessName) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

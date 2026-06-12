@@ -9,6 +9,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, x-inquiry-secret',
 };
 
+// Form values are interpolated into the notification email HTML — escape them.
+function esc(s: string) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('x-inquiry-secret');
   if (secret !== process.env.INQUIRY_API_SECRET) {
@@ -89,20 +98,20 @@ export async function POST(req: NextRequest) {
     subject: `🆕 New Lead: ${name}`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
-        <h2 style="margin-bottom:4px;">New inquiry from ${name}</h2>
-        ${company ? `<p style="font-size:13px;font-weight:600;margin-bottom:2px;">${company}</p>` : ''}
-        <p style="color:#6B6B60;font-size:13px;margin-bottom:20px;">${email}${phone ? ` · ${phone}` : ''}</p>
+        <h2 style="margin-bottom:4px;">New inquiry from ${esc(name)}</h2>
+        ${company ? `<p style="font-size:13px;font-weight:600;margin-bottom:2px;">${esc(company)}</p>` : ''}
+        <p style="color:#6B6B60;font-size:13px;margin-bottom:20px;">${esc(email)}${phone ? ` · ${esc(phone)}` : ''}</p>
 
         ${pain_point ? `
         <div style="background:#F0F7F3;border-left:4px solid #1B4D2E;padding:14px 16px;border-radius:0 8px 8px 0;margin-bottom:20px;">
           <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#1B4D2E;margin-bottom:6px;">Their Pain Point</p>
-          <p style="font-size:15px;line-height:1.6;margin:0;color:#1A1A1A;">${pain_point}</p>
+          <p style="font-size:15px;line-height:1.6;margin:0;color:#1A1A1A;">${esc(pain_point)}</p>
         </div>` : ''}
 
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
-          ${serviceLabel ? `<tr><td style="padding:8px 0;color:#6B6B60;width:110px;">Interested In</td><td style="padding:8px 0;">${serviceLabel}</td></tr>` : ''}
-          ${budgetLabel ? `<tr><td style="padding:8px 0;color:#6B6B60;">Budget</td><td style="padding:8px 0;">${budgetLabel}</td></tr>` : ''}
-          ${message ? `<tr><td style="padding:8px 0;color:#6B6B60;vertical-align:top;">Notes</td><td style="padding:8px 0;line-height:1.6;">${message}</td></tr>` : ''}
+          ${serviceLabel ? `<tr><td style="padding:8px 0;color:#6B6B60;width:110px;">Interested In</td><td style="padding:8px 0;">${esc(serviceLabel)}</td></tr>` : ''}
+          ${budgetLabel ? `<tr><td style="padding:8px 0;color:#6B6B60;">Budget</td><td style="padding:8px 0;">${esc(budgetLabel)}</td></tr>` : ''}
+          ${message ? `<tr><td style="padding:8px 0;color:#6B6B60;vertical-align:top;">Notes</td><td style="padding:8px 0;line-height:1.6;">${esc(message)}</td></tr>` : ''}
         </table>
 
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/scout" style="display:inline-block;margin-top:24px;background:#1B4D2E;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">

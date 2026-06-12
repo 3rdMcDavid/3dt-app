@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { requireAdmin } from '@/lib/apiAuth';
 
 // The pipeline lives on the WSL2 box, so Vercel can't spawn it. This route
 // only enqueues a run; the watcher script in 3dt-agents/scout claims it
 // (status → 'running'), runs the pipeline, and marks 'complete' / 'error'.
 export async function POST(req: Request) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   const body = await req.json().catch(() => ({}));
   const count: number = Number(body.count) || 10;
   const supabase = createServiceClient();
