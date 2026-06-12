@@ -14,7 +14,7 @@ export default async function ScoutPage() {
   const [{ data: pending }, { data: approved }, { data: recentRuns }] = await Promise.all([
     supabase
       .from('leads')
-      .select('id,business_name,business_type,city,fit_score,phone,address,website,rating,review_count,outreach_draft,observation,owner_name,suggested_channel,source,tier')
+      .select('id,business_name,business_type,city,fit_score,phone,address,website,rating,review_count,outreach_draft,observation,owner_name,suggested_channel,source,tier,created_at')
       .eq('pipeline_state', 'qualified')
       .or('outreach_approved.is.null,outreach_approved.eq.false')
       .order('fit_score', { ascending: false }),

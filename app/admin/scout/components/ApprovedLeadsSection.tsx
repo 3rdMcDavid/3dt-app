@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Database, LeadSource, SuggestedChannel } from '@/lib/types';
-import { CHANNEL_ICON, CHANNEL_LABEL } from '@/lib/leadDisplay';
+import { relativeDate, CHANNEL_ICON, CHANNEL_LABEL } from '@/lib/leadDisplay';
 import SourceBadge from '@/app/admin/components/SourceBadge';
 
 type LeadUpdate = Database['public']['Tables']['leads']['Update'];
@@ -137,12 +137,11 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
         </div>
       </div>
 
-      {/* Type · city */}
-      {(lead.business_type || lead.city) && (
-        <div style={{ fontSize:12, color:'var(--muted)' }}>
-          {[lead.business_type, lead.city].filter(Boolean).join(' · ')}
-        </div>
-      )}
+      {/* Type · city · arrival date */}
+      <div style={{ fontSize:12, color:'var(--muted)', display:'flex', gap:6, flexWrap:'wrap' }}>
+        <span>{[lead.business_type, lead.city].filter(Boolean).join(' · ')}</span>
+        <span style={{ marginLeft:'auto', flexShrink:0 }}>{relativeDate(lead.created_at)}</span>
+      </div>
 
       {/* Observation — the call opener */}
       {lead.observation && (

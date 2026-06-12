@@ -33,3 +33,12 @@ export const CHANNEL_LABEL: Record<SuggestedChannel, string> = {
   facebook_dm: 'Facebook DM',
   email:       'Email',
 };
+
+export function relativeDate(d: string) {
+  const days = Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7)  return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
