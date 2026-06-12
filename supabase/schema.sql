@@ -12,7 +12,8 @@ create table clients (
   phone      text,
   company    text,
   status     text        not null default 'lead'
-             check (status in ('lead', 'active', 'completed'))
+             check (status in ('lead', 'active', 'completed')),
+  notes      text
 );
 
 create table projects (
@@ -24,13 +25,17 @@ create table projects (
                         check (project_type in ('website', 'tool', 'website_tool')),
   stage                 text        not null default 'discovery'
                         check (stage in ('discovery', 'proposal', 'contract', 'build', 'review', 'handoff_pending', 'launched')),
-  revision_stage        text
+  revision_stage        text        default 'awaiting_intake'
                         check (revision_stage in (
                           'awaiting_intake', 'intake_received',
                           'revision_1_open', 'revision_1_received',
                           'revision_2_open', 'revision_2_received',
                           'post_final_open', 'extra_revision_requested', 'complete'
                         )),
+  revision_components   text        not null default 'both'
+                        check (revision_components in ('website', 'tool', 'both')),
+  draft_url             text,
+  tool_draft_url        text,
   notes                 text,
   -- Launch / handoff fields (populated by client via portal)
   client_vercel_email   text,
@@ -51,20 +56,22 @@ create table proposals (
 );
 
 create table contracts (
-  id             uuid        default gen_random_uuid() primary key,
-  created_at     timestamptz default now(),
-  project_id     uuid        not null references projects(id) on delete cascade,
-  content        text        not null,
-  signed_at      timestamptz,
-  signature_name text,
-  signature_ip   text
+  id                 uuid        default gen_random_uuid() primary key,
+  created_at         timestamptz default now(),
+  project_id         uuid        not null references projects(id) on delete cascade,
+  content            text        not null,
+  sign_token         uuid        not null default gen_random_uuid(),  -- magic link for /sign/[token]
+  sign_email_sent_at timestamptz,
+  signed_at          timestamptz,
+  signature_name     text,
+  signature_ip       text
 );
 
 -- contract_templates: admin-editable template used to pre-fill new contracts.
 -- Only one row expected; onboardClientAction uses .single().
 create table contract_templates (
   id         uuid        default gen_random_uuid() primary key,
-  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
   content    text        not null default ''
 );
 
@@ -215,6 +222,16 @@ create table leads (
   interested_at      timestamptz
 );
 
+-- LEGACY — pre-OneSignal web-push subscriptions. No code reads or writes this
+-- table anymore (lib/push.ts uses the OneSignal API). Safe to drop.
+create table push_subscriptions (
+  id         uuid        default gen_random_uuid() primary key,
+  created_at timestamptz default now(),
+  endpoint   text        not null,
+  p256dh     text        not null,
+  auth       text        not null
+);
+
 -- Job queue + history for the scout pipeline. The Vercel app inserts
 -- 'requested'; the WSL watcher claims it ('running') and runs the pipeline.
 create table pipeline_runs (
@@ -245,6 +262,7 @@ alter table intake_submissions enable row level security;
 alter table intake_files       enable row level security;
 alter table leads              enable row level security;
 alter table pipeline_runs      enable row level security;
+alter table push_subscriptions enable row level security;
 
 -- Admin (David — the only authenticated user) has full access to all tables.
 -- Portal clients are unauthenticated; portal routes use the service role key
@@ -264,6 +282,7 @@ create policy "admin_all" on intake_submissions  for all using (auth.role() = 'a
 create policy "admin_all" on intake_files        for all using (auth.role() = 'authenticated');
 create policy "admin_all" on leads               for all using (auth.role() = 'authenticated');
 create policy "admin_all" on pipeline_runs       for all using (auth.role() = 'authenticated');
+create policy "admin_all" on push_subscriptions  for all using (auth.role() = 'authenticated');
 
 -- ── Storage buckets ──────────────────────────────────────────────────────────
 -- Create these in Storage → Buckets after running this schema:

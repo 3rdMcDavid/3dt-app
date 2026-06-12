@@ -436,10 +436,6 @@ export type Database = {
           content_ready: string | null
           testimonials: string | null
           special_features: string[] | null
-          location: string | null
-          hours: string | null
-          payment_methods: string | null
-          google_profile: string | null
         }
         Insert: {
           id?: string
@@ -476,10 +472,6 @@ export type Database = {
           content_ready?: string | null
           testimonials?: string | null
           special_features?: string[] | null
-          location?: string | null
-          hours?: string | null
-          payment_methods?: string | null
-          google_profile?: string | null
         }
         Update: {
           id?: string
@@ -516,10 +508,6 @@ export type Database = {
           content_ready?: string | null
           testimonials?: string | null
           special_features?: string[] | null
-          location?: string | null
-          hours?: string | null
-          payment_methods?: string | null
-          google_profile?: string | null
         }
         Relationships: []
       }

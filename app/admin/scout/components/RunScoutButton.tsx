@@ -6,15 +6,24 @@ import { createClient } from '@/lib/supabase/client';
 
 const COUNT_OPTIONS = [5, 10, 25, 50];
 
+// If the run is still 'requested' after this long, the WSL watcher is
+// probably not running (it polls every 60s).
+const STUCK_QUEUE_MS = 3 * 60_000;
+
 export default function RunScoutButton() {
   const [running, setRunning]   = useState(false);
   const [count, setCount]       = useState(10);
   const [errMsg, setErrMsg]     = useState<string | null>(null);
   const router = useRouter();
   const cleanupRef = useRef<(() => void) | null>(null);
+  const lastStatusRef = useRef<string>('requested');
+  const stuckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    return () => { cleanupRef.current?.(); };
+    return () => {
+      cleanupRef.current?.();
+      if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
+    };
   }, []);
 
   async function handleRun() {
@@ -42,6 +51,14 @@ export default function RunScoutButton() {
 
     if (!runId) { setRunning(false); return; }
 
+    // Warn if nothing claims the run — the watcher on the WSL box may be down.
+    lastStatusRef.current = 'requested';
+    stuckTimerRef.current = setTimeout(() => {
+      if (lastStatusRef.current === 'requested') {
+        setErrMsg('Run is still queued after 3 minutes — the watcher on the WSL machine may be down. Check: systemctl status 3dt-watcher (and that WSL is running).');
+      }
+    }, STUCK_QUEUE_MS);
+
     const supabase = createClient();
 
     // Subscribe to Realtime first, then do an initial status check to avoid
@@ -58,6 +75,8 @@ export default function RunScoutButton() {
         },
         (payload) => {
           const { status } = payload.new as { status: string };
+          lastStatusRef.current = status;
+          if (status === 'running') setErrMsg(null); // watcher picked it up
           if (status === 'complete' || status === 'error') {
             supabase.removeChannel(channel);
             cleanupRef.current = null;
@@ -77,6 +96,7 @@ export default function RunScoutButton() {
           .select('status')
           .eq('id', runId!)
           .single();
+        if (data) lastStatusRef.current = data.status;
         if (data && (data.status === 'complete' || data.status === 'error')) {
           supabase.removeChannel(channel);
           cleanupRef.current = null;
