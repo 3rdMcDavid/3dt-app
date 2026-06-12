@@ -551,7 +551,7 @@ export type Database = {
           tier: 'A' | 'B' | null
           fit_score: number | null
           fit_reason: string | null
-          score_breakdown: Record<string, number> | null
+          score_breakdown: Record<string, number | string> | null
           observation: string | null
           owner_name: string | null
           email: string | null
@@ -570,7 +570,6 @@ export type Database = {
           outreach_sent_at: string | null
           notes: string | null
           tags: string[] | null
-          digest_sent: boolean | null
           call_attempted_at: string | null
           call_outcome: string | null
           call_notes: string | null
@@ -589,7 +588,7 @@ export type Database = {
           tier?: 'A' | 'B' | null
           fit_score?: number | null
           fit_reason?: string | null
-          score_breakdown?: Record<string, number> | null
+          score_breakdown?: Record<string, number | string> | null
           observation?: string | null
           owner_name?: string | null
           email?: string | null
@@ -608,7 +607,6 @@ export type Database = {
           outreach_sent_at?: string | null
           notes?: string | null
           tags?: string[] | null
-          digest_sent?: boolean | null
           call_attempted_at?: string | null
           call_outcome?: string | null
           call_notes?: string | null
@@ -627,7 +625,7 @@ export type Database = {
           tier?: 'A' | 'B' | null
           fit_score?: number | null
           fit_reason?: string | null
-          score_breakdown?: Record<string, number> | null
+          score_breakdown?: Record<string, number | string> | null
           observation?: string | null
           owner_name?: string | null
           email?: string | null
@@ -646,7 +644,6 @@ export type Database = {
           outreach_sent_at?: string | null
           notes?: string | null
           tags?: string[] | null
-          digest_sent?: boolean | null
           call_attempted_at?: string | null
           call_outcome?: string | null
           call_notes?: string | null

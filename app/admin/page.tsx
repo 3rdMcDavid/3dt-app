@@ -8,7 +8,8 @@ import DashboardNewLeads from '@/app/admin/components/DashboardNewLeads';
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Vercel runs in UTC — compute "today" in David's timezone (en-CA → YYYY-MM-DD)
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
 
   const [
     { count: totalLeads },

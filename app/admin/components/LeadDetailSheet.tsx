@@ -61,6 +61,7 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
   const [showConvert, setShowConvert] = useState(false);
   const [convertEmail, setConvertEmail] = useState('');
   const [converting, setConverting]   = useState(false);
+  const [convertErr, setConvertErr]   = useState<string | null>(null);
   const [convertDone, setConvertDone] = useState(false);
   const touchY = useRef(0);
   const supabase = createClient();
@@ -102,6 +103,7 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
   async function handleConvert() {
     if (!lead) return;
     setConverting(true);
+    setConvertErr(null);
     try {
       const res = await fetch('/api/leads/convert', {
         method: 'POST',
@@ -118,7 +120,12 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
         setLead(merged);
         onLeadUpdate(lead.id, { interested_at: merged.interested_at });
         setConvertDone(true);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setConvertErr(body.error ?? `Failed (HTTP ${res.status})`);
       }
+    } catch (e) {
+      setConvertErr((e as Error).message);
     } finally {
       setConverting(false);
     }
@@ -370,6 +377,9 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
                       >
                         {converting ? 'Creating…' : `Add ${lead.business_name} to Clients →`}
                       </button>
+                      {convertErr && (
+                        <div style={{ fontSize:12, color:'var(--red)' }}>{convertErr}</div>
+                      )}
                     </div>
                   )}
                 </div>

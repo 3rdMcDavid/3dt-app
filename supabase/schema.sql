@@ -214,7 +214,6 @@ create table leads (
   outreach_sent_at   timestamptz,
   notes              text,
   tags               text[],
-  digest_sent        boolean     default false,
   call_attempted_at  timestamptz,
   call_outcome       text,
   call_notes         text,

@@ -74,6 +74,7 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
   );
   const [convertEmail, setConvertEmail] = useState(lead.email ?? '');
   const [converting, setConverting]     = useState(false);
+  const [convertErr, setConvertErr]     = useState<string | null>(null);
   const [saving, setSaving]             = useState(false);
   const supabase = createClient();
 
@@ -97,6 +98,7 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
 
   async function handleConvert() {
     setConverting(true);
+    setConvertErr(null);
     try {
       const res = await fetch('/api/leads/convert', {
         method: 'POST',
@@ -111,7 +113,12 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
       if (res.ok) {
         setConvertDone(true);
         setShowConvert(false);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setConvertErr(body.error ?? `Failed (HTTP ${res.status})`);
       }
+    } catch (e) {
+      setConvertErr((e as Error).message);
     } finally {
       setConverting(false);
     }
@@ -227,6 +234,9 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
             >
               {converting ? 'Creating…' : 'Create Client →'}
             </button>
+            {convertErr && (
+              <div style={{ fontSize:12, color:'var(--red)' }}>{convertErr}</div>
+            )}
           </div>
         </div>
       )}
@@ -298,8 +308,10 @@ export default function ApprovedLeadsSection({ initialLeads }: { initialLeads: A
         (payload) => {
           const lead = payload.new as ApprovedLead & { outreach_approved: boolean };
           if (lead?.id && lead.outreach_approved) {
+            // Merge updates into existing cards (key stays stable, so the
+            // card's local edit state is preserved); prepend new arrivals.
             setLeads(prev => prev.some(l => l.id === lead.id)
-              ? prev
+              ? prev.map(l => l.id === lead.id ? { ...l, ...lead } : l)
               : sortLeads([lead, ...prev]));
           }
         }
