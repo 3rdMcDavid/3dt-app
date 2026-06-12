@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 type Run = {
   id: string;
-  status: 'running' | 'complete' | 'error';
+  status: 'requested' | 'running' | 'complete' | 'error';
   started_at: string;
   leads_found: number | null;
   leads_qualified: number | null;
@@ -23,9 +23,10 @@ function fmtRunDate(iso: string) {
 }
 
 const STATUS: Record<string, { icon: string; color: string }> = {
-  complete: { icon: '✓', color: 'var(--green)' },
-  error:    { icon: '✗', color: 'var(--red)' },
-  running:  { icon: '⏳', color: 'var(--orange)' },
+  complete:  { icon: '✓', color: 'var(--green)' },
+  error:     { icon: '✗', color: 'var(--red)' },
+  running:   { icon: '⏳', color: 'var(--orange)' },
+  requested: { icon: '⏸', color: 'var(--muted)' },
 };
 
 export default function PipelineLog({ initialRuns }: { initialRuns: Run[] }) {

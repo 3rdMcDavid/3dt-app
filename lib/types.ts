@@ -15,6 +15,9 @@ export type IntakeSubmissionType = 'initial' | 'revision_1' | 'revision_2' | 'po
 export type ProposalStatus = 'draft' | 'sent' | 'accepted' | 'declined';
 export type InvoiceType = 'deposit' | 'final' | 'addon';
 export type InvoiceStatus = 'unpaid' | 'paid';
+export type LeadPipelineState = 'new' | 'qualified' | 'approved' | 'contacted' | 'follow_up' | 'interested' | 'won' | 'lost' | 'rejected';
+export type LeadSource = 'scout' | 'inquiry' | 'referral' | 'manual';
+export type SuggestedChannel = 'phone' | 'facebook_dm' | 'email';
 
 export interface Client {
   id: string;
@@ -551,19 +554,35 @@ export type Database = {
         Row: {
           id: string
           created_at: string
+          updated_at: string | null
           business_name: string
           business_type: string | null
           city: string | null
-          state: string | null
+          pipeline_state: 'new' | 'qualified' | 'approved' | 'contacted' | 'follow_up' | 'interested' | 'won' | 'lost' | 'rejected'
+          source: 'scout' | 'inquiry' | 'referral' | 'manual'
+          tier: 'A' | 'B' | null
           fit_score: number | null
           fit_reason: string | null
+          score_breakdown: Record<string, number> | null
+          observation: string | null
+          owner_name: string | null
+          email: string | null
           phone: string | null
           address: string | null
           website: string | null
           rating: number | null
           review_count: number | null
+          google_place_id: string | null
+          google_maps_url: string | null
+          search_query: string | null
+          suggested_channel: 'phone' | 'facebook_dm' | 'email' | null
+          inquiry_notes: string | null
           outreach_draft: string | null
           outreach_approved: boolean | null
+          outreach_sent_at: string | null
+          notes: string | null
+          tags: string[] | null
+          digest_sent: boolean | null
           call_attempted_at: string | null
           call_outcome: string | null
           call_notes: string | null
@@ -573,19 +592,35 @@ export type Database = {
         Insert: {
           id?: string
           created_at?: string
+          updated_at?: string | null
           business_name: string
           business_type?: string | null
           city?: string | null
-          state?: string | null
+          pipeline_state?: 'new' | 'qualified' | 'approved' | 'contacted' | 'follow_up' | 'interested' | 'won' | 'lost' | 'rejected'
+          source?: 'scout' | 'inquiry' | 'referral' | 'manual'
+          tier?: 'A' | 'B' | null
           fit_score?: number | null
           fit_reason?: string | null
+          score_breakdown?: Record<string, number> | null
+          observation?: string | null
+          owner_name?: string | null
+          email?: string | null
           phone?: string | null
           address?: string | null
           website?: string | null
           rating?: number | null
           review_count?: number | null
+          google_place_id?: string | null
+          google_maps_url?: string | null
+          search_query?: string | null
+          suggested_channel?: 'phone' | 'facebook_dm' | 'email' | null
+          inquiry_notes?: string | null
           outreach_draft?: string | null
           outreach_approved?: boolean | null
+          outreach_sent_at?: string | null
+          notes?: string | null
+          tags?: string[] | null
+          digest_sent?: boolean | null
           call_attempted_at?: string | null
           call_outcome?: string | null
           call_notes?: string | null
@@ -595,19 +630,35 @@ export type Database = {
         Update: {
           id?: string
           created_at?: string
+          updated_at?: string | null
           business_name?: string
           business_type?: string | null
           city?: string | null
-          state?: string | null
+          pipeline_state?: 'new' | 'qualified' | 'approved' | 'contacted' | 'follow_up' | 'interested' | 'won' | 'lost' | 'rejected'
+          source?: 'scout' | 'inquiry' | 'referral' | 'manual'
+          tier?: 'A' | 'B' | null
           fit_score?: number | null
           fit_reason?: string | null
+          score_breakdown?: Record<string, number> | null
+          observation?: string | null
+          owner_name?: string | null
+          email?: string | null
           phone?: string | null
           address?: string | null
           website?: string | null
           rating?: number | null
           review_count?: number | null
+          google_place_id?: string | null
+          google_maps_url?: string | null
+          search_query?: string | null
+          suggested_channel?: 'phone' | 'facebook_dm' | 'email' | null
+          inquiry_notes?: string | null
           outreach_draft?: string | null
           outreach_approved?: boolean | null
+          outreach_sent_at?: string | null
+          notes?: string | null
+          tags?: string[] | null
+          digest_sent?: boolean | null
           call_attempted_at?: string | null
           call_outcome?: string | null
           call_notes?: string | null
@@ -621,27 +672,33 @@ export type Database = {
           id: string
           started_at: string
           completed_at: string | null
-          status: 'running' | 'complete' | 'error'
+          status: 'requested' | 'running' | 'complete' | 'error'
+          requested_count: number | null
           leads_found: number
           leads_qualified: number
+          leads_disqualified: number | null
           triggered_by: string
         }
         Insert: {
           id?: string
           started_at?: string
           completed_at?: string | null
-          status?: 'running' | 'complete' | 'error'
+          status?: 'requested' | 'running' | 'complete' | 'error'
+          requested_count?: number | null
           leads_found?: number
           leads_qualified?: number
+          leads_disqualified?: number | null
           triggered_by?: string
         }
         Update: {
           id?: string
           started_at?: string
           completed_at?: string | null
-          status?: 'running' | 'complete' | 'error'
+          status?: 'requested' | 'running' | 'complete' | 'error'
+          requested_count?: number | null
           leads_found?: number
           leads_qualified?: number
+          leads_disqualified?: number | null
           triggered_by?: string
         }
         Relationships: []

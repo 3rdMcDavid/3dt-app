@@ -39,15 +39,15 @@ export async function POST(req: NextRequest) {
   };
 
   const BUDGET_LABELS: Record<string, string> = {
-    '500-1000':   '$500 – $1,000',
     '1000-2500':  '$1,000 – $2,500',
-    '2500-plus':  '$2,500+',
+    '2500-5000':  '$2,500 – $5,000',
+    '5000-plus':  '$5,000+',
+    'not-sure':   'Not sure yet',
   };
 
   const serviceLabel = service ? (SERVICE_LABELS[service] ?? service) : null;
   const budgetLabel = budget ? (BUDGET_LABELS[budget] ?? null) : null;
-  const notes = [
-    pain_point ? `Pain Point: ${pain_point}` : null,
+  const inquiryNotes = [
     serviceLabel ? `Interested in: ${serviceLabel}` : null,
     budgetLabel ? `Budget: ${budgetLabel}` : null,
     message ? `Additional notes: ${message}` : null,
@@ -55,14 +55,21 @@ export async function POST(req: NextRequest) {
 
   const name = [first_name, last_name].filter(Boolean).join(' ');
 
+  // Warm inbound lead — lands in the approved funnel, skips qualification.
+  // No clients row is created here; /api/leads/convert is the only path into
+  // clients, which avoids the unique-email crash on repeat inquiries.
   const supabase = createServiceClient();
-  const { error } = await supabase.from('clients').insert({
-    name,
+  const { error } = await supabase.from('leads').insert({
+    business_name: company?.trim() || name,
+    owner_name: name,
     email,
     phone: phone ?? null,
-    company: company?.trim() || null,
-    status: 'lead',
-    notes,
+    source: 'inquiry',
+    pipeline_state: 'approved',
+    outreach_approved: true,
+    observation: pain_point?.trim() || null,
+    inquiry_notes: inquiryNotes,
+    suggested_channel: phone ? 'phone' : 'email',
   });
 
   if (error) {
@@ -73,7 +80,7 @@ export async function POST(req: NextRequest) {
   await sendPushNotification(
     '🆕 New Lead',
     `${name} submitted an inquiry`,
-    '/admin/clients'
+    '/admin/scout'
   );
 
   resend.emails.send({
@@ -98,7 +105,7 @@ export async function POST(req: NextRequest) {
           ${message ? `<tr><td style="padding:8px 0;color:#6B6B60;vertical-align:top;">Notes</td><td style="padding:8px 0;line-height:1.6;">${message}</td></tr>` : ''}
         </table>
 
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/clients" style="display:inline-block;margin-top:24px;background:#1B4D2E;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/scout" style="display:inline-block;margin-top:24px;background:#1B4D2E;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
           View in Admin →
         </a>
       </div>

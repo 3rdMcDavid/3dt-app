@@ -166,6 +166,70 @@ create table intake_files (
   file_url             text        not null  -- storage path: {project_id}/{submission_id}/{timestamp}-{filename}
 );
 
+-- Prospects found by the Scout agent (WSL pipeline) or entered via the inquiry
+-- form / manual entry. Unified funnel:
+--   new → qualified → approved → contacted → follow_up → interested
+--   terminal: won | lost | rejected
+create table leads (
+  id                 uuid        default gen_random_uuid() primary key,
+  created_at         timestamptz default now(),
+  updated_at         timestamptz,
+  business_name      text        not null,
+  business_type      text,
+  city               text,
+  pipeline_state     text        not null default 'new'
+                     check (pipeline_state in (
+                       'new', 'qualified', 'approved', 'contacted', 'follow_up',
+                       'interested', 'won', 'lost', 'rejected'
+                     )),
+  source             text        not null default 'scout'
+                     check (source in ('scout', 'inquiry', 'referral', 'manual')),
+  tier               text        check (tier is null or tier in ('A', 'B')),
+  fit_score          int,        -- rule-based score, 0–12 (legacy rows: 1–10 LLM score)
+  fit_reason         text,       -- legacy LLM reason; superseded by observation
+  score_breakdown    jsonb,      -- e.g. {"no_website": 3, "reviews_20_plus": 2}
+  observation        text,       -- one-sentence call opener (the most damning true problem)
+  owner_name         text,
+  email              text,
+  phone              text,
+  address            text,
+  website            text,
+  rating             numeric,
+  review_count       int,
+  google_place_id    text        unique,  -- dedupe across scout runs
+  google_maps_url    text,
+  search_query       text,
+  suggested_channel  text        check (suggested_channel is null or
+                                        suggested_channel in ('phone', 'facebook_dm', 'email')),
+  inquiry_notes      text,       -- service / budget / message block from the inquiry form
+  outreach_draft     text,
+  outreach_approved  boolean     default false,
+  outreach_sent_at   timestamptz,
+  notes              text,
+  tags               text[],
+  digest_sent        boolean     default false,
+  call_attempted_at  timestamptz,
+  call_outcome       text,
+  call_notes         text,
+  follow_up_date     date,
+  interested_at      timestamptz
+);
+
+-- Job queue + history for the scout pipeline. The Vercel app inserts
+-- 'requested'; the WSL watcher claims it ('running') and runs the pipeline.
+create table pipeline_runs (
+  id              uuid        default gen_random_uuid() primary key,
+  started_at      timestamptz default now(),
+  completed_at    timestamptz,
+  status          text        not null default 'requested'
+                  check (status in ('requested', 'running', 'complete', 'error')),
+  requested_count    int         default 10,
+  leads_found        int         default 0,
+  leads_qualified    int         default 0,
+  leads_disqualified int         default 0,
+  triggered_by       text        default 'manual'
+);
+
 -- ── Row Level Security ───────────────────────────────────────────────────────
 
 alter table clients            enable row level security;
@@ -179,10 +243,13 @@ alter table documents          enable row level security;
 alter table portal_sessions    enable row level security;
 alter table intake_submissions enable row level security;
 alter table intake_files       enable row level security;
+alter table leads              enable row level security;
+alter table pipeline_runs      enable row level security;
 
 -- Admin (David — the only authenticated user) has full access to all tables.
 -- Portal clients are unauthenticated; portal routes use the service role key
 -- server-side after validating the token, so no anon RLS policies are needed.
+-- The scout agent (WSL) uses the service role key, which bypasses RLS.
 
 create policy "admin_all" on clients             for all using (auth.role() = 'authenticated');
 create policy "admin_all" on projects            for all using (auth.role() = 'authenticated');
@@ -195,6 +262,8 @@ create policy "admin_all" on documents           for all using (auth.role() = 'a
 create policy "admin_all" on portal_sessions     for all using (auth.role() = 'authenticated');
 create policy "admin_all" on intake_submissions  for all using (auth.role() = 'authenticated');
 create policy "admin_all" on intake_files        for all using (auth.role() = 'authenticated');
+create policy "admin_all" on leads               for all using (auth.role() = 'authenticated');
+create policy "admin_all" on pipeline_runs       for all using (auth.role() = 'authenticated');
 
 -- ── Storage buckets ──────────────────────────────────────────────────────────
 -- Create these in Storage → Buckets after running this schema:

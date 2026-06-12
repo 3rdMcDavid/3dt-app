@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { scoreColor } from '@/lib/leadDisplay';
 import LeadDetailSheet from './LeadDetailSheet';
 import LeadsSheet from './LeadsSheet';
 
@@ -11,7 +12,7 @@ type Lead = {
   city: string | null;
   address: string | null;
   fit_score: number | null;
-  state: string | null;
+  pipeline_state: string | null;
   created_at: string;
 };
 
@@ -37,9 +38,7 @@ function cityState(city: string | null, address: string | null): string | null {
 
 function scoreDot(score: number | null) {
   if (score == null) return 'var(--border)';
-  if (score >= 8) return 'var(--green)';
-  if (score >= 5) return 'var(--orange)';
-  return 'var(--red)';
+  return scoreColor(score);
 }
 
 export default function DashboardNewLeads({ initialLeads }: { initialLeads: Lead[] }) {

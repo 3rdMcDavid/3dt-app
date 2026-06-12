@@ -2,18 +2,22 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import type { Database, LeadSource, SuggestedChannel } from '@/lib/types';
+
+type LeadUpdate = Database['public']['Tables']['leads']['Update'];
+import { scoreColor, CHANNEL_ICON, CHANNEL_LABEL } from '@/lib/leadDisplay';
+import SourceBadge from './SourceBadge';
 
 const STATUS_OPTIONS = [
-  { value:'new',            label:'New' },
-  { value:'qualified',      label:'Qualified' },
-  { value:'approved',       label:'Approved' },
-  { value:'called',         label:'Called' },
-  { value:'interested',     label:'Interested' },
-  { value:'follow_up',      label:'Follow Up' },
-  { value:'not_interested', label:'Not Interested' },
-  { value:'rejected',       label:'Rejected' },
-  { value:'won',            label:'Won' },
-  { value:'lost',           label:'Lost' },
+  { value:'new',        label:'New' },
+  { value:'qualified',  label:'Qualified' },
+  { value:'approved',   label:'Approved' },
+  { value:'contacted',  label:'Contacted' },
+  { value:'follow_up',  label:'Follow Up' },
+  { value:'interested', label:'Interested' },
+  { value:'rejected',   label:'Rejected' },
+  { value:'won',        label:'Won' },
+  { value:'lost',       label:'Lost' },
 ];
 
 type Lead = {
@@ -21,10 +25,11 @@ type Lead = {
   business_name: string;
   business_type: string | null;
   city: string | null;
-  state: string | null;
+  pipeline_state: string | null;
   fit_score: number | null;
   fit_reason: string | null;
   phone: string | null;
+  email: string | null;
   address: string | null;
   website: string | null;
   rating: number | null;
@@ -34,6 +39,11 @@ type Lead = {
   follow_up_date: string | null;
   call_attempted_at: string | null;
   interested_at: string | null;
+  observation: string | null;
+  owner_name: string | null;
+  suggested_channel: SuggestedChannel | null;
+  source: LeadSource | null;
+  inquiry_notes: string | null;
 };
 
 type Props = {
@@ -41,13 +51,6 @@ type Props = {
   onClose: () => void;
   onLeadUpdate: (id: string, updates: Partial<Lead>) => void;
 };
-
-function scoreColor(s: number | null) {
-  if (!s) return 'var(--border)';
-  if (s >= 8) return 'var(--green)';
-  if (s >= 5) return 'var(--orange)';
-  return 'var(--red)';
-}
 
 export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props) {
   const [lead, setLead]               = useState<Lead | null>(null);
@@ -68,13 +71,17 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
       .select('*')
       .eq('id', leadId)
       .single()
-      .then(({ data }) => { setLead(data as Lead); setLoading(false); });
+      .then(({ data }) => {
+        setLead(data as Lead);
+        setConvertEmail((data as Lead | null)?.email ?? '');
+        setLoading(false);
+      });
   }, [leadId]);
 
   async function save(updates: Partial<Lead>) {
     if (!lead) return;
     setSaving(true);
-    const { error } = await supabase.from('leads').update(updates).eq('id', lead.id);
+    const { error } = await supabase.from('leads').update(updates as LeadUpdate).eq('id', lead.id);
     if (!error) {
       const merged = { ...lead, ...updates };
       setLead(merged);
@@ -84,8 +91,8 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
   }
 
   async function handleStatus(val: string) {
-    const updates: Partial<Lead> = { state: val };
-    if (val === 'called' && !lead?.call_attempted_at) {
+    const updates: Partial<Lead> = { pipeline_state: val };
+    if (val === 'contacted' && !lead?.call_attempted_at) {
       updates.call_attempted_at = new Date().toISOString();
     }
     await save(updates);
@@ -128,7 +135,7 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.address || lead.business_name)}`
     : '#';
 
-  const isInterested = lead?.state === 'interested' || showConvert;
+  const isInterested = lead?.pipeline_state === 'interested' || showConvert;
 
   return (
     <>
@@ -169,7 +176,13 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
               padding:'8px 20px 14px', borderBottom:'1px solid var(--border)',
             }}>
               <div>
-                <div style={{ fontWeight:700, fontSize:18 }}>{lead.business_name}</div>
+                <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                  <span style={{ fontWeight:700, fontSize:18 }}>{lead.business_name}</span>
+                  <SourceBadge source={lead.source} />
+                </div>
+                {lead.owner_name && lead.owner_name !== lead.business_name && (
+                  <div style={{ fontSize:13, color:'var(--muted)', marginTop:2 }}>👤 {lead.owner_name}</div>
+                )}
                 {lead.business_type && (
                   <div style={{ fontSize:13, color:'var(--muted)', marginTop:2 }}>{lead.business_type}</div>
                 )}
@@ -183,6 +196,24 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
 
             <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:16 }}>
 
+              {/* Observation — the call opener */}
+              {lead.observation && (
+                <div style={{
+                  background:'rgba(240,165,0,0.08)', borderLeft:'3px solid var(--orange)',
+                  borderRadius:'0 8px 8px 0', padding:'10px 14px',
+                  fontSize:14, lineHeight:1.6, color:'var(--text)',
+                }}>
+                  {lead.observation}
+                </div>
+              )}
+
+              {/* Inquiry notes (service / budget / message from the form) */}
+              {lead.inquiry_notes && (
+                <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>
+                  {lead.inquiry_notes}
+                </div>
+              )}
+
               {/* Contact info */}
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {lead.address && (
@@ -194,6 +225,17 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
                   <a href={`tel:${lead.phone}`} style={{ fontSize:13, color:'var(--accent-lt)', display:'flex', gap:8, textDecoration:'none' }}>
                     <span>📞</span><span>{lead.phone}</span>
                   </a>
+                )}
+                {lead.email && (
+                  <a href={`mailto:${lead.email}`} style={{ fontSize:13, color:'var(--accent-lt)', display:'flex', gap:8, textDecoration:'none' }}>
+                    <span>✉️</span><span>{lead.email}</span>
+                  </a>
+                )}
+                {lead.suggested_channel && (
+                  <div style={{ fontSize:13, color:'var(--muted)', display:'flex', gap:8 }} title="Suggested channel">
+                    <span>{CHANNEL_ICON[lead.suggested_channel]}</span>
+                    <span>Suggested: {CHANNEL_LABEL[lead.suggested_channel]}</span>
+                  </div>
                 )}
                 <div style={{ fontSize:13, color:'var(--muted)', display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
                   {lead.rating != null && (
@@ -219,11 +261,11 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
                     <span style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.8px', color:'var(--muted)' }}>
                       Fit Score
                     </span>
-                    <span style={{ fontWeight:700, color: scoreColor(lead.fit_score) }}>{lead.fit_score}/10</span>
+                    <span style={{ fontWeight:700, color: scoreColor(lead.fit_score) }}>{lead.fit_score}</span>
                   </div>
                   <div style={{ background:'var(--border)', borderRadius:4, height:6, overflow:'hidden' }}>
                     <div style={{
-                      width:`${(lead.fit_score / 10) * 100}%`, height:'100%',
+                      width:`${Math.min(100, (lead.fit_score / 12) * 100)}%`, height:'100%',
                       background: scoreColor(lead.fit_score), borderRadius:4,
                     }} />
                   </div>
@@ -283,7 +325,7 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
                   Status
                 </div>
                 <select
-                  value={lead.state ?? 'new'}
+                  value={lead.pipeline_state ?? 'new'}
                   onChange={e => handleStatus(e.target.value)}
                   disabled={saving}
                   style={{ width:'100%' }}
@@ -292,7 +334,7 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
                 </select>
                 {lead.call_attempted_at && (
                   <p style={{ fontSize:12, color:'var(--muted)', marginTop:6 }}>
-                    Called {new Date(lead.call_attempted_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}
+                    Contacted {new Date(lead.call_attempted_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}
                   </p>
                 )}
               </div>
@@ -362,7 +404,7 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
               </div>
 
               {/* Follow-up date — only shown when status = follow_up */}
-              {lead.state === 'follow_up' && (
+              {lead.pipeline_state === 'follow_up' && (
                 <div>
                   <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.8px', color:'var(--muted)', marginBottom:8 }}>
                     Follow-Up Date

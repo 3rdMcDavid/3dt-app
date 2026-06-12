@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-
+import type { LeadSource, SuggestedChannel } from '@/lib/types';
+import { scoreColor, CHANNEL_ICON, CHANNEL_LABEL } from '@/lib/leadDisplay';
+import SourceBadge from '@/app/admin/components/SourceBadge';
 
 export type PendingLead = {
   id: string;
   business_name: string;
   business_type: string | null;
   city: string | null;
-  state: string | null;
   fit_score: number | null;
   phone: string | null;
   address: string | null;
@@ -17,6 +18,11 @@ export type PendingLead = {
   rating: number | null;
   review_count: number | null;
   outreach_draft: string | null;
+  observation: string | null;
+  owner_name: string | null;
+  suggested_channel: SuggestedChannel | null;
+  source: LeadSource | null;
+  tier: 'A' | 'B' | null;
 };
 
 type Props = {
@@ -25,21 +31,14 @@ type Props = {
   onReject?: (id: string) => void;
 };
 
-function scoreColor(s: number | null) {
-  if (!s) return 'var(--muted)';
-  if (s >= 8) return 'var(--green)';
-  if (s >= 5) return 'var(--orange)';
-  return 'var(--red)';
-}
-
 function ScoreTag({ score }: { score: number | null }) {
-  if (!score) return null;
+  if (score == null) return null;
   return (
     <span style={{
       fontSize:11, fontWeight:700, padding:'3px 8px', borderRadius:4,
       background: scoreColor(score), color:'#fff', flexShrink:0,
     }}>
-      {score}/10
+      {score}
     </span>
   );
 }
@@ -73,25 +72,51 @@ function LeadCard({
       borderRadius:12, padding:'14px 16px',
       display:'flex', flexDirection:'column', gap:10,
     }}>
-      {/* Name + score */}
+      {/* Name + source + score */}
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
-        <div style={{ fontWeight:700, fontSize:15, lineHeight:1.3, color:'var(--text)' }}>{lead.business_name}</div>
-        <ScoreTag score={lead.fit_score} />
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontWeight:700, fontSize:15, lineHeight:1.3, color:'var(--text)' }}>{lead.business_name}</div>
+          {lead.owner_name && lead.owner_name !== lead.business_name && (
+            <div style={{ fontSize:12, color:'var(--muted)', marginTop:2 }}>👤 {lead.owner_name}</div>
+          )}
+        </div>
+        <div style={{ display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
+          <SourceBadge source={lead.source} />
+          <ScoreTag score={lead.fit_score} />
+        </div>
       </div>
 
-      {/* Type · location */}
+      {/* Type · city */}
       {(lead.business_type || lead.city) && (
         <div style={{ fontSize:12, color:'var(--muted)' }}>
-          {[lead.business_type, [lead.city, lead.state].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
+          {[lead.business_type, lead.city].filter(Boolean).join(' · ')}
         </div>
       )}
 
-      {/* Phone */}
-      {lead.phone && (
-        <a href={`tel:${lead.phone}`} style={{ fontSize:13, color:'var(--accent-lt)', textDecoration:'none' }}>
-          📞 {lead.phone}
-        </a>
+      {/* Observation — the call opener */}
+      {lead.observation && (
+        <div style={{
+          background:'rgba(240,165,0,0.08)', borderLeft:'3px solid var(--orange)',
+          borderRadius:'0 8px 8px 0', padding:'8px 12px',
+          fontSize:13, lineHeight:1.5, color:'var(--text)',
+        }}>
+          {lead.observation}
+        </div>
       )}
+
+      {/* Phone + suggested channel */}
+      <div style={{ display:'flex', gap:12, flexWrap:'wrap', alignItems:'center' }}>
+        {lead.phone && (
+          <a href={`tel:${lead.phone}`} style={{ fontSize:13, color:'var(--accent-lt)', textDecoration:'none' }}>
+            📞 {lead.phone}
+          </a>
+        )}
+        {lead.suggested_channel && (
+          <span style={{ fontSize:12, color:'var(--muted)' }} title="Suggested channel">
+            {CHANNEL_ICON[lead.suggested_channel]} {CHANNEL_LABEL[lead.suggested_channel]}
+          </span>
+        )}
+      </div>
 
       {/* Website + rating */}
       <div style={{ fontSize:12, color:'var(--muted)', display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
@@ -193,8 +218,8 @@ export default function PendingReviewSection({ initialLeads, onApprove, onReject
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'leads' },
         (payload) => {
-          const lead = payload.new as PendingLead & { outreach_approved: boolean | null };
-          if (lead.state === 'qualified' && !lead.outreach_approved) {
+          const lead = payload.new as PendingLead & { outreach_approved: boolean | null; pipeline_state: string };
+          if (lead.pipeline_state === 'qualified' && !lead.outreach_approved) {
             setLeads(prev => prev.some(l => l.id === lead.id) ? prev : [lead, ...prev]);
           }
         }
@@ -238,7 +263,7 @@ export default function PendingReviewSection({ initialLeads, onApprove, onReject
 
     const { error } = await supabase
       .from('leads')
-      .update({ state: 'rejected' })
+      .update({ pipeline_state: 'rejected' })
       .eq('id', id);
 
     if (error) {

@@ -62,7 +62,7 @@ export default function RunScoutButton() {
             supabase.removeChannel(channel);
             cleanupRef.current = null;
             if (status === 'error') {
-              setErrMsg('Pipeline run failed. Run Scout only works when the Next.js server is running locally on the same machine as the pipeline.');
+              setErrMsg('Pipeline run failed. Check the watcher logs on the WSL machine (3dt-agents/scout/watcher.log).');
             }
             setRunning(false);
             router.refresh();
@@ -81,7 +81,7 @@ export default function RunScoutButton() {
           supabase.removeChannel(channel);
           cleanupRef.current = null;
           if (data.status === 'error') {
-            setErrMsg('Pipeline run failed. Run Scout only works when the Next.js server is running locally on the same machine as the pipeline.');
+            setErrMsg('Pipeline run failed. Check the watcher logs on the WSL machine (3dt-agents/scout/watcher.log).');
           }
           setRunning(false);
           router.refresh();

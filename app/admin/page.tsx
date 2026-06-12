@@ -8,20 +8,26 @@ import DashboardNewLeads from '@/app/admin/components/DashboardNewLeads';
 export default async function DashboardPage() {
   const supabase = await createClient();
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const [
     { count: totalLeads },
     { count: qualifiedLeads },
     { count: approvedLeads },
     { count: interestedLeads },
+    { count: inboundAwaiting },
+    { count: followUpsDue },
     { count: activeClients },
     { data: unpaidInvoices },
     { data: latestRun },
     { data: newLeads },
   ] = await Promise.all([
     supabase.from('leads').select('*', { count: 'exact', head: true }),
-    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('state', 'qualified'),
-    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('state', 'approved'),
-    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('state', 'interested'),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('pipeline_state', 'qualified'),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('pipeline_state', 'approved'),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('pipeline_state', 'interested'),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('source', 'inquiry').eq('pipeline_state', 'approved'),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('pipeline_state', 'follow_up').lte('follow_up_date', today),
     supabase.from('clients').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('invoices').select('amount').eq('status', 'unpaid'),
     supabase
@@ -32,8 +38,8 @@ export default async function DashboardPage() {
       .maybeSingle(),
     supabase
       .from('leads')
-      .select('id,business_name,business_type,city,address,fit_score,state,created_at')
-      .eq('state', 'qualified')
+      .select('id,business_name,business_type,city,address,fit_score,pipeline_state,created_at')
+      .eq('pipeline_state', 'qualified')
       .eq('outreach_approved', false)
       .order('created_at', { ascending: false })
       .limit(5),
@@ -54,6 +60,8 @@ export default async function DashboardPage() {
           qualifiedLeads={qualifiedLeads ?? 0}
           approvedLeads={approvedLeads ?? 0}
           interestedLeads={interestedLeads ?? 0}
+          inboundAwaiting={inboundAwaiting ?? 0}
+          followUpsDue={followUpsDue ?? 0}
           activeClients={activeClients ?? 0}
           openInvoiceCount={openCount}
           openInvoiceTotal={openTotal}

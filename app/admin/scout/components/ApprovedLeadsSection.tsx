@@ -2,28 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { Database } from '@/lib/types';
+import type { Database, LeadSource, SuggestedChannel } from '@/lib/types';
+import { CHANNEL_ICON, CHANNEL_LABEL } from '@/lib/leadDisplay';
+import SourceBadge from '@/app/admin/components/SourceBadge';
 
 type LeadUpdate = Database['public']['Tables']['leads']['Update'];
 
 const STATUS_OPTIONS = [
-  { value:'approved',       label:'Approved' },
-  { value:'called',         label:'Called' },
-  { value:'interested',     label:'Interested' },
-  { value:'follow_up',      label:'Follow Up' },
-  { value:'not_interested', label:'Not Interested' },
-  { value:'won',            label:'Won' },
-  { value:'lost',           label:'Lost' },
+  { value:'approved',   label:'Approved' },
+  { value:'contacted',  label:'Contacted' },
+  { value:'follow_up',  label:'Follow Up' },
+  { value:'interested', label:'Interested' },
+  { value:'won',        label:'Won' },
+  { value:'lost',       label:'Lost' },
 ];
 
 const STATUS_STYLE: Record<string, { bg:string; color:string; border:string }> = {
-  approved:       { bg:'rgba(34,197,94,0.12)',  color:'var(--green)',  border:'rgba(34,197,94,0.3)' },
-  called:         { bg:'rgba(99,102,241,0.12)', color:'#818cf8',       border:'rgba(99,102,241,0.3)' },
-  interested:     { bg:'rgba(34,197,94,0.12)',  color:'var(--green)',  border:'rgba(34,197,94,0.3)' },
-  follow_up:      { bg:'rgba(240,165,0,0.12)',  color:'var(--orange)', border:'rgba(240,165,0,0.3)' },
-  not_interested: { bg:'rgba(239,68,68,0.12)',  color:'var(--red)',    border:'rgba(239,68,68,0.3)' },
-  won:            { bg:'rgba(34,197,94,0.25)',  color:'var(--green)',  border:'rgba(34,197,94,0.5)' },
-  lost:           { bg:'rgba(239,68,68,0.12)',  color:'var(--red)',    border:'rgba(239,68,68,0.3)' },
+  approved:   { bg:'rgba(34,197,94,0.12)',  color:'var(--green)',  border:'rgba(34,197,94,0.3)' },
+  contacted:  { bg:'rgba(99,102,241,0.12)', color:'#818cf8',       border:'rgba(99,102,241,0.3)' },
+  interested: { bg:'rgba(34,197,94,0.12)',  color:'var(--green)',  border:'rgba(34,197,94,0.3)' },
+  follow_up:  { bg:'rgba(240,165,0,0.12)',  color:'var(--orange)', border:'rgba(240,165,0,0.3)' },
+  won:        { bg:'rgba(34,197,94,0.25)',  color:'var(--green)',  border:'rgba(34,197,94,0.5)' },
+  lost:       { bg:'rgba(239,68,68,0.12)',  color:'var(--red)',    border:'rgba(239,68,68,0.3)' },
 };
 
 export type ApprovedLead = {
@@ -31,15 +31,21 @@ export type ApprovedLead = {
   business_name: string;
   business_type: string | null;
   city: string | null;
-  state: string | null;
+  pipeline_state: string | null;
   fit_score: number | null;
   phone: string | null;
+  email: string | null;
   address: string | null;
   call_notes: string | null;
   follow_up_date: string | null;
   call_attempted_at: string | null;
   interested_at: string | null;
   created_at: string;
+  observation: string | null;
+  owner_name: string | null;
+  suggested_channel: SuggestedChannel | null;
+  source: LeadSource | null;
+  inquiry_notes: string | null;
 };
 
 function fmtDate(d: string) {
@@ -60,13 +66,13 @@ function StatusBadge({ state }: { state: string }) {
 }
 
 function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
-  const [currentState, setCurrentState] = useState(lead.state ?? 'approved');
+  const [currentState, setCurrentState] = useState(lead.pipeline_state ?? 'approved');
   const [callDate, setCallDate]         = useState(lead.call_attempted_at);
   const [convertDone, setConvertDone]   = useState(!!lead.interested_at);
   const [showConvert, setShowConvert]   = useState(
-    lead.state === 'interested' && !lead.interested_at
+    lead.pipeline_state === 'interested' && !lead.interested_at
   );
-  const [convertEmail, setConvertEmail] = useState('');
+  const [convertEmail, setConvertEmail] = useState(lead.email ?? '');
   const [converting, setConverting]     = useState(false);
   const [saving, setSaving]             = useState(false);
   const supabase = createClient();
@@ -78,8 +84,8 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
   }
 
   async function handleStatus(val: string) {
-    const updates: LeadUpdate = { state: val };
-    if (val === 'called' && !callDate) {
+    const updates: LeadUpdate = { pipeline_state: val as LeadUpdate['pipeline_state'] };
+    if (val === 'contacted' && !callDate) {
       const now = new Date().toISOString();
       updates.call_attempted_at = now;
       setCallDate(now);
@@ -117,29 +123,67 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
       borderRadius:12, padding:'14px 16px',
       display:'flex', flexDirection:'column', gap:10,
     }}>
-      {/* Name + status */}
+      {/* Name + source + status */}
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
-        <div style={{ fontWeight:700, fontSize:15, lineHeight:1.3, color:'var(--text)' }}>{lead.business_name}</div>
-        <StatusBadge state={currentState} />
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontWeight:700, fontSize:15, lineHeight:1.3, color:'var(--text)' }}>{lead.business_name}</div>
+          {lead.owner_name && lead.owner_name !== lead.business_name && (
+            <div style={{ fontSize:12, color:'var(--muted)', marginTop:2 }}>👤 {lead.owner_name}</div>
+          )}
+        </div>
+        <div style={{ display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
+          <SourceBadge source={lead.source} />
+          <StatusBadge state={currentState} />
+        </div>
       </div>
 
-      {/* Type · location */}
+      {/* Type · city */}
       {(lead.business_type || lead.city) && (
         <div style={{ fontSize:12, color:'var(--muted)' }}>
-          {[lead.business_type, [lead.city, lead.state].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
+          {[lead.business_type, lead.city].filter(Boolean).join(' · ')}
         </div>
       )}
 
-      {/* Phone */}
-      {lead.phone && (
-        <a href={`tel:${lead.phone}`} style={{ fontSize:13, color:'var(--accent-lt)', textDecoration:'none' }}>
-          📞 {lead.phone}
-        </a>
+      {/* Observation — the call opener */}
+      {lead.observation && (
+        <div style={{
+          background:'rgba(240,165,0,0.08)', borderLeft:'3px solid var(--orange)',
+          borderRadius:'0 8px 8px 0', padding:'8px 12px',
+          fontSize:13, lineHeight:1.5, color:'var(--text)',
+        }}>
+          {lead.observation}
+        </div>
       )}
+
+      {/* Inquiry notes (service / budget / message from the form) */}
+      {lead.inquiry_notes && (
+        <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.6, whiteSpace:'pre-wrap' }}>
+          {lead.inquiry_notes}
+        </div>
+      )}
+
+      {/* Contact row */}
+      <div style={{ display:'flex', gap:12, flexWrap:'wrap', alignItems:'center' }}>
+        {lead.phone && (
+          <a href={`tel:${lead.phone}`} style={{ fontSize:13, color:'var(--accent-lt)', textDecoration:'none' }}>
+            📞 {lead.phone}
+          </a>
+        )}
+        {lead.email && (
+          <a href={`mailto:${lead.email}`} style={{ fontSize:13, color:'var(--accent-lt)', textDecoration:'none' }}>
+            ✉️ {lead.email}
+          </a>
+        )}
+        {lead.suggested_channel && (
+          <span style={{ fontSize:12, color:'var(--muted)' }} title="Suggested channel">
+            {CHANNEL_ICON[lead.suggested_channel]} {CHANNEL_LABEL[lead.suggested_channel]}
+          </span>
+        )}
+      </div>
 
       {/* Called date */}
       {callDate && (
-        <div style={{ fontSize:12, color:'var(--muted)' }}>Called {fmtDate(callDate)}</div>
+        <div style={{ fontSize:12, color:'var(--muted)' }}>Contacted {fmtDate(callDate)}</div>
       )}
 
       <div style={{ borderTop:'1px solid var(--border)' }} />
@@ -231,6 +275,16 @@ function ApprovedLeadCard({ lead }: { lead: ApprovedLead }) {
   );
 }
 
+// Inquiries are warm and time-sensitive — they sort to the top.
+function sortLeads(leads: ApprovedLead[]) {
+  return [...leads].sort((a, b) => {
+    if ((a.source === 'inquiry') !== (b.source === 'inquiry')) {
+      return a.source === 'inquiry' ? -1 : 1;
+    }
+    return b.created_at.localeCompare(a.created_at);
+  });
+}
+
 export default function ApprovedLeadsSection({ initialLeads }: { initialLeads: ApprovedLead[] }) {
   const [leads, setLeads] = useState<ApprovedLead[]>(initialLeads);
 
@@ -240,11 +294,14 @@ export default function ApprovedLeadsSection({ initialLeads }: { initialLeads: A
       .channel('scout-approved-leads')
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'leads', filter: 'outreach_approved=eq.true' },
+        // INSERT too: inquiry + manual leads enter directly as approved.
+        { event: '*', schema: 'public', table: 'leads', filter: 'outreach_approved=eq.true' },
         (payload) => {
           const lead = payload.new as ApprovedLead & { outreach_approved: boolean };
-          if (lead.outreach_approved) {
-            setLeads(prev => prev.some(l => l.id === lead.id) ? prev : [lead, ...prev]);
+          if (lead?.id && lead.outreach_approved) {
+            setLeads(prev => prev.some(l => l.id === lead.id)
+              ? prev
+              : sortLeads([lead, ...prev]));
           }
         }
       )

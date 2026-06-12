@@ -9,6 +9,8 @@ type Props = {
   qualifiedLeads: number;
   approvedLeads: number;
   interestedLeads: number;
+  inboundAwaiting: number;
+  followUpsDue: number;
   activeClients: number;
   openInvoiceCount: number;
   openInvoiceTotal: number;
@@ -20,12 +22,41 @@ function fmtMoney(n: number) {
 
 export default function DashboardStatCards({
   totalLeads, qualifiedLeads, approvedLeads, interestedLeads,
+  inboundAwaiting, followUpsDue,
   activeClients, openInvoiceCount, openInvoiceTotal,
 }: Props) {
   const [activeFilter, setFilter] = useState<string | null>(null);
 
   return (
     <>
+      {/* The two numbers that should make you pick up the phone */}
+      <div className="stat-grid" style={{ gridTemplateColumns:'repeat(2, 1fr)' }}>
+        <Link
+          href="/admin/scout"
+          className="stat-card stat-card-link"
+          style={inboundAwaiting > 0 ? { borderColor:'rgba(34,197,94,0.5)' } : undefined}
+        >
+          <div className="stat-label">Inbound Awaiting Contact</div>
+          <div className="stat-value" style={inboundAwaiting > 0 ? { color:'var(--green)' } : undefined}>
+            {inboundAwaiting}
+          </div>
+        </Link>
+        <button
+          type="button"
+          className="stat-card stat-card-link"
+          onClick={() => setFilter('follow_up')}
+          style={{
+            textAlign:'left', width:'100%',
+            ...(followUpsDue > 0 ? { borderColor:'rgba(240,165,0,0.5)' } : {}),
+          }}
+        >
+          <div className="stat-label">Follow-Ups Due Today</div>
+          <div className="stat-value" style={followUpsDue > 0 ? { color:'var(--orange)' } : undefined}>
+            {followUpsDue}
+          </div>
+        </button>
+      </div>
+
       <div className="stat-grid" style={{ gridTemplateColumns:'repeat(2, 1fr)' }}>
         {[
           { label:'Total Leads', value:totalLeads,     filter:'all'       },

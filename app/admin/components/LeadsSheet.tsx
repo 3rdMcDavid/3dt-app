@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { scoreColor } from '@/lib/leadDisplay';
 import LeadDetailSheet from './LeadDetailSheet';
 
-const TABS = ['all','new','qualified','approved','interested','follow_up','rejected','won','lost'] as const;
+const TABS = ['all','new','qualified','approved','contacted','follow_up','interested','rejected','won','lost'] as const;
 const TAB_LABEL: Record<string, string> = {
   all:'All', new:'New', qualified:'Qualified', approved:'Approved',
-  interested:'Interested', follow_up:'Follow Up', rejected:'Rejected',
-  won:'Won', lost:'Lost',
+  contacted:'Contacted', interested:'Interested', follow_up:'Follow Up',
+  rejected:'Rejected', won:'Won', lost:'Lost',
 };
 const SORT_OPTS = ['newest','score','city','type'] as const;
 const SORT_LABEL: Record<string, string> = {
@@ -21,7 +22,7 @@ type Lead = {
   business_type: string | null;
   city: string | null;
   fit_score: number | null;
-  state: string | null;
+  pipeline_state: string | null;
   created_at: string;
 };
 
@@ -38,9 +39,7 @@ function relativeDate(d: string) {
 
 function scoreDot(score: number | null) {
   if (score == null) return 'var(--border)';
-  if (score >= 8) return 'var(--green)';
-  if (score >= 5) return 'var(--orange)';
-  return 'var(--red)';
+  return scoreColor(score);
 }
 
 export default function LeadsSheet({ initialFilter, onClose }: Props) {
@@ -61,13 +60,13 @@ export default function LeadsSheet({ initialFilter, onClose }: Props) {
     const supabase = createClient();
     supabase
       .from('leads')
-      .select('id,business_name,business_type,city,fit_score,state,created_at')
+      .select('id,business_name,business_type,city,fit_score,pipeline_state,created_at')
       .order('created_at', { ascending: false })
       .then(({ data }) => { setLeads(data ?? []); setLoad(false); });
   }, []);
 
   const visible = leads
-    .filter(l => filter === 'all' || l.state === filter)
+    .filter(l => filter === 'all' || l.pipeline_state === filter)
     .filter(l => !search || (l.business_name ?? '').toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sort === 'score') return (b.fit_score ?? 0) - (a.fit_score ?? 0);
@@ -198,13 +197,13 @@ export default function LeadsSheet({ initialFilter, onClose }: Props) {
                       {lead.business_type}
                     </span>
                   )}
-                  {lead.state && (
+                  {lead.pipeline_state && (
                     <span style={{
                       fontSize:11, fontWeight:600, padding:'1px 6px', borderRadius:4,
                       border:'1px solid var(--border)', color:'var(--muted)',
                       textTransform:'capitalize', whiteSpace:'nowrap',
                     }}>
-                      {lead.state.replace(/_/g, ' ')}
+                      {lead.pipeline_state.replace(/_/g, ' ')}
                     </span>
                   )}
                   <span style={{ marginLeft:'auto', flexShrink:0 }}>{relativeDate(lead.created_at)}</span>

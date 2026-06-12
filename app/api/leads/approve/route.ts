@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const supabase = createServiceClient();
   const { error } = await supabase
     .from('leads')
-    .update({ outreach_approved: true, state: 'approved' })
+    .update({ outreach_approved: true, pipeline_state: 'approved' })
     .eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
