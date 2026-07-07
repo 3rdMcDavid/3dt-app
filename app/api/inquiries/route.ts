@@ -38,13 +38,19 @@ export async function POST(req: NextRequest) {
   }
 
   const SERVICE_LABELS: Record<string, string> = {
+    // Current site offer (July 2026 repositioning)
+    'automation-setup': 'Business Automation Setup ($1,800)',
+    'landing-page':     'Landing Page ($500)',
+    'website':          'Website ($1,200)',
+    'care-plan':        'Care Plan ($250/mo)',
+    'not-sure':         "Not sure — let's talk",
+    // Legacy values from older versions of the site (stale cached pages)
     'digital-presence': 'Digital Presence System',
     'business-ops':     'Business Operations System',
-    'care-plan':        'Monthly Care Plan ($150/mo)',
     'other':            "Not sure — let's talk",
-    'website':          'New Website',
     'website-tools':    'Website + Business Tools',
     'tool':             'Business Tool / Custom Build',
+    'custom-tool':      'Business Tool / Custom Build',
   };
 
   const BUDGET_LABELS: Record<string, string> = {
