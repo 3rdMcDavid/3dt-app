@@ -575,6 +575,9 @@ export type Database = {
           call_notes: string | null
           follow_up_date: string | null
           interested_at: string | null
+          auto_follow_up: boolean
+          follow_up_touches_sent: number
+          last_follow_up_at: string | null
         }
         Insert: {
           id?: string
@@ -612,6 +615,9 @@ export type Database = {
           call_notes?: string | null
           follow_up_date?: string | null
           interested_at?: string | null
+          auto_follow_up?: boolean
+          follow_up_touches_sent?: number
+          last_follow_up_at?: string | null
         }
         Update: {
           id?: string
@@ -649,6 +655,9 @@ export type Database = {
           call_notes?: string | null
           follow_up_date?: string | null
           interested_at?: string | null
+          auto_follow_up?: boolean
+          follow_up_touches_sent?: number
+          last_follow_up_at?: string | null
         }
         Relationships: []
       }

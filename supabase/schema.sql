@@ -218,7 +218,10 @@ create table leads (
   call_outcome       text,
   call_notes         text,
   follow_up_date     date,
-  interested_at      timestamptz
+  interested_at      timestamptz,
+  auto_follow_up          boolean     not null default true,
+  follow_up_touches_sent  int         not null default 0,
+  last_follow_up_at       timestamptz
 );
 
 -- LEGACY — pre-OneSignal web-push subscriptions. No code reads or writes this
