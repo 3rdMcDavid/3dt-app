@@ -20,6 +20,20 @@ const STATUS_OPTIONS = [
   { value:'lost',       label:'Lost' },
 ];
 
+const FOLLOW_UP_ACTIVE_STATES = ['approved', 'contacted', 'follow_up'];
+
+function followUpSummary(lead: {
+  pipeline_state: string | null;
+  auto_follow_up: boolean;
+  follow_up_touches_sent: number;
+}): string {
+  if (lead.follow_up_touches_sent >= 2) return '2/2 sent — sequence done';
+  if (!FOLLOW_UP_ACTIVE_STATES.includes(lead.pipeline_state ?? ''))
+    return `stopped (${lead.pipeline_state})`;
+  if (!lead.auto_follow_up) return 'off';
+  return `${lead.follow_up_touches_sent}/2 sent`;
+}
+
 type Lead = {
   id: string;
   business_name: string;
@@ -44,6 +58,9 @@ type Lead = {
   suggested_channel: SuggestedChannel | null;
   source: LeadSource | null;
   inquiry_notes: string | null;
+  auto_follow_up: boolean;
+  follow_up_touches_sent: number;
+  last_follow_up_at: string | null;
 };
 
 type Props = {
@@ -343,6 +360,31 @@ export default function LeadDetailSheet({ leadId, onClose, onLeadUpdate }: Props
                   <p style={{ fontSize:12, color:'var(--muted)', marginTop:6 }}>
                     Contacted {new Date(lead.call_attempted_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}
                   </p>
+                )}
+                {lead.source === 'inquiry' && (
+                  <div style={{
+                    display:'flex', alignItems:'center', justifyContent:'space-between',
+                    marginTop:12, padding:'10px 12px',
+                    background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8,
+                  }}>
+                    <div>
+                      <div style={{ fontSize:13, fontWeight:600 }}>Auto follow-up</div>
+                      <div style={{ fontSize:12, color:'var(--muted)' }}>{followUpSummary(lead)}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => save({ auto_follow_up: !lead.auto_follow_up })}
+                      disabled={saving}
+                      style={{
+                        padding:'6px 14px', borderRadius:999, border:'none', cursor:'pointer',
+                        fontSize:12, fontWeight:700,
+                        background: lead.auto_follow_up ? 'var(--green)' : 'var(--border)',
+                        color: lead.auto_follow_up ? '#0F1117' : 'var(--text)',
+                      }}
+                    >
+                      {lead.auto_follow_up ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
                 )}
               </div>
 
