@@ -127,6 +127,48 @@ export async function POST(req: NextRequest) {
     `,
   }).catch(() => {});
 
+  // Instant auto-reply to the lead — the site's own "reply within 60 seconds" promise.
+  resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL!,
+    to: email,
+    replyTo: '3rddavidstechnology@gmail.com',
+    subject: `Got your inquiry, ${first_name} — here's what happens next`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1A1A1A;">
+        <h2 style="margin-bottom:8px;">Hi ${esc(first_name)},</h2>
+        <p style="margin-bottom:16px;line-height:1.6;">
+          Thanks for reaching out — your inquiry just landed in my inbox.
+          I'll reach out personally within 24 hours, usually same day.
+        </p>
+
+        <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#1B4D2E;margin-bottom:10px;">What happens next</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;">
+          <tr>
+            <td style="padding:8px 0;color:#6B6B60;width:32px;vertical-align:top;font-weight:700;">1.</td>
+            <td style="padding:8px 0;line-height:1.6;"><strong>15-minute fit call.</strong> We talk about how leads reach you today and whether this fits. No pitch, no pressure.</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:#6B6B60;vertical-align:top;font-weight:700;">2.</td>
+            <td style="padding:8px 0;line-height:1.6;"><strong>I build it.</strong> Your total time investment: about an hour. I handle everything else.</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:#6B6B60;vertical-align:top;font-weight:700;">3.</td>
+            <td style="padding:8px 0;line-height:1.6;"><strong>Go live within 10 days.</strong> A walkthrough on your phone and a plain-English guide.</td>
+          </tr>
+        </table>
+
+        <a href="https://3rddavidstechnology.com/demo/automation" style="display:inline-block;background:#1B4D2E;color:#fff;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+          Watch the system in action →
+        </a>
+
+        <p style="margin-top:24px;line-height:1.6;">— David<br /><span style="color:#6B6B60;font-size:13px;">3rd David's Technology</span></p>
+        <p style="margin-top:16px;color:#6B6B60;font-size:12px;">
+          Questions in the meantime? Just reply to this email or write to 3rddavidstechnology@gmail.com.
+        </p>
+      </div>
+    `,
+  }).catch(() => {});
+
   return NextResponse.json({ success: true }, { status: 201, headers: corsHeaders });
 }
 
