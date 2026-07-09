@@ -98,7 +98,10 @@ export async function POST(req: NextRequest) {
     '/admin/scout'
   );
 
-  resend.emails.send({
+  // Both sends are awaited: un-awaited promises can be killed when the function
+  // freezes after responding. The SDK reports failures via `error`, never throw,
+  // so the 201 below is unaffected either way.
+  const ownerEmail = resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: '3rddavidstechnology@gmail.com',
     subject: `🆕 New Lead: ${name}`,
@@ -125,10 +128,10 @@ export async function POST(req: NextRequest) {
         </a>
       </div>
     `,
-  }).catch(() => {});
+  });
 
   // Instant auto-reply to the lead — the site's own "reply within 60 seconds" promise.
-  resend.emails.send({
+  const leadEmail = resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: email,
     replyTo: '3rddavidstechnology@gmail.com',
@@ -167,7 +170,17 @@ export async function POST(req: NextRequest) {
         </p>
       </div>
     `,
-  }).catch(() => {});
+  });
+
+  const results = await Promise.allSettled([ownerEmail, leadEmail]);
+  results.forEach((result, i) => {
+    const label = i === 0 ? 'Owner notification' : 'Lead auto-reply';
+    if (result.status === 'rejected') {
+      console.error(`${label} email failed:`, result.reason);
+    } else if (result.value.error) {
+      console.error(`${label} email failed:`, result.value.error);
+    }
+  });
 
   return NextResponse.json({ success: true }, { status: 201, headers: corsHeaders });
 }

@@ -65,8 +65,13 @@ inquiry, not marketing.
 
 ### Error handling
 
-- Send is not awaited for response success; `.catch(() => {})` swallows failures
-  (same as the owner notification).
+- Both email sends (owner notification and lead auto-reply) are awaited via
+  `Promise.allSettled` before the 201 returns, with failures logged via
+  `console.error`. Originally specced as fire-and-forget, but verification
+  showed un-awaited sends can be killed when the serverless function freezes
+  after responding — and the Resend SDK reports failures in its return value
+  (never throws), so `.catch()` observes nothing. Awaiting keeps the sends
+  alive; the 201 response is still returned regardless of email outcome.
 - `email` is already validated as required before the insert, so the send always
   has a recipient.
 - `first_name` is interpolated into HTML and the subject; HTML-escape via `esc()`
