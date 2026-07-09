@@ -32,7 +32,7 @@
 **Interfaces:**
 - Produces: columns `auto_follow_up boolean not null default true`, `follow_up_touches_sent int not null default 0`, `last_follow_up_at timestamptz null` on `leads`; same names in the `Database` type (`auto_follow_up: boolean`, `follow_up_touches_sent: number`, `last_follow_up_at: string | null` in Row; optional in Insert/Update). Tasks 2 and 3 rely on these exact names.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 `supabase/migrations/20260709_follow_up_sequence.sql`:
 
@@ -46,7 +46,7 @@ alter table leads
   add column last_follow_up_at       timestamptz;
 ```
 
-- [ ] **Step 2: Apply it to the live DB**
+- [x] **Step 2: Apply it to the live DB**
 
 Via the Supabase MCP (`apply_migration`, project `tlmjfqpgwuvuthcowbkc`, name `follow_up_sequence`) or paste into the Supabase SQL editor. Verify:
 
@@ -57,7 +57,7 @@ where table_name = 'leads' and column_name like '%follow_up%';
 
 Expected: three rows (`follow_up_date` pre-existing plus the two new `follow_up*` columns) — plus check `auto_follow_up` separately; simplest: `select auto_follow_up, follow_up_touches_sent, last_follow_up_at from leads limit 1;` returns without error.
 
-- [ ] **Step 3: Update schema.sql**
+- [x] **Step 3: Update schema.sql**
 
 In `supabase/schema.sql`, inside `create table leads (...)`, after the line `  interested_at      timestamptz` add (note: comma-terminate the previous line):
 
@@ -68,7 +68,7 @@ In `supabase/schema.sql`, inside `create table leads (...)`, after the line `  i
   last_follow_up_at       timestamptz
 ```
 
-- [ ] **Step 4: Update lib/types.ts**
+- [x] **Step 4: Update lib/types.ts**
 
 In the `leads` table type, add to **Row** (after `interested_at: string | null`):
 
@@ -86,11 +86,11 @@ Add to **Insert** and **Update** (after their `interested_at?: string | null` li
           last_follow_up_at?: string | null
 ```
 
-- [ ] **Step 5: Verify types compile**
+- [x] **Step 5: Verify types compile**
 
 Run (from `C:\Users\wideo\3dt-app`): `npx tsc --noEmit` — expected: exit 0, no output.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/20260709_follow_up_sequence.sql supabase/schema.sql lib/types.ts
@@ -112,7 +112,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: Task 1's columns; `createServiceClient` from `@/lib/supabase/service`; `resend` from `@/lib/resend`.
 - Produces: `followUpTouch(touch: 1 | 2, ownerName: string | null): { subject: string; html: string }`; route `GET /api/cron/follow-ups` returning `{ checked, sent, failed }`.
 
-- [ ] **Step 1: Write the email builders**
+- [x] **Step 1: Write the email builders**
 
 `lib/followUpEmails.ts`:
 
@@ -177,7 +177,7 @@ export function followUpTouch(touch: 1 | 2, ownerName: string | null): { subject
 }
 ```
 
-- [ ] **Step 2: Write the cron route**
+- [x] **Step 2: Write the cron route**
 
 `app/api/cron/follow-ups/route.ts`:
 
@@ -257,7 +257,7 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-- [ ] **Step 3: Add the cron config**
+- [x] **Step 3: Add the cron config**
 
 `vercel.json` (new file at repo root):
 
@@ -267,12 +267,12 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-- [ ] **Step 4: Lint and type-check**
+- [x] **Step 4: Lint and type-check**
 
 Run: `npx eslint lib/followUpEmails.ts app/api/cron/follow-ups/route.ts` — expected: clean.
 Run: `npx tsc --noEmit` — expected: exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/followUpEmails.ts app/api/cron/follow-ups/route.ts vercel.json
@@ -291,7 +291,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: Task 1's columns via the sheet's existing `save(updates)` helper (line 82) which writes through the browser Supabase client and calls `onLeadUpdate`.
 
-- [ ] **Step 1: Extend the local Lead type**
+- [x] **Step 1: Extend the local Lead type**
 
 In the `type Lead = { ... }` block, after `inquiry_notes: string | null;` add:
 
@@ -301,7 +301,7 @@ In the `type Lead = { ... }` block, after `inquiry_notes: string | null;` add:
   last_follow_up_at: string | null;
 ```
 
-- [ ] **Step 2: Add the indicator helper**
+- [x] **Step 2: Add the indicator helper**
 
 Below the `STATUS_OPTIONS` constant (module scope), add:
 
@@ -321,7 +321,7 @@ function followUpSummary(lead: {
 }
 ```
 
-- [ ] **Step 3: Render the toggle for inquiry leads**
+- [x] **Step 3: Render the toggle for inquiry leads**
 
 Directly after the pipeline-status `<select>`'s wrapping element (the block around line 335 containing `value={lead.pipeline_state ?? 'new'}`), insert:
 
@@ -350,12 +350,12 @@ Directly after the pipeline-status `<select>`'s wrapping element (the block arou
 
 (If the surrounding JSX uses className-based styling rather than inline styles, match the file's actual convention when inserting — behavior stays as written.)
 
-- [ ] **Step 4: Lint and type-check**
+- [x] **Step 4: Lint and type-check**
 
 Run: `npx eslint app/admin/components/LeadDetailSheet.tsx` — expected: no new errors.
 Run: `npx tsc --noEmit` — expected: exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/admin/components/LeadDetailSheet.tsx
@@ -373,7 +373,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: everything above, deployed at `app.3rddavidstechnology.com`.
 
-- [ ] **Step 1: Set CRON_SECRET on Vercel**
+- [x] **Step 1: Set CRON_SECRET on Vercel**
 
 Generate and add (David approved CLI use; project is linked):
 
@@ -385,7 +385,7 @@ npx vercel env add CRON_SECRET production < /tmp/cron_secret.txt
 
 Keep the value in hand for Step 4's curl. (If `vercel env add` prompts interactively, have David paste the value in the Vercel dashboard instead: Settings → Environment Variables → `CRON_SECRET`, production.)
 
-- [ ] **Step 2: Pre-deploy pipeline review**
+- [x] **Step 2: Pre-deploy pipeline review**
 
 Old eligible inquiry leads will enter the sequence on the first run (spec: intentional). List them; David reviews and opts out any that shouldn't be emailed:
 
@@ -397,11 +397,11 @@ where source = 'inquiry' and auto_follow_up = true
 
 Opt-out is `update leads set auto_follow_up = false where id = '...'` (or the new toggle once deployed).
 
-- [ ] **Step 3: Push to deploy**
+- [x] **Step 3: Push to deploy**
 
 ⚠️ Deploys to production. `git push origin main`, then wait for the deployment to reach READY (Vercel dashboard or MCP). Confirm the cron registered: Vercel dashboard → project → Settings → Cron Jobs shows `/api/cron/follow-ups` at `0 14 * * *`.
 
-- [ ] **Step 4: End-to-end test**
+- [x] **Step 4: End-to-end test**
 
 ```bash
 # 1. Create a test lead through the real form
@@ -419,7 +419,7 @@ curl -s https://app.3rddavidstechnology.com/api/cron/follow-ups -H "Authorizatio
 
 Verify: touch-1 email ("Still thinking it over, Test?") arrives at David's personal inbox with reply-to the business Gmail; `follow_up_touches_sent = 1` in SQL. Then backdate to 8 days, curl again → touch 2 ("Last note from me, Test"), counter 2; curl a third time → `sent: 0`. Reset counter to 0, flip the dashboard toggle OFF, curl → `sent: 0`. NOTE: the instant auto-reply from step 1 will also have fired at lead creation — expected, ignore it.
 
-- [ ] **Step 5: Clean up**
+- [x] **Step 5: Clean up**
 
 ```sql
 delete from leads where owner_name = 'Test FollowUp' and email = 'wideoutinfootball@gmail.com';
